@@ -96,9 +96,7 @@ class DeterministicPngGenerator:
                 if 18 <= x < width - 18 and 12 <= y < height - 12:
                     pixel = card
 
-                face_equation = ((x - cx) ** 2) / (face_rx**2) + ((y - cy) ** 2) / (
-                    face_ry**2
-                )
+                face_equation = ((x - cx) ** 2) / (face_rx**2) + ((y - cy) ** 2) / (face_ry**2)
                 if face_equation <= 1:
                     pixel = skin
 
