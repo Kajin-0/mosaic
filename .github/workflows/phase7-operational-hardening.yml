@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pull-requests: read
 
 jobs:
   validate-operational-hardening:
@@ -14,10 +14,9 @@ jobs:
     timeout-minutes: 50
 
     steps:
-      - name: Checkout branch
+      - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
           fetch-depth: 0
 
       - name: Set up Node.js
@@ -34,10 +33,8 @@ jobs:
       - name: Install pinned uv
         run: python -m pip install uv==0.12.4
 
-      - name: Bootstrap locked Python environment
-        run: |
-          uv lock --project services/engine
-          uv sync --project services/engine --all-groups
+      - name: Install locked Python environment
+        run: uv sync --project services/engine --all-groups --frozen
 
       - name: Install locked JavaScript workspace graph
         run: npm ci --no-audit --no-fund
@@ -123,19 +120,6 @@ jobs:
 
       - name: Re-verify RLS after recovery
         run: npm run supabase:test:auth
-
-      - name: Commit initial Phase 7 Python lock update
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          if git diff --quiet -- services/engine/uv.lock; then
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add services/engine/uv.lock
-          git commit -m 'chore: lock Phase 7 type checker'
-          git push origin HEAD:${{ github.head_ref }}
 
       - name: Reject generated-contract or dependency drift
         run: |
