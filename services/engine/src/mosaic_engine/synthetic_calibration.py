@@ -1,7 +1,7 @@
 import hashlib
 import json
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid5
 
 from mosaic_engine.models import CalibrationResponseChoice
@@ -267,7 +267,7 @@ class SyntheticCalibrationService:
                 self._assert_same_asset(asset_record, existing_asset, exc)
                 asset_record = existing_asset
 
-            decision = (
+            decision: Literal["accepted", "rejected"] = (
                 "accepted"
                 if asset_record.media_type == "image/png" and len(asset_record.content_sha256) == 64
                 else "rejected"

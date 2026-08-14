@@ -12,6 +12,13 @@ class JsonFormatter(logging.Formatter):
         "path",
         "status_code",
         "duration_ms",
+        "subject_ref",
+        "engine_version",
+        "api_version",
+        "contract_version",
+        "policy_version",
+        "model_version",
+        "error_type",
     )
 
     def format(self, record: logging.LogRecord) -> str:

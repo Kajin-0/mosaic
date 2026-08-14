@@ -1,39 +1,32 @@
-name: Phase 5 Measurement
+name: Phase 7 Operational Hardening
 
 on:
   pull_request:
-    paths:
-      - 'apps/mobile/**'
-      - 'services/engine/**'
-      - 'packages/contracts/**'
-      - 'supabase/**'
-      - 'scripts/test-api-contract.mjs'
-      - 'scripts/test-phase4-vertical-slice.mjs'
-      - 'scripts/test-phase5-measurement.mjs'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/phase5-measurement.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
-  validate-measurement:
+  validate-operational-hardening:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 50
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22.16.0'
+          package-manager-cache: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
 
@@ -45,6 +38,22 @@ jobs:
 
       - name: Install locked JavaScript workspace graph
         run: npm ci --no-audit --no-fund
+
+      - name: Scan repository history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate engine lint, typecheck, and tests
+        run: npm run engine:check
+
+      - name: Regenerate and validate API contracts
+        run: |
+          npm run contracts:sync
+          npm run contracts:check
+
+      - name: Validate mobile client
+        run: npm run mobile:check
 
       - name: Verify pinned Supabase CLI
         run: test "$(npx supabase --version)" = "2.114.0"
@@ -70,20 +79,12 @@ jobs:
           echo "EXPO_PUBLIC_MOSAIC_ENGINE_URL=http://127.0.0.1:8000" >> "$GITHUB_ENV"
           echo "MOSAIC_TEST_ENGINE_URL=http://127.0.0.1:8000" >> "$GITHUB_ENV"
 
-      - name: Validate engine
-        run: npm run engine:check
-
-      - name: Regenerate and validate contracts
-        run: |
-          npm run contracts:sync
-          npm run contracts:check
-
-      - name: Validate mobile client
-        run: npm run mobile:check
+      - name: Verify authentication ownership and RLS
+        run: npm run supabase:test:auth
 
       - name: Bundle all Expo platforms
         working-directory: apps/mobile
-        run: npx expo export --platform all --output-dir dist-p5-ci
+        run: npx expo export --platform all --output-dir dist-p7-ci
 
       - name: Start Mosaic engine
         shell: bash
@@ -99,13 +100,28 @@ jobs:
           cat /tmp/mosaic-engine.log
           exit 1
 
-      - name: Re-run Phase 4 vertical slice
+      - name: Replay Phase 4 vertical slice
         run: npm run phase4:test
 
-      - name: Run Phase 5 measurement integration
+      - name: Replay Phase 5 measurement integration
         run: npm run phase5:test
 
-      - name: Reject dependency or generated-contract drift
+      - name: Replay Phase 6 synthetic calibration
+        run: npm run phase6:test
+
+      - name: Verify Phase 6 session provenance immutability
+        run: node scripts/test-phase6-session-provenance.mjs
+
+      - name: Enforce internal-alpha latency target
+        run: npm run phase7:latency
+
+      - name: Execute destructive science-evidence recovery drill
+        run: npm run phase7:recovery
+
+      - name: Re-verify RLS after recovery
+        run: npm run supabase:test:auth
+
+      - name: Reject generated-contract or dependency drift
         run: |
           git diff --exit-code -- \
             services/engine/uv.lock \
@@ -115,7 +131,13 @@ jobs:
 
       - name: Show engine log on failure
         if: failure()
-        run: cat /tmp/mosaic-engine.log 2>/dev/null || true
+        shell: bash
+        run: |
+          cat /tmp/mosaic-engine.log 2>/dev/null || true
+          if test -s /tmp/mosaic-engine.log; then
+            message="$(tail -n 20 /tmp/mosaic-engine.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')"
+            echo "::notice title=Phase 7 engine tail::$message"
+          fi
 
       - name: Stop Mosaic engine
         if: always()
