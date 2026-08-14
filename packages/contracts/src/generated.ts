@@ -72,6 +72,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/measurement/next": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Measurement Next */
+        post: operations["getNextMeasurementItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/measurement/response": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Measurement Response */
+        post: operations["submitMeasurementResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/measurement/score": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Measurement Score */
+        post: operations["scoreMeasurementSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/version": {
         parameters: {
             query?: never;
@@ -223,10 +274,38 @@ export interface components {
             /** Label */
             label: string;
         };
+        /** ForcedChoiceItem */
+        ForcedChoiceItem: {
+            /** Dimension Key */
+            dimension_key: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "forced_choice";
+            left: components["schemas"]["MeasurementChoiceOption"];
+            /** Prompt */
+            prompt: string;
+            right: components["schemas"]["MeasurementChoiceOption"];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HardConstraintItem */
+        HardConstraintItem: {
+            /** Dimension Key */
+            dimension_key: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "hard_constraint";
+            /** Options */
+            options: components["schemas"]["MeasurementChoiceOption"][];
+            /** Prompt */
+            prompt: string;
         };
         /** HealthResponse */
         HealthResponse: {
@@ -262,6 +341,191 @@ export interface components {
             /** Ranked Candidates */
             ranked_candidates: components["schemas"]["RankedCandidate"][];
         };
+        /** MeasurementChoiceAnswer */
+        MeasurementChoiceAnswer: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "choice";
+            /** Option Id */
+            option_id: string;
+        };
+        /** MeasurementChoiceOption */
+        MeasurementChoiceOption: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+        };
+        /** MeasurementNextRequest */
+        MeasurementNextRequest: Record<string, never>;
+        /** MeasurementNextResponse */
+        MeasurementNextResponse: {
+            /** Completed Item Count */
+            completed_item_count: number;
+            /** Instrument Key */
+            instrument_key: string;
+            /** Instrument Version */
+            instrument_version: string;
+            /**
+             * Is Mock
+             * @default true
+             * @constant
+             */
+            is_mock: true;
+            /** Item */
+            item?: (components["schemas"]["HardConstraintItem"] | components["schemas"]["RatingItem"] | components["schemas"]["ScenarioItem"] | components["schemas"]["ForcedChoiceItem"]) | null;
+            /** Item Id */
+            item_id?: string | null;
+            /** Item Version */
+            item_version?: string | null;
+            /** Ordinal */
+            ordinal?: number | null;
+            /** Presentation Id */
+            presentation_id?: string | null;
+            /** Selection Policy Version */
+            selection_policy_version: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            status: components["schemas"]["MeasurementNextStatus"];
+            /** Target Item Count */
+            target_item_count: number;
+        };
+        /**
+         * MeasurementNextStatus
+         * @enum {string}
+         */
+        MeasurementNextStatus: "item" | "complete";
+        /** MeasurementRatingAnswer */
+        MeasurementRatingAnswer: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "rating";
+            /** Value */
+            value: number;
+        };
+        /** MeasurementResponseReceipt */
+        MeasurementResponseReceipt: {
+            /**
+             * Accepted
+             * @default true
+             * @constant
+             */
+            accepted: true;
+            /**
+             * Client Response Id
+             * Format: uuid
+             */
+            client_response_id: string;
+            /** Completed Item Count */
+            completed_item_count: number;
+            /** Duplicate */
+            duplicate: boolean;
+            /** Instrument Version */
+            instrument_version: string;
+            /**
+             * Is Mock
+             * @default true
+             * @constant
+             */
+            is_mock: true;
+            /**
+             * Presentation Id
+             * Format: uuid
+             */
+            presentation_id: string;
+            /** Selection Policy Version */
+            selection_policy_version: string;
+            /**
+             * Server Timestamp
+             * Format: date-time
+             */
+            server_timestamp: string;
+            /** Session Complete */
+            session_complete: boolean;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Target Item Count */
+            target_item_count: number;
+        };
+        /** MeasurementResponseRequest */
+        MeasurementResponseRequest: {
+            /** Answer */
+            answer: components["schemas"]["MeasurementChoiceAnswer"] | components["schemas"]["MeasurementRatingAnswer"];
+            /**
+             * Client Response Id
+             * Format: uuid
+             */
+            client_response_id: string;
+            /** Client Timestamp */
+            client_timestamp?: string | null;
+            /**
+             * Presentation Id
+             * Format: uuid
+             */
+            presentation_id: string;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** MeasurementScoreRequest */
+        MeasurementScoreRequest: {
+            scoring_version: components["schemas"]["MeasurementScoringVersion"];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** MeasurementScoreResponse */
+        MeasurementScoreResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Evidence Fingerprint */
+            evidence_fingerprint: string;
+            /**
+             * Is Mock
+             * @default true
+             * @constant
+             */
+            is_mock: true;
+            /** Response Count */
+            response_count: number;
+            /**
+             * Score Run Id
+             * Format: uuid
+             */
+            score_run_id: string;
+            /** Scores */
+            scores: {
+                [key: string]: number;
+            };
+            scoring_version: components["schemas"]["MeasurementScoringVersion"];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /**
+         * MeasurementScoringVersion
+         * @enum {string}
+         */
+        MeasurementScoringVersion: "mock-measurement-p5-score-1.0.0" | "mock-measurement-p5-score-2.0.0";
         /** RankedCandidate */
         RankedCandidate: {
             /**
@@ -273,6 +537,46 @@ export interface components {
             rank: number;
             /** Rank Score */
             rank_score: number;
+        };
+        /** RatingItem */
+        RatingItem: {
+            /** Dimension Key */
+            dimension_key: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "rating";
+            /** Max Label */
+            max_label: string;
+            /** Min Label */
+            min_label: string;
+            /** Prompt */
+            prompt: string;
+            /**
+             * Scale Max
+             * @default 5
+             */
+            scale_max: number;
+            /**
+             * Scale Min
+             * @default 1
+             */
+            scale_min: number;
+        };
+        /** ScenarioItem */
+        ScenarioItem: {
+            /** Dimension Key */
+            dimension_key: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "scenario";
+            /** Options */
+            options: components["schemas"]["MeasurementChoiceOption"][];
+            /** Prompt */
+            prompt: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -417,6 +721,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MatchRankResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getNextMeasurementItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeasurementNextRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasurementNextResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submitMeasurementResponse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeasurementResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasurementResponseReceipt"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scoreMeasurementSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MeasurementScoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeasurementScoreResponse"];
                 };
             };
             /** @description Validation Error */

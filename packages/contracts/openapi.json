@@ -292,6 +292,39 @@
         "title": "CalibrationStimulusOption",
         "type": "object"
       },
+      "ForcedChoiceItem": {
+        "additionalProperties": false,
+        "properties": {
+          "dimension_key": {
+            "title": "Dimension Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "forced_choice",
+            "default": "forced_choice",
+            "title": "Kind",
+            "type": "string"
+          },
+          "left": {
+            "$ref": "#/components/schemas/MeasurementChoiceOption"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "right": {
+            "$ref": "#/components/schemas/MeasurementChoiceOption"
+          }
+        },
+        "required": [
+          "prompt",
+          "dimension_key",
+          "left",
+          "right"
+        ],
+        "title": "ForcedChoiceItem",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -303,6 +336,41 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HardConstraintItem": {
+        "additionalProperties": false,
+        "properties": {
+          "dimension_key": {
+            "title": "Dimension Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "hard_constraint",
+            "default": "hard_constraint",
+            "title": "Kind",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/MeasurementChoiceOption"
+            },
+            "maxItems": 6,
+            "minItems": 2,
+            "title": "Options",
+            "type": "array"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt",
+          "dimension_key",
+          "options"
+        ],
+        "title": "HardConstraintItem",
         "type": "object"
       },
       "HealthResponse": {
@@ -380,6 +448,432 @@
         "title": "MatchRankResponse",
         "type": "object"
       },
+      "MeasurementChoiceAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "choice",
+            "default": "choice",
+            "title": "Kind",
+            "type": "string"
+          },
+          "option_id": {
+            "title": "Option Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "option_id"
+        ],
+        "title": "MeasurementChoiceAnswer",
+        "type": "object"
+      },
+      "MeasurementChoiceOption": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "MeasurementChoiceOption",
+        "type": "object"
+      },
+      "MeasurementNextRequest": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "MeasurementNextRequest",
+        "type": "object"
+      },
+      "MeasurementNextResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_item_count": {
+            "minimum": 0.0,
+            "title": "Completed Item Count",
+            "type": "integer"
+          },
+          "instrument_key": {
+            "title": "Instrument Key",
+            "type": "string"
+          },
+          "instrument_version": {
+            "title": "Instrument Version",
+            "type": "string"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "forced_choice": "#/components/schemas/ForcedChoiceItem",
+                    "hard_constraint": "#/components/schemas/HardConstraintItem",
+                    "rating": "#/components/schemas/RatingItem",
+                    "scenario": "#/components/schemas/ScenarioItem"
+                  },
+                  "propertyName": "kind"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/HardConstraintItem"
+                  },
+                  {
+                    "$ref": "#/components/schemas/RatingItem"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ScenarioItem"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ForcedChoiceItem"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "item_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Version"
+          },
+          "ordinal": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordinal"
+          },
+          "presentation_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Presentation Id"
+          },
+          "selection_policy_version": {
+            "title": "Selection Policy Version",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MeasurementNextStatus"
+          },
+          "target_item_count": {
+            "minimum": 1.0,
+            "title": "Target Item Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "status",
+          "completed_item_count",
+          "target_item_count",
+          "instrument_key",
+          "instrument_version",
+          "selection_policy_version"
+        ],
+        "title": "MeasurementNextResponse",
+        "type": "object"
+      },
+      "MeasurementNextStatus": {
+        "enum": [
+          "item",
+          "complete"
+        ],
+        "title": "MeasurementNextStatus",
+        "type": "string"
+      },
+      "MeasurementRatingAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "rating",
+            "default": "rating",
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "MeasurementRatingAnswer",
+        "type": "object"
+      },
+      "MeasurementResponseReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "const": true,
+            "default": true,
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "client_response_id": {
+            "format": "uuid",
+            "title": "Client Response Id",
+            "type": "string"
+          },
+          "completed_item_count": {
+            "minimum": 1.0,
+            "title": "Completed Item Count",
+            "type": "integer"
+          },
+          "duplicate": {
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "instrument_version": {
+            "title": "Instrument Version",
+            "type": "string"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "presentation_id": {
+            "format": "uuid",
+            "title": "Presentation Id",
+            "type": "string"
+          },
+          "selection_policy_version": {
+            "title": "Selection Policy Version",
+            "type": "string"
+          },
+          "server_timestamp": {
+            "format": "date-time",
+            "title": "Server Timestamp",
+            "type": "string"
+          },
+          "session_complete": {
+            "title": "Session Complete",
+            "type": "boolean"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "target_item_count": {
+            "minimum": 1.0,
+            "title": "Target Item Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "duplicate",
+          "session_id",
+          "presentation_id",
+          "client_response_id",
+          "instrument_version",
+          "selection_policy_version",
+          "completed_item_count",
+          "target_item_count",
+          "session_complete",
+          "server_timestamp"
+        ],
+        "title": "MeasurementResponseReceipt",
+        "type": "object"
+      },
+      "MeasurementResponseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "discriminator": {
+              "mapping": {
+                "choice": "#/components/schemas/MeasurementChoiceAnswer",
+                "rating": "#/components/schemas/MeasurementRatingAnswer"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementChoiceAnswer"
+              },
+              {
+                "$ref": "#/components/schemas/MeasurementRatingAnswer"
+              }
+            ],
+            "title": "Answer"
+          },
+          "client_response_id": {
+            "format": "uuid",
+            "title": "Client Response Id",
+            "type": "string"
+          },
+          "client_timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Timestamp"
+          },
+          "presentation_id": {
+            "format": "uuid",
+            "title": "Presentation Id",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "presentation_id",
+          "client_response_id",
+          "answer"
+        ],
+        "title": "MeasurementResponseRequest",
+        "type": "object"
+      },
+      "MeasurementScoreRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "scoring_version": {
+            "$ref": "#/components/schemas/MeasurementScoringVersion"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "scoring_version"
+        ],
+        "title": "MeasurementScoreRequest",
+        "type": "object"
+      },
+      "MeasurementScoreResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evidence_fingerprint": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Evidence Fingerprint",
+            "type": "string"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "response_count": {
+            "minimum": 0.0,
+            "title": "Response Count",
+            "type": "integer"
+          },
+          "score_run_id": {
+            "format": "uuid",
+            "title": "Score Run Id",
+            "type": "string"
+          },
+          "scores": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Scores",
+            "type": "object"
+          },
+          "scoring_version": {
+            "$ref": "#/components/schemas/MeasurementScoringVersion"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "score_run_id",
+          "session_id",
+          "scoring_version",
+          "evidence_fingerprint",
+          "response_count",
+          "scores",
+          "created_at"
+        ],
+        "title": "MeasurementScoreResponse",
+        "type": "object"
+      },
+      "MeasurementScoringVersion": {
+        "enum": [
+          "mock-measurement-p5-score-1.0.0",
+          "mock-measurement-p5-score-2.0.0"
+        ],
+        "title": "MeasurementScoringVersion",
+        "type": "string"
+      },
       "RankedCandidate": {
         "additionalProperties": false,
         "properties": {
@@ -406,6 +900,88 @@
           "rank_score"
         ],
         "title": "RankedCandidate",
+        "type": "object"
+      },
+      "RatingItem": {
+        "additionalProperties": false,
+        "properties": {
+          "dimension_key": {
+            "title": "Dimension Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "rating",
+            "default": "rating",
+            "title": "Kind",
+            "type": "string"
+          },
+          "max_label": {
+            "title": "Max Label",
+            "type": "string"
+          },
+          "min_label": {
+            "title": "Min Label",
+            "type": "string"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "scale_max": {
+            "default": 5,
+            "minimum": 2.0,
+            "title": "Scale Max",
+            "type": "integer"
+          },
+          "scale_min": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Scale Min",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "prompt",
+          "dimension_key",
+          "min_label",
+          "max_label"
+        ],
+        "title": "RatingItem",
+        "type": "object"
+      },
+      "ScenarioItem": {
+        "additionalProperties": false,
+        "properties": {
+          "dimension_key": {
+            "title": "Dimension Key",
+            "type": "string"
+          },
+          "kind": {
+            "const": "scenario",
+            "default": "scenario",
+            "title": "Kind",
+            "type": "string"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/MeasurementChoiceOption"
+            },
+            "maxItems": 6,
+            "minItems": 2,
+            "title": "Options",
+            "type": "array"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          }
+        },
+        "required": [
+          "prompt",
+          "dimension_key",
+          "options"
+        ],
+        "title": "ScenarioItem",
         "type": "object"
       },
       "ValidationError": {
@@ -496,9 +1072,9 @@
     }
   },
   "info": {
-    "description": "Server-authoritative Mosaic API boundary. Phase 4 calibration behavior is a deterministic persisted infrastructure trial, not validated relationship-science inference.",
+    "description": "Server-authoritative Mosaic API boundary. Phase 4 calibration and Phase 5 measurement behavior are deterministic persisted infrastructure protocols, not validated relationship-science inference.",
     "title": "Mosaic Engine API",
-    "version": "2026-08-14.2"
+    "version": "2026-08-14.3"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -642,6 +1218,135 @@
           }
         },
         "summary": "Matches Rank"
+      }
+    },
+    "/v1/measurement/next": {
+      "post": {
+        "operationId": "getNextMeasurementItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasurementNextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementNextResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Measurement Next"
+      }
+    },
+    "/v1/measurement/response": {
+      "post": {
+        "operationId": "submitMeasurementResponse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasurementResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementResponseReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Measurement Response"
+      }
+    },
+    "/v1/measurement/score": {
+      "post": {
+        "operationId": "scoreMeasurementSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasurementScoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementScoreResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Measurement Score"
       }
     },
     "/version": {
