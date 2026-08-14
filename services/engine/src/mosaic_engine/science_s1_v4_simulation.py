@@ -7,10 +7,7 @@ from random import Random
 
 from .science_s1 import acceptance_probability
 from .science_s1_bayesian_acquisition import choose_uncertainty_aware_pair
-from .science_s1_decision_acquisition import (
-    choose_expected_top_k_value_pair,
-    expected_top_k_value_of_information,
-)
+from .science_s1_decision_acquisition_fast import choose_expected_top_k_value_pair_approximation
 from .science_s1_simulation import (
     BinaryObservation,
     CandidatePair,
@@ -88,23 +85,14 @@ def run_ground_truth_simulation_v4(
                 random=selection_random,
             )
         elif policy == "expected_top_k_evsi":
-            pair = choose_expected_top_k_value_pair(
+            pair, score = choose_expected_top_k_value_pair_approximation(
                 remaining,
                 candidates,
                 posterior,
                 decision_features,
                 top_k=top_k,
             )
-            first, second = pair
-            selected_decision_scores.append(
-                expected_top_k_value_of_information(
-                    posterior,
-                    candidates[first],
-                    candidates[second],
-                    decision_features,
-                    top_k=top_k,
-                )
-            )
+            selected_decision_scores.append(score)
         else:
             pair = choose_uncertainty_aware_pair(
                 policy,
