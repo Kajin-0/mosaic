@@ -17,6 +17,11 @@ const internalAlphaCandidates = [
   '10000000-0000-4000-8000-000000000005',
 ] as const;
 
+const rankingRequest = {
+  candidate_ids: [...internalAlphaCandidates],
+  limit: internalAlphaCandidates.length,
+};
+
 export default function MatchesScreen() {
   const router = useRouter();
   const { session, loading } = useAuth();
@@ -25,31 +30,45 @@ export default function MatchesScreen() {
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadRanking() {
-    if (!accessToken) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await rankMatches(accessToken, {
-        candidate_ids: [...internalAlphaCandidates],
-        limit: internalAlphaCandidates.length,
-      });
-      setRanking(result);
-    } catch (rankingError: unknown) {
-      setError(rankingError instanceof Error ? rankingError.message : 'Unable to load ranking.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   useEffect(() => {
     if (loading) return;
     if (!accessToken) {
       router.replace('/auth');
       return;
     }
-    void loadRanking();
+
+    let active = true;
+    void rankMatches(accessToken, rankingRequest)
+      .then((result) => {
+        if (!active) return;
+        setRanking(result);
+        setError(null);
+      })
+      .catch((rankingError: unknown) => {
+        if (!active) return;
+        setError(rankingError instanceof Error ? rankingError.message : 'Unable to load ranking.');
+      })
+      .finally(() => {
+        if (active) setBusy(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [accessToken, loading, router]);
+
+  async function retryRanking() {
+    if (!accessToken) return;
+    setBusy(true);
+    setError(null);
+    try {
+      setRanking(await rankMatches(accessToken, rankingRequest));
+    } catch (rankingError: unknown) {
+      setError(rankingError instanceof Error ? rankingError.message : 'Unable to load ranking.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <AppScreen scroll>
@@ -91,7 +110,7 @@ export default function MatchesScreen() {
 
       <View style={styles.actions}>
         {error ? (
-          <PrimaryButton disabled={busy} onPress={() => void loadRanking()}>
+          <PrimaryButton disabled={busy} onPress={() => void retryRanking()}>
             Retry ranking
           </PrimaryButton>
         ) : null}
