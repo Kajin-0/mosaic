@@ -13,6 +13,8 @@ const expected = new Map([
   ['/v1/measurement/next', ['post']],
   ['/v1/measurement/response', ['post']],
   ['/v1/measurement/score', ['post']],
+  ['/v1/synthetic-calibration/next', ['post']],
+  ['/v1/synthetic-calibration/response', ['post']],
   ['/v1/matches/rank', ['post']],
 ]);
 
@@ -43,6 +45,14 @@ for (const schemaName of [
   'RatingItem',
   'ScenarioItem',
   'ForcedChoiceItem',
+  'SyntheticCalibrationNextRequest',
+  'SyntheticCalibrationNextResponse',
+  'SyntheticCalibrationResponseRequest',
+  'SyntheticCalibrationResponseReceipt',
+  'SyntheticCalibrationNextStatus',
+  'SyntheticCalibrationPair',
+  'SyntheticAsset',
+  'SyntheticGenerationProvenance',
   'MatchRankRequest',
   'MatchRankResponse',
 ]) {
@@ -50,12 +60,22 @@ for (const schemaName of [
 }
 
 const nextRequest = contract.components.schemas.CalibrationNextRequest;
-assert.deepEqual(nextRequest.properties ?? {}, {}, 'calibration next request must not accept client-owned progress state');
+assert.deepEqual(
+  nextRequest.properties ?? {},
+  {},
+  'calibration next request must not accept client-owned progress state',
+);
 const measurementNextRequest = contract.components.schemas.MeasurementNextRequest;
 assert.deepEqual(
   measurementNextRequest.properties ?? {},
   {},
   'measurement next request must not accept client-owned progress state',
+);
+const syntheticNextRequest = contract.components.schemas.SyntheticCalibrationNextRequest;
+assert.deepEqual(
+  syntheticNextRequest.properties ?? {},
+  {},
+  'synthetic calibration next request must not accept client-owned progress state',
 );
 
 assert.ok(contract.components.securitySchemes.HTTPBearer, 'missing bearer security scheme');
@@ -65,6 +85,8 @@ for (const path of [
   '/v1/measurement/next',
   '/v1/measurement/response',
   '/v1/measurement/score',
+  '/v1/synthetic-calibration/next',
+  '/v1/synthetic-calibration/response',
 ]) {
   assert.deepEqual(contract.paths[path].post.security, [{ HTTPBearer: [] }]);
 }
@@ -80,4 +102,18 @@ assert.ok(score.scoring_version);
 assert.ok(score.evidence_fingerprint);
 assert.ok(score.scores);
 
-console.log('Mosaic Phase 5 OpenAPI contract surface check passed.');
+const syntheticNext = contract.components.schemas.SyntheticCalibrationNextResponse.properties;
+assert.ok(syntheticNext.completed_trial_count);
+assert.ok(syntheticNext.target_trial_count);
+assert.ok(syntheticNext.instrument_version);
+assert.ok(syntheticNext.pair_policy_version);
+assert.ok(syntheticNext.generator_adapter_version);
+assert.ok(syntheticNext.cache_ready);
+
+const syntheticAsset = contract.components.schemas.SyntheticAsset.properties;
+assert.ok(syntheticAsset.specification_id);
+assert.ok(syntheticAsset.content_sha256);
+assert.ok(syntheticAsset.asset_uri);
+assert.ok(syntheticAsset.provenance);
+
+console.log('Mosaic Phase 6 OpenAPI contract surface check passed.');

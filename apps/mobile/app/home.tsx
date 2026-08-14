@@ -10,6 +10,8 @@ import { theme } from '@/theme';
 const modules = [
   ['Profile', 'Phase 2', 'Authenticated and persisted user lifecycle state'],
   ['Calibration', 'Phase 4', 'Authenticated, persisted ten-trial vertical slice'],
+  ['Measurement', 'Phase 5', 'Versioned resumable onboarding measurement'],
+  ['Synthetic calibration', 'Phase 6', 'Replayable controlled synthetic comparisons'],
   ['Matches', 'Later', 'Directional attraction and dyadic ranking'],
 ] as const;
 
@@ -40,7 +42,8 @@ export default function HomePlaceholderScreen() {
         <Text style={styles.eyebrow}>PROTOTYPE HOME</Text>
         <Text style={styles.title}>Authenticated Mosaic infrastructure online.</Text>
         <Text style={styles.body}>
-          Profile state remains protected by Supabase RLS. Phase 4 calibration now crosses the authenticated FastAPI boundary and persists server-authored experimental records.
+          Profile, measurement, calibration, and synthetic experimental records remain
+          server-authoritative and reconstructable behind the authenticated FastAPI boundary.
         </Text>
       </View>
 
@@ -64,10 +67,25 @@ export default function HomePlaceholderScreen() {
       </View>
 
       <View style={styles.actions}>
-        <PrimaryButton disabled={busy} onPress={() => router.push('/calibration')} testID="home-calibration">
+        <PrimaryButton
+          disabled={busy}
+          onPress={() => router.push('/calibration')}
+          testID="home-calibration"
+        >
           Open calibration prototype
         </PrimaryButton>
-        <PrimaryButton disabled={busy} onPress={() => void handleSignOut()} testID="home-sign-out">
+        <PrimaryButton
+          disabled={busy}
+          onPress={() => router.push('/synthetic-calibration')}
+          testID="home-synthetic-calibration"
+        >
+          Open synthetic calibration
+        </PrimaryButton>
+        <PrimaryButton
+          disabled={busy}
+          onPress={() => void handleSignOut()}
+          testID="home-sign-out"
+        >
           {busy ? 'Signing out…' : 'Sign out'}
         </PrimaryButton>
       </View>
