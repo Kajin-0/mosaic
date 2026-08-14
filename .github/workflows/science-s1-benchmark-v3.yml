@@ -2,7 +2,9 @@
 name: Science S1 Acquisition Benchmark v3
 
 on:
-  pull_request:
+  push:
+    branches:
+      - science/s1-identifiable-preference-model
   workflow_dispatch:
 
 permissions:
