@@ -204,13 +204,11 @@ def linear_bayes_pair_outcomes(
     dimension = len(posterior.mean)
 
     gain_a = tuple(
-        covariance_a[index] * response_inverse[0][0]
-        + covariance_b[index] * response_inverse[1][0]
+        covariance_a[index] * response_inverse[0][0] + covariance_b[index] * response_inverse[1][0]
         for index in range(dimension)
     )
     gain_b = tuple(
-        covariance_a[index] * response_inverse[0][1]
-        + covariance_b[index] * response_inverse[1][1]
+        covariance_a[index] * response_inverse[0][1] + covariance_b[index] * response_inverse[1][1]
         for index in range(dimension)
     )
 
