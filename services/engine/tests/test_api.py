@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
@@ -84,7 +84,7 @@ class MemoryStore:
             policy_version=policy_version,
             target_trial_count=target_trial_count,
             status="active",
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         self.sessions[session.id] = session
         return session
@@ -113,7 +113,11 @@ class MemoryStore:
         client_response_id: UUID,
     ) -> CalibrationResponseRecord | None:
         return next(
-            (response for response in self.responses.values() if response.client_response_id == client_response_id),
+            (
+                response
+                for response in self.responses.values()
+                if response.client_response_id == client_response_id
+            ),
             None,
         )
 
@@ -141,7 +145,7 @@ class MemoryStore:
             client_response_id=client_response_id,
             response=response,
             client_timestamp=client_timestamp,
-            server_timestamp=datetime.now(timezone.utc),
+            server_timestamp=datetime.now(UTC),
             policy_version=policy_version,
         )
         self.responses[experiment_id] = record
@@ -149,7 +153,7 @@ class MemoryStore:
 
     async def complete_session(self, session_id: UUID) -> CalibrationSessionRecord:
         session = self.sessions[session_id].model_copy(
-            update={"status": "complete", "completed_at": datetime.now(timezone.utc)},
+            update={"status": "complete", "completed_at": datetime.now(UTC)},
         )
         self.sessions[session_id] = session
         return session

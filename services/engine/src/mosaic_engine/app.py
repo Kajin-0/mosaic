@@ -82,7 +82,8 @@ def create_app(
         version=CONTRACT_VERSION,
         description=(
             "Server-authoritative Mosaic API boundary. Phase 4 calibration behavior is a "
-            "deterministic persisted infrastructure trial, not validated relationship-science inference."
+            "deterministic persisted infrastructure trial, not validated relationship-science "
+            "inference."
         ),
         docs_url=None if resolved.environment == "production" else "/docs",
         redoc_url=None if resolved.environment == "production" else "/redoc",
@@ -132,14 +133,27 @@ def create_app(
         credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
     ) -> UUID:
         if configuration_error is not None or subject_resolver is None:
-            raise HTTPException(status_code=503, detail="Calibration persistence is not configured.")
-        token = credentials.credentials if credentials and credentials.scheme.lower() == "bearer" else None
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is not configured.",
+            )
+        token = (
+            credentials.credentials
+            if credentials and credentials.scheme.lower() == "bearer"
+            else None
+        )
         try:
             subject_id = await subject_resolver.resolve_subject(token)
         except SupabaseAuthenticationError as exc:
-            raise HTTPException(status_code=401, detail="Invalid or missing access token.") from exc
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or missing access token.",
+            ) from exc
         except SupabasePersistenceError as exc:
-            raise HTTPException(status_code=503, detail="Calibration persistence is unavailable.") from exc
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is unavailable.",
+            ) from exc
         request.state.subject_id = subject_id
         return subject_id
 
@@ -156,11 +170,17 @@ def create_app(
     ) -> CalibrationNextResponse:
         del payload
         if calibration_service is None:
-            raise HTTPException(status_code=503, detail="Calibration persistence is not configured.")
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is not configured.",
+            )
         try:
             return await calibration_service.next_trial(subject_id)
         except SupabasePersistenceError as exc:
-            raise HTTPException(status_code=503, detail="Calibration persistence is unavailable.") from exc
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is unavailable.",
+            ) from exc
 
     @v1.post(
         "/calibration/response",
@@ -172,7 +192,10 @@ def create_app(
         subject_id: Annotated[UUID, Depends(require_subject)],
     ) -> CalibrationResponseReceipt:
         if calibration_service is None:
-            raise HTTPException(status_code=503, detail="Calibration persistence is not configured.")
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is not configured.",
+            )
         try:
             return await calibration_service.submit_response(subject_id, payload)
         except CalibrationNotFoundError as exc:
@@ -180,7 +203,10 @@ def create_app(
         except CalibrationConflictError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         except SupabasePersistenceError as exc:
-            raise HTTPException(status_code=503, detail="Calibration persistence is unavailable.") from exc
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is unavailable.",
+            ) from exc
 
     @v1.post(
         "/matches/rank",

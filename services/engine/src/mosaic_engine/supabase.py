@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -64,7 +64,9 @@ class SupabaseGateway:
         try:
             return UUID(response.json()["id"])
         except (KeyError, TypeError, ValueError) as exc:
-            raise SupabaseAuthenticationError("Supabase user payload did not contain a valid id.") from exc
+            raise SupabaseAuthenticationError(
+                "Supabase user payload did not contain a valid id.",
+            ) from exc
 
     def _service_headers(self, prefer: str | None = None) -> dict[str, str]:
         headers = {
@@ -96,8 +98,14 @@ class SupabaseGateway:
             )
 
         if response.status_code not in expected_statuses:
-            message = response.text or f"Supabase request failed with HTTP {response.status_code}."
-            error_type = SupabaseConflictError if response.status_code == 409 else SupabasePersistenceError
+            message = response.text or (
+                f"Supabase request failed with HTTP {response.status_code}."
+            )
+            error_type = (
+                SupabaseConflictError
+                if response.status_code == 409
+                else SupabasePersistenceError
+            )
             raise error_type(response.status_code, message)
 
         if not response.content:
@@ -128,7 +136,11 @@ class SupabaseGateway:
         rows = await self._service_request(
             "GET",
             "/rest/v1/science_subjects",
-            params={"select": "subject_id,user_id", "user_id": f"eq.{user_id}", "limit": "1"},
+            params={
+                "select": "subject_id,user_id",
+                "user_id": f"eq.{user_id}",
+                "limit": "1",
+            },
         )
         return rows[0] if rows else None
 
@@ -197,7 +209,11 @@ class SupabaseGateway:
         rows = await self._service_request(
             "GET",
             "/rest/v1/calibration_trials",
-            params={"select": "*", "session_id": f"eq.{session_id}", "order": "ordinal.asc"},
+            params={
+                "select": "*",
+                "session_id": f"eq.{session_id}",
+                "order": "ordinal.asc",
+            },
         )
         return [CalibrationTrialRecord.model_validate(row) for row in rows]
 
@@ -302,10 +318,13 @@ class SupabaseGateway:
             params={"id": f"eq.{session_id}"},
             json={
                 "status": "complete",
-                "completed_at": datetime.now(timezone.utc).isoformat(),
+                "completed_at": datetime.now(UTC).isoformat(),
             },
             prefer="return=representation",
         )
         if not rows:
-            raise SupabasePersistenceError(404, "Calibration session disappeared during completion.")
+            raise SupabasePersistenceError(
+                404,
+                "Calibration session disappeared during completion.",
+            )
         return CalibrationSessionRecord.model_validate(rows[0])

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid5
 
 from mosaic_engine.models import (
@@ -104,9 +104,13 @@ class CalibrationService:
         if trial is None:
             raise CalibrationNotFoundError("Calibration experiment was not found.")
         if trial.session_id != session.id or trial.subject_id != subject_id:
-            raise CalibrationConflictError("Experiment does not belong to the authenticated session.")
+            raise CalibrationConflictError(
+                "Experiment does not belong to the authenticated session.",
+            )
 
-        existing_experiment = await self._store.find_response_by_experiment_id(request.experiment_id)
+        existing_experiment = await self._store.find_response_by_experiment_id(
+            request.experiment_id,
+        )
         if existing_experiment is not None:
             raise CalibrationConflictError(
                 "Experiment already has immutable evidence under a different idempotency key.",
@@ -129,10 +133,12 @@ class CalibrationService:
                 client_timestamp=request.client_timestamp,
                 policy_version=MOCK_CALIBRATION_POLICY_VERSION,
             )
-        except SupabaseConflictError:
+        except SupabaseConflictError as exc:
             raced = await self._store.find_response_by_client_id(request.client_response_id)
             if raced is None:
-                raise CalibrationConflictError("Calibration response conflicted with immutable evidence.")
+                raise CalibrationConflictError(
+                    "Calibration response conflicted with immutable evidence.",
+                ) from exc
             self._assert_same_idempotent_request(subject_id, request, raced)
             return await self._receipt(raced, duplicate=True)
 
@@ -206,7 +212,7 @@ class CalibrationService:
             policy_version=MOCK_CALIBRATION_POLICY_VERSION,
             stimulus=stimulus,
             response_options=list(CalibrationResponseChoice),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
     def _trial_response(
@@ -250,9 +256,14 @@ class CalibrationService:
         *,
         duplicate: bool,
     ) -> CalibrationResponseReceipt:
-        session = await self._store.get_session_by_id(response.subject_id, response.session_id)
+        session = await self._store.get_session_by_id(
+            response.subject_id,
+            response.session_id,
+        )
         if session is None:
-            raise CalibrationNotFoundError("Calibration session disappeared after response storage.")
+            raise CalibrationNotFoundError(
+                "Calibration session disappeared after response storage.",
+            )
         completed = len(await self._store.list_responses(session.id))
         return CalibrationResponseReceipt(
             duplicate=duplicate,
