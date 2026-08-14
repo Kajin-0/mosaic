@@ -59,9 +59,7 @@ def _metric_summary(metrics: Sequence[SimulationMetrics]) -> dict[str, dict[str,
         raise ValueError("metrics must not be empty")
     metric_names = tuple(asdict(metrics[0]))
     return {
-        metric_name: _summarize(
-            [float(getattr(metric, metric_name)) for metric in metrics]
-        )
+        metric_name: _summarize([float(getattr(metric, metric_name)) for metric in metrics])
         for metric_name in metric_names
     }
 
@@ -149,12 +147,9 @@ def run_benchmark(
                         "policy": policy,
                         "runs": len(results),
                         "convergence_rate": mean(
-                            1.0 if result.posterior.converged else 0.0
-                            for result in results
+                            1.0 if result.posterior.converged else 0.0 for result in results
                         ),
-                        "metrics": _metric_summary(
-                            [result.metrics for result in results]
-                        ),
+                        "metrics": _metric_summary([result.metrics for result in results]),
                     }
                 )
 
