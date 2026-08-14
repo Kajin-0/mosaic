@@ -31,7 +31,9 @@ class LaplacePosterior:
 @dataclass(frozen=True)
 class SimulationMetrics:
     coefficient_rmse: float
+    oracle_log_loss: float
     expected_log_loss: float
+    excess_log_loss: float
     probability_mse: float
     top_k_regret: float
     top_k_overlap: float
@@ -354,6 +356,7 @@ def evaluate_ground_truth(
         acceptance_probability(posterior.mean, features) for features in heldout_features
     ]
 
+    oracle_log_loss = 0.0
     expected_log_loss = 0.0
     probability_mse = 0.0
     for truth, prediction in zip(
@@ -361,10 +364,19 @@ def evaluate_ground_truth(
         predicted_probabilities,
         strict=True,
     ):
-        clipped = min(max(prediction, 1e-15), 1.0 - 1e-15)
-        expected_log_loss += -truth * log(clipped) - (1.0 - truth) * log(1.0 - clipped)
+        clipped_truth = min(max(truth, 1e-15), 1.0 - 1e-15)
+        clipped_prediction = min(max(prediction, 1e-15), 1.0 - 1e-15)
+        oracle_log_loss += (
+            -truth * log(clipped_truth) - (1.0 - truth) * log(1.0 - clipped_truth)
+        )
+        expected_log_loss += (
+            -truth * log(clipped_prediction)
+            - (1.0 - truth) * log(1.0 - clipped_prediction)
+        )
         probability_mse += (truth - prediction) ** 2
+    oracle_log_loss /= len(heldout_features)
     expected_log_loss /= len(heldout_features)
+    excess_log_loss = expected_log_loss - oracle_log_loss
     probability_mse /= len(heldout_features)
 
     true_ranking = sorted(
@@ -398,7 +410,9 @@ def evaluate_ground_truth(
 
     return SimulationMetrics(
         coefficient_rmse=coefficient_rmse,
+        oracle_log_loss=oracle_log_loss,
         expected_log_loss=expected_log_loss,
+        excess_log_loss=excess_log_loss,
         probability_mse=probability_mse,
         top_k_regret=top_k_regret,
         top_k_overlap=top_k_overlap,

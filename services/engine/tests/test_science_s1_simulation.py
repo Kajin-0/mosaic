@@ -82,7 +82,9 @@ def test_ground_truth_metrics_are_exact_when_posterior_mean_equals_truth() -> No
     assert metrics.top_k_regret == pytest.approx(0.0)
     assert metrics.top_k_overlap == pytest.approx(1.0)
     assert metrics.interval_coverage == pytest.approx(1.0)
-    assert metrics.expected_log_loss > 0.0
+    assert metrics.oracle_log_loss > 0.0
+    assert metrics.expected_log_loss == pytest.approx(metrics.oracle_log_loss)
+    assert metrics.excess_log_loss == pytest.approx(0.0)
 
 
 def test_ground_truth_simulation_is_reproducible_and_keeps_pairs_unique() -> None:
@@ -111,6 +113,7 @@ def test_ground_truth_simulation_is_reproducible_and_keeps_pairs_unique() -> Non
     assert first.posterior.converged
     assert len(first.selected_pairs) == 6
     assert len(set(first.selected_pairs)) == 6
+    assert first.metrics.excess_log_loss >= -1e-12
     assert first.metrics.top_k_regret >= 0.0
     assert 0.0 <= first.metrics.top_k_overlap <= 1.0
     assert 0.0 <= first.metrics.interval_coverage <= 1.0

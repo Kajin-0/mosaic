@@ -11,12 +11,12 @@ from .science_s1_simulation import (
     run_ground_truth_simulation,
 )
 
-BENCHMARK_VERSION = "s1-ground-truth-benchmark-v1"
+BENCHMARK_VERSION = "s1-ground-truth-benchmark-v2"
 MODEL_VERSION = "visual-acceptance-linear-logit-v1"
 POLICIES = ("random", "boundary", "d_optimal")
 FEATURE_DIMENSIONS = (2, 4, 8)
 QUERY_COUNTS = (5, 10, 20, 30)
-SEEDS = tuple(range(12))
+SEEDS = tuple(range(64))
 CANDIDATE_COUNT = 18
 HELDOUT_COUNT = 96
 TOP_K = 8
@@ -106,6 +106,7 @@ def run_benchmark(
         raise ValueError("prior_variance must be positive")
 
     cells: list[dict[str, object]] = []
+    raw_runs: list[dict[str, object]] = []
     for feature_dimension in dimensions:
         prior_mean = (0.0,) * (feature_dimension + 1)
         prior_variances = (prior_variance,) * (feature_dimension + 1)
@@ -126,18 +127,28 @@ def run_benchmark(
                 results = []
                 for seed in seed_values:
                     true_alpha, candidates, heldout = scenarios[seed]
-                    results.append(
-                        run_ground_truth_simulation(
-                            policy=policy,
-                            true_alpha=true_alpha,
-                            candidates=candidates,
-                            heldout_features=heldout,
-                            prior_mean=prior_mean,
-                            prior_variances=prior_variances,
-                            query_count=query_count,
-                            top_k=top_k,
-                            seed=_response_seed(feature_dimension, seed),
-                        )
+                    result = run_ground_truth_simulation(
+                        policy=policy,
+                        true_alpha=true_alpha,
+                        candidates=candidates,
+                        heldout_features=heldout,
+                        prior_mean=prior_mean,
+                        prior_variances=prior_variances,
+                        query_count=query_count,
+                        top_k=top_k,
+                        seed=_response_seed(feature_dimension, seed),
+                    )
+                    results.append(result)
+                    raw_runs.append(
+                        {
+                            "feature_dimension": feature_dimension,
+                            "query_count": query_count,
+                            "policy": policy,
+                            "seed": seed,
+                            "converged": result.posterior.converged,
+                            "iterations": result.posterior.iterations,
+                            "metrics": asdict(result.metrics),
+                        }
                     )
 
                 cells.append(
@@ -173,6 +184,7 @@ def run_benchmark(
             "intercept": intercept,
         },
         "cells": cells,
+        "raw_runs": raw_runs,
     }
 
 

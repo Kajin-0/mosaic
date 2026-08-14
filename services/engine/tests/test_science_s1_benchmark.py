@@ -21,7 +21,7 @@ def test_small_benchmark_is_reproducible_and_versions_its_scope() -> None:
     second = run_benchmark(**arguments)
 
     assert first == second
-    assert first["benchmark_version"] == "s1-ground-truth-benchmark-v1"
+    assert first["benchmark_version"] == "s1-ground-truth-benchmark-v2"
     assert first["model_version"] == "visual-acceptance-linear-logit-v1"
     assert "not human or matchmaking validation" in str(first["scientific_scope"])
 
@@ -31,3 +31,10 @@ def test_small_benchmark_is_reproducible_and_versions_its_scope() -> None:
     assert {cell["policy"] for cell in cells} == {"random", "d_optimal"}
     assert all(cell["runs"] == 2 for cell in cells)
     assert all(cell["convergence_rate"] == 1.0 for cell in cells)
+    assert all("excess_log_loss" in cell["metrics"] for cell in cells)
+
+    raw_runs = first["raw_runs"]
+    assert isinstance(raw_runs, list)
+    assert len(raw_runs) == 4
+    assert {run["seed"] for run in raw_runs} == {0, 1}
+    assert all("excess_log_loss" in run["metrics"] for run in raw_runs)
