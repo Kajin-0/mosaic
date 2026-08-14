@@ -91,7 +91,7 @@ Create a version-controlled local Supabase/PostgreSQL environment before using a
 - Column-scoped client write grants.
 - Publishable/anon client-key boundary; no service-role credential in mobile configuration.
 - Two-user integration test proving own-row access and cross-user isolation.
-- Permanent read-only CI using `npm ci`, full local database reset, RLS integration testing, mobile checks, and all-platform Expo export.
+- Phase 2 introduced read-only CI using `npm ci`, full local database reset, RLS integration testing, mobile checks, and all-platform Expo export. These guarantees are now subsumed by the Phase 7 repository-wide gate.
 
 ## Exit criteria — satisfied
 Automated integration test demonstrates:
@@ -132,7 +132,7 @@ Establish the boundary around Mosaic's scientific algorithms before implementing
 - `packages/contracts` workspace generated from FastAPI's OpenAPI document.
 - ADR 0003 establishes FastAPI/OpenAPI as the sole wire-contract authority; TypeScript DTOs are generated rather than independently maintained.
 - Committed Python `uv.lock`, npm lockfile update, OpenAPI artifact, and generated TypeScript declarations.
-- Permanent read-only CI uses frozen Python dependencies, `npm ci`, Python lint/format/tests, OpenAPI regeneration, TypeScript generation/typecheck, contract-surface validation, and a zero-diff generated-contract gate.
+- Phase 3 introduced frozen Python dependencies, Python lint/format/tests, OpenAPI regeneration, TypeScript generation/typecheck, contract-surface validation, and zero-diff generated-contract enforcement. These guarantees are now subsumed by the Phase 7 repository-wide gate.
 
 ## Design invariant
 The mobile application never imports or reimplements scientific equations. It consumes stable generated API contracts. Scientific implementations can later replace deterministic mocks behind that boundary or intentionally revise the contract with an explicit reviewable diff.
@@ -178,7 +178,7 @@ Prove the authenticated mobile → API → persistent-data architecture before a
 - The Expo client has a real authenticated calibration route using only generated TypeScript API contracts.
 - The Phase 4 instrument is a deterministic 10-trial text-pair protocol with `left`, `right`, `both`, and `neither` responses. It is infrastructure scaffolding, not a validated relationship instrument.
 - ADR 0004 records the server-authoritative persistence boundary; `docs/protocols/phase4-calibration-vertical-slice.md` records the replayable test protocol.
-- Permanent Phase 4 CI is read-only, installs frozen dependency graphs, rebuilds Supabase from migrations, regenerates API contracts, validates the mobile client, bundles all Expo platforms, starts the real FastAPI process, executes the authenticated ten-trial protocol, and rejects dependency/generated-contract drift.
+- Phase 4 introduced a live authenticated ten-trial CI replay and science-record mutation probes. These guarantees are now subsumed by the Phase 7 repository-wide gate.
 
 ## Exit criteria — satisfied
 A clean GitHub runner proves:
@@ -207,7 +207,7 @@ trial/response mutation probes rejected
 OpenAPI/TypeScript/lock artifacts remain zero-diff
 ```
 
-On the permanent Phase 4 head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, and Phase 4 vertical-slice workflows all pass together.
+On the Phase 4 release head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, and Phase 4 vertical-slice workflows passed together.
 
 Phase 4 merged via PR #6 (`d3e6c5579e88ed1c1f1b33bb3551f2935c228f3f`).
 
@@ -230,7 +230,7 @@ Build the general measurement machinery required by Mosaic without yet claiming 
 - Repeated next-item requests return the same unanswered presentation; exact response retries are idempotent and conflicting idempotency-key reuse is rejected.
 - The authenticated Expo onboarding route renders all four item families from generated TypeScript contracts and resumes entirely from server state.
 - ADR 0005 records the raw-evidence/derived-state separation; `docs/protocols/phase5-measurement-infrastructure.md` records the replayable 20-item protocol.
-- Permanent Phase 5 CI is read-only, installs frozen dependency graphs, rebuilds Supabase from migrations, reruns P4, executes the P5 protocol against the real FastAPI process, bundles all Expo targets, and rejects dependency/generated-contract drift.
+- Phase 5 introduced the persistent heterogeneous measurement replay and immutable rescoring gate. These guarantees are now subsumed by the Phase 7 repository-wide gate.
 
 ## Data invariant
 Raw measurement evidence and derived scores are different persistence classes. A new scoring implementation creates a new score run over the same immutable evidence; it never updates historical presentations or responses.
@@ -268,7 +268,7 @@ direct authenticated-client science write rejected
 presentation/response/score-provenance mutation rejected
 ```
 
-On the permanent Phase 5 code head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, Phase 4 vertical-slice, and Phase 5 measurement workflows all pass together.
+On the Phase 5 release head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, Phase 4 vertical-slice, and Phase 5 measurement workflows passed together.
 
 Phase 5 merged via PR #7 (`1623f7a13def648aa034ee6d946645179e65468f`).
 
@@ -294,7 +294,7 @@ Create the experiment platform for controlled synthetic attraction calibration b
 - JSON-serialized deterministic stimulus and pair seeds are constrained to `0..9,007,199,254,740,991` (`2^53 - 1`) in Pydantic and PostgreSQL so Python, PostgreSQL, and JavaScript can replay canonical specification hashes without numeric precision loss.
 - The authenticated Expo route explicitly identifies the displayed people as synthetic calibration candidates, states that they are not real members, and renders the exact persisted PNG artifacts rather than regenerating or transforming them client-side.
 - ADR 0006 records the synthetic-artifact, collision, and cross-runtime canonical-provenance invariants; `docs/protocols/phase6-synthetic-calibration-infrastructure.md` records the replay protocol and scientific non-claims.
-- Permanent Phase 6 CI is read-only. It uses frozen Python/Node dependency graphs, rebuilds Supabase from migrations, regenerates contracts only to prove zero drift, validates the mobile client, bundles all Expo targets, reruns P4 and P5, executes the full P6 replay, tests completed-session provenance immutability, and rejects lock/generated-contract drift.
+- Phase 6 introduced the complete synthetic-artifact replay, session-provenance immutability, and zero-drift gate. These guarantees are now subsumed by the Phase 7 repository-wide gate.
 
 ## Scientific invariant
 A generated candidate is an experimental artifact, not disposable UI content. Historical interpretation requires the exact specification, generated bytes, generation provenance, QC decision, pair assignment, and user response to remain reconstructable as distinct records.
@@ -350,43 +350,116 @@ Phase 6 merged via PR #8 (`23071c7ffa876e2cb9bb1945cc45f518fb694cec`).
 
 ---
 
-# Phase 7 — CI, Security, Observability, and Recovery — ACTIVE
+# Phase 7 — CI, Security, Observability, and Recovery — COMPLETE
 
 ## Objective
-Make failures visible before real users or scientific experiments depend on the system.
+Make failures visible and recovery executable before real users or scientific experiments depend on the system.
 
-## CI gates
-For every pull request:
-- TypeScript typecheck
-- JavaScript/TypeScript lint
-- mobile tests
-- Python lint/typecheck/tests
-- API contract tests
-- database migration tests
-- RLS/security tests
-- secret scanning
+## Implemented
+- Replaced the six phase-specific workflows with one repository-wide `Phase 7 Operational Hardening` pull-request gate. The replacement was first proven while all P1–P6 workflows still existed, then the old workflows were retired and the consolidated read-only gate passed again by itself.
+- CI now runs from frozen npm and uv lockfiles and covers mobile typecheck/lint/tests, Python Ruff, a real mypy static typecheck, pytest, OpenAPI regeneration, generated TypeScript contracts, database migration rebuild, RLS/authentication, all-platform Expo export, P4/P5/P6 live replays, synthetic-session provenance immutability, latency, destructive recovery, and zero drift.
+- Added full-history Gitleaks scanning to every pull request. The Phase 7 release candidate scanned the complete Phase 7 change history with no leaks found.
+- Added a stable one-way `subject_ref` for science-service observability instead of logging raw account IDs or raw science UUIDs.
+- Structured request events include request ID, method/path/status, latency, engine/API/contract versions, and route-relevant policy/model version. Unsafe/unbounded externally supplied request IDs are replaced server-side.
+- Unexpected exceptions now emit a versioned `request_failed` event with status 500, latency, request ID, and exception class before propagation.
+- Added a pinned mypy gate. Its first diagnostic caught one genuine P6 type-contract weakness: a QC decision persisted as `Literal["accepted", "rejected"]` was locally inferred as generic `str`. The implementation now preserves the literal type at source rather than suppressing the check.
+- Added ADR 0007 defining operational controls as part of scientific reproducibility, including pseudonymous observability, latency semantics, recovery boundaries, forward-owned migrations, and secret-incident handling.
+- Added `docs/protocols/phase7-operational-hardening.md` and `docs/operations/database-recovery.md` so CI tests and recovery claims have durable operational meaning.
 
-## Operational requirements
-- structured request IDs
-- pseudonymous user identifiers in science-service logs
-- API version
-- model/policy version
-- latency/error instrumentation
-- database backup/recovery procedure
-- migration rollback/forward-fix policy
+## Latency result
 
-## Initial API latency target
-For ordinary non-generation API operations:
+The internal-alpha local runner measures 20 warm-request samples for each of five non-generation operations. On the workflow-retirement validation head:
+
+| Operation | p50 | p95 | max |
+|---|---:|---:|---:|
+| health | 1.021 ms | 1.593 ms | 1.771 ms |
+| version | 0.990 ms | 1.278 ms | 1.647 ms |
+| mock ranking | 1.281 ms | 1.783 ms | 3.968 ms |
+| cached/pending calibration next | 110.187 ms | 130.837 ms | 134.352 ms |
+| cached/pending measurement next | 109.353 ms | 133.259 ms | 134.750 ms |
+
+Across all 100 measured requests:
 
 ```text
-p95 < 500 ms
+overall p95 = 130.390 ms < 500 ms target
 ```
 
-under the internal-alpha load profile.
+This is an internal CI regression budget, not a hosted-production throughput, concurrency, Internet-latency, or image-generation claim.
+
+## Recovery result
+
+After P4–P6 populated the science database, the Phase 7 gate:
+
+1. canonically snapshotted the detached pseudonymous science graph;
+2. computed SHA-256 fingerprint `41c152320e8e713a6585b6f3ff321ec929469204d7aa52e6ac834395098bdd8c`;
+3. destructively rebuilt PostgreSQL from migrations and seed data;
+4. proved the critical science evidence tables were empty;
+5. restored subjects with account linkage intentionally detached plus all P4–P6 evidence in foreign-key order;
+6. reproduced the exact same SHA-256 fingerprint and row counts; and
+7. reran the two-user RLS test successfully after restoration.
+
+The restored graph contained:
+
+```text
+science_subjects                     4
+calibration_sessions                 2
+calibration_trials                  11
+calibration_responses               10
+measurement_sessions                 2
+measurement_presentations           21
+measurement_responses               20
+measurement_score_runs               2
+synthetic_calibration_sessions       1
+synthetic_stimulus_specs            40
+synthetic_assets                    40
+synthetic_qc_events                 40
+synthetic_pairs                     20
+synthetic_calibration_responses     20
+```
+
+`science_subjects.user_id` is intentionally not part of this detached evidence representation. Full account/platform restoration and scientific-evidence restoration are separate recovery classes.
+
+## Exit criteria — satisfied
+
+The consolidated read-only workflow proves on one clean runner:
+
+```text
+frozen dependency graphs
+        ↓
+full PR-history secret scan
+        ↓
+Ruff + mypy + pytest
+        ↓
+OpenAPI/TypeScript regeneration with zero drift
+        ↓
+mobile checks + Android/iOS/web export
+        ↓
+full migration-backed database reconstruction
+        ↓
+two-user auth/RLS isolation
+        ↓
+P4 replay → P5 replay → P6 replay
+        ↓
+P6 completed-session provenance immutability
+        ↓
+100-request p95 latency budget
+        ↓
+destructive database reset
+        ↓
+exact detached science-evidence restoration
+        ↓
+identical SHA-256 recovery fingerprint
+        ↓
+RLS passes again after recovery
+        ↓
+no dependency/generated-contract drift
+```
+
+The consolidated read-only gate passed after all six phase-specific workflows were removed, proving the repository no longer depends on duplicated phase CI definitions.
 
 ---
 
-# Phase 8 — Infrastructure-Complete Internal Alpha
+# Phase 8 — Infrastructure-Complete Internal Alpha — ACTIVE
 
 ## Objective
 Demonstrate the entire preliminary platform without requiring production-quality matching science.
