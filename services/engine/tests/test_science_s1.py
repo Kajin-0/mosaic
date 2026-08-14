@@ -19,9 +19,7 @@ from mosaic_engine.science_s1 import (
 def test_effective_pair_coefficient_absorbs_noise_scale() -> None:
     preference_direction = (1.2, -0.7)
     inverse_noise_scale = 2.5
-    effective_coefficients = tuple(
-        inverse_noise_scale * value for value in preference_direction
-    )
+    effective_coefficients = tuple(inverse_noise_scale * value for value in preference_direction)
     features_a = (0.2, -0.4)
     features_b = (-0.5, 0.3)
 
@@ -79,9 +77,7 @@ def test_four_option_response_is_two_binary_acceptability_observations() -> None
     assert probabilities["a_only"] == pytest.approx(probability_a * (1.0 - probability_b))
     assert probabilities["b_only"] == pytest.approx((1.0 - probability_a) * probability_b)
     assert probabilities["both"] == pytest.approx(probability_a * probability_b)
-    assert probabilities["neither"] == pytest.approx(
-        (1.0 - probability_a) * (1.0 - probability_b)
-    )
+    assert probabilities["neither"] == pytest.approx((1.0 - probability_a) * (1.0 - probability_b))
 
 
 def test_binary_fisher_information_is_symmetric_positive_semidefinite() -> None:
