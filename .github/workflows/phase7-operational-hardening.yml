@@ -1,0 +1,164 @@
+name: Phase 7 Operational Hardening
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  validate-operational-hardening:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.16.0'
+          package-manager-cache: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned uv
+        run: python -m pip install uv==0.12.4
+
+      - name: Bootstrap locked Python environment
+        run: |
+          uv lock --project services/engine
+          uv sync --project services/engine --all-groups
+
+      - name: Install locked JavaScript workspace graph
+        run: npm ci --no-audit --no-fund
+
+      - name: Scan repository history for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate engine lint, typecheck, and tests
+        run: npm run engine:check
+
+      - name: Regenerate and validate API contracts
+        run: |
+          npm run contracts:sync
+          npm run contracts:check
+
+      - name: Validate mobile client
+        run: npm run mobile:check
+
+      - name: Verify pinned Supabase CLI
+        run: test "$(npx supabase --version)" = "2.114.0"
+
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Rebuild database from migrations and seed
+        run: npx supabase db reset
+
+      - name: Export local runtime configuration
+        shell: bash
+        run: |
+          eval "$(npx supabase status -o env)"
+          echo "API_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
+          echo "MOSAIC_ENGINE_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "MOSAIC_ENGINE_SUPABASE_PUBLIC_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "MOSAIC_ENGINE_SUPABASE_SERVER_KEY=$SERVICE_ROLE_KEY" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_MOSAIC_ENGINE_URL=http://127.0.0.1:8000" >> "$GITHUB_ENV"
+          echo "MOSAIC_TEST_ENGINE_URL=http://127.0.0.1:8000" >> "$GITHUB_ENV"
+
+      - name: Verify authentication ownership and RLS
+        run: npm run supabase:test:auth
+
+      - name: Bundle all Expo platforms
+        working-directory: apps/mobile
+        run: npx expo export --platform all --output-dir dist-p7-ci
+
+      - name: Start Mosaic engine
+        shell: bash
+        run: |
+          uv run --project services/engine uvicorn mosaic_engine.main:app --host 127.0.0.1 --port 8000 > /tmp/mosaic-engine.log 2>&1 &
+          echo $! > /tmp/mosaic-engine.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8000/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mosaic-engine.log
+          exit 1
+
+      - name: Replay Phase 4 vertical slice
+        run: npm run phase4:test
+
+      - name: Replay Phase 5 measurement integration
+        run: npm run phase5:test
+
+      - name: Replay Phase 6 synthetic calibration
+        run: npm run phase6:test
+
+      - name: Verify Phase 6 session provenance immutability
+        run: node scripts/test-phase6-session-provenance.mjs
+
+      - name: Enforce internal-alpha latency target
+        run: npm run phase7:latency
+
+      - name: Execute destructive science-evidence recovery drill
+        run: npm run phase7:recovery
+
+      - name: Re-verify RLS after recovery
+        run: npm run supabase:test:auth
+
+      - name: Commit initial Phase 7 Python lock update
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          if git diff --quiet -- services/engine/uv.lock; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add services/engine/uv.lock
+          git commit -m 'chore: lock Phase 7 type checker'
+          git push origin HEAD:${{ github.head_ref }}
+
+      - name: Reject generated-contract or dependency drift
+        run: |
+          git diff --exit-code -- \
+            services/engine/uv.lock \
+            package-lock.json \
+            packages/contracts/openapi.json \
+            packages/contracts/src/generated.ts
+
+      - name: Show engine log on failure
+        if: failure()
+        shell: bash
+        run: |
+          cat /tmp/mosaic-engine.log 2>/dev/null || true
+          if test -s /tmp/mosaic-engine.log; then
+            message="$(tail -n 20 /tmp/mosaic-engine.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')"
+            echo "::notice title=Phase 7 engine tail::$message"
+          fi
+
+      - name: Stop Mosaic engine
+        if: always()
+        run: kill "$(cat /tmp/mosaic-engine.pid)" 2>/dev/null || true
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop --no-backup || true
