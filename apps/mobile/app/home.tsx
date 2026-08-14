@@ -12,7 +12,7 @@ const modules = [
   ['Calibration', 'Phase 4', 'Authenticated, persisted ten-trial vertical slice'],
   ['Measurement', 'Phase 5', 'Versioned resumable onboarding measurement'],
   ['Synthetic calibration', 'Phase 6', 'Replayable controlled synthetic comparisons'],
-  ['Matches', 'Later', 'Directional attraction and dyadic ranking'],
+  ['Matches', 'Phase 8', 'Authenticated, versioned, persisted mock ranking output'],
 ] as const;
 
 export default function HomePlaceholderScreen() {
@@ -39,11 +39,11 @@ export default function HomePlaceholderScreen() {
   return (
     <AppScreen scroll>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>PROTOTYPE HOME</Text>
+        <Text style={styles.eyebrow}>INTERNAL ALPHA</Text>
         <Text style={styles.title}>Authenticated Mosaic infrastructure online.</Text>
         <Text style={styles.body}>
-          Profile, measurement, calibration, and synthetic experimental records remain
-          server-authoritative and reconstructable behind the authenticated FastAPI boundary.
+          Profile, measurement, calibration, synthetic experimental records, and mock ranking runs
+          remain reconstructable across authenticated sessions.
         </Text>
       </View>
 
@@ -80,6 +80,13 @@ export default function HomePlaceholderScreen() {
           testID="home-synthetic-calibration"
         >
           Open synthetic calibration
+        </PrimaryButton>
+        <PrimaryButton
+          disabled={busy}
+          onPress={() => router.push('/matches')}
+          testID="home-matches"
+        >
+          Open mock ranking
         </PrimaryButton>
         <PrimaryButton
           disabled={busy}
