@@ -113,11 +113,14 @@ for (let ordinal = 1; ordinal <= 20; ordinal += 1) {
     const asset = next.payload.pair[side];
     assert.ok(asset.asset_id);
     assert.ok(asset.specification_id);
-    assert.equal(asset.media_type, 'image/svg+xml');
+    assert.equal(asset.media_type, 'image/png');
     assert.equal(asset.content_sha256.length, 64);
-    assert.ok(asset.asset_uri.startsWith('data:image/svg+xml;base64,'));
-    assert.equal(asset.provenance.adapter_key, 'deterministic-svg');
+    assert.ok(asset.asset_uri.startsWith('data:image/png;base64,'));
+    assert.equal(asset.provenance.adapter_key, 'deterministic-png');
     assert.equal(asset.provenance.provider, 'mosaic-local-mock');
+    const raw = Buffer.from(asset.asset_uri.split(',', 2)[1], 'base64');
+    assert.equal(raw.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    assert.equal(sha256(raw), asset.content_sha256);
   }
   assert.notEqual(next.payload.pair.left.asset_id, next.payload.pair.right.asset_id);
 
@@ -237,11 +240,13 @@ for (const spec of specs.payload) {
 
 for (const asset of assets.payload) {
   assert.ok(specById.has(asset.spec_id));
+  assert.equal(asset.media_type, 'image/png');
   assert.equal(asset.content_sha256.length, 64);
-  assert.ok(asset.asset_uri.startsWith('data:image/svg+xml;base64,'));
+  assert.ok(asset.asset_uri.startsWith('data:image/png;base64,'));
   const raw = Buffer.from(asset.asset_uri.split(',', 2)[1], 'base64');
+  assert.equal(raw.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
   assert.equal(sha256(raw), asset.content_sha256);
-  assert.equal(asset.generation_provenance.adapter_key, 'deterministic-svg');
+  assert.equal(asset.generation_provenance.adapter_key, 'deterministic-png');
   assert.equal(asset.generation_provenance.provider, 'mosaic-local-mock');
   assert.equal(qcByAsset.get(asset.id)?.decision, 'accepted');
 }
