@@ -25,6 +25,7 @@ const tableDefinitions = [
   { name: 'synthetic_qc_events', select: '*', key: 'id' },
   { name: 'synthetic_pairs', select: '*', key: 'id' },
   { name: 'synthetic_calibration_responses', select: '*', key: 'id' },
+  { name: 'match_rank_runs', select: '*', key: 'id' },
 ];
 
 function stableStringify(value) {
@@ -126,6 +127,7 @@ const requiredTables = [
   'measurement_responses',
   'measurement_score_runs',
   'synthetic_calibration_responses',
+  'match_rank_runs',
 ];
 for (const table of requiredTables) {
   assert.ok(before.tables[table].length > 0, `${table} was empty before the recovery drill`);
