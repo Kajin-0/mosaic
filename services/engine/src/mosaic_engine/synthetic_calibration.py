@@ -6,7 +6,7 @@ from uuid import UUID, uuid5
 from mosaic_engine.models import CalibrationResponseChoice
 from mosaic_engine.supabase import SupabaseConflictError
 from mosaic_engine.synthetic_generation import (
-    DeterministicSvgGenerator,
+    DeterministicPngGenerator,
     SyntheticGeneratorAdapter,
 )
 from mosaic_engine.synthetic_models import (
@@ -56,7 +56,7 @@ class SyntheticCalibrationService:
         generator: SyntheticGeneratorAdapter | None = None,
     ) -> None:
         self._store = store
-        self._generator = generator or DeterministicSvgGenerator()
+        self._generator = generator or DeterministicPngGenerator()
 
     async def next_pair(self, subject_id: UUID) -> SyntheticCalibrationNextResponse:
         session = await self._get_or_create_session(subject_id)
@@ -262,7 +262,7 @@ class SyntheticCalibrationService:
 
             decision = (
                 "accepted"
-                if asset_record.media_type == "image/svg+xml"
+                if asset_record.media_type == "image/png"
                 and len(asset_record.content_sha256) == 64
                 else "rejected"
             )
