@@ -189,7 +189,7 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-scenario-family",
         ScenarioItem(
-            prompt="Both families expect you for the same holiday. What approach feels most natural?",
+            prompt="Both families want you for the same holiday. What approach feels most natural?",
             dimension_key="family_coordination",
             options=[
                 _option("alternate", "Create an explicit alternating plan"),
