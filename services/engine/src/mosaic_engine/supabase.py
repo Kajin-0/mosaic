@@ -102,9 +102,7 @@ class SupabaseGateway:
                 f"Supabase request failed with HTTP {response.status_code}."
             )
             error_type = (
-                SupabaseConflictError
-                if response.status_code == 409
-                else SupabasePersistenceError
+                SupabaseConflictError if response.status_code == 409 else SupabasePersistenceError
             )
             raise error_type(response.status_code, message)
 
