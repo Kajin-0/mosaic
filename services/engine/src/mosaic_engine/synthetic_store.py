@@ -125,15 +125,24 @@ class SyntheticCalibrationStore(Protocol):
         record: SyntheticStimulusSpecRecord,
     ) -> SyntheticStimulusSpecRecord: ...
 
+    async def get_synthetic_spec(self, spec_id: UUID) -> SyntheticStimulusSpecRecord | None: ...
+
     async def create_synthetic_asset(
         self,
         record: SyntheticAssetRecord,
     ) -> SyntheticAssetRecord: ...
 
+    async def get_synthetic_asset(self, asset_id: UUID) -> SyntheticAssetRecord | None: ...
+
     async def create_synthetic_qc_event(
         self,
         record: SyntheticQcEventRecord,
     ) -> SyntheticQcEventRecord: ...
+
+    async def get_synthetic_qc_event(
+        self,
+        qc_event_id: UUID,
+    ) -> SyntheticQcEventRecord | None: ...
 
     async def create_synthetic_pair(
         self,
@@ -141,8 +150,6 @@ class SyntheticCalibrationStore(Protocol):
     ) -> SyntheticPairRecord: ...
 
     async def get_synthetic_pair(self, pair_id: UUID) -> SyntheticPairRecord | None: ...
-
-    async def get_synthetic_asset(self, asset_id: UUID) -> SyntheticAssetRecord | None: ...
 
     async def list_synthetic_responses(
         self,
