@@ -80,10 +80,7 @@ def binary_fisher_information(
     augmented_features = (1.0, *(float(feature) for feature in features))
 
     return tuple(
-        tuple(
-            weight * row_feature * column_feature
-            for column_feature in augmented_features
-        )
+        tuple(weight * row_feature * column_feature for column_feature in augmented_features)
         for row_feature in augmented_features
     )
 
@@ -98,10 +95,7 @@ def pair_fisher_information(
     information_b = binary_fisher_information(alpha, features_b)
 
     return tuple(
-        tuple(
-            value_a + value_b
-            for value_a, value_b in zip(row_a, row_b, strict=True)
-        )
+        tuple(value_a + value_b for value_a, value_b in zip(row_a, row_b, strict=True))
         for row_a, row_b in zip(information_a, information_b, strict=True)
     )
 
