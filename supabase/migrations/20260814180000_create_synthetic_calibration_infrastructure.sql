@@ -88,7 +88,8 @@ create table public.synthetic_pairs (
   ordinal integer not null check (ordinal >= 1),
   left_asset_id uuid not null,
   right_asset_id uuid not null,
-  randomization_seed bigint not null check (randomization_seed >= 0),
+  randomization_seed bigint not null
+    check (randomization_seed between 0 and 9007199254740991),
   pair_policy_version text not null,
   created_at timestamptz not null default now(),
   unique (id, session_id, subject_id),
