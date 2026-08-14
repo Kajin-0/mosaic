@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from math import ceil, exp
 from collections.abc import Sequence
-
+from math import ceil, exp
 
 FOUR_OPTION_RESPONSES = ("a_only", "b_only", "both", "neither")
 
