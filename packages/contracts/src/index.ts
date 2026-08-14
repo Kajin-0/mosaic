@@ -35,3 +35,4 @@ export type SyntheticAsset = components['schemas']['SyntheticAsset'];
 export type SyntheticGenerationProvenance = components['schemas']['SyntheticGenerationProvenance'];
 export type MatchRankRequest = components['schemas']['MatchRankRequest'];
 export type MatchRankResponse = components['schemas']['MatchRankResponse'];
+export type PersistedMatchRankResponse = components['schemas']['PersistedMatchRankResponse'];
