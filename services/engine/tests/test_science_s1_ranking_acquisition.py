@@ -62,12 +62,8 @@ def test_score_regret_is_symmetric_and_homogeneous() -> None:
 def test_score_regret_decreases_as_ordering_becomes_more_certain() -> None:
     variance = 1.0
 
-    assert pairwise_linear_score_regret(0.0, variance) > pairwise_linear_score_regret(
-        1.0, variance
-    )
-    assert pairwise_linear_score_regret(1.0, variance) > pairwise_linear_score_regret(
-        3.0, variance
-    )
+    assert pairwise_linear_score_regret(0.0, variance) > pairwise_linear_score_regret(1.0, variance)
+    assert pairwise_linear_score_regret(1.0, variance) > pairwise_linear_score_regret(3.0, variance)
 
 
 def test_population_risk_ignores_intercept_only_uncertainty() -> None:
