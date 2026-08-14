@@ -79,13 +79,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     void supabase.auth.getSession().then(({ data, error: sessionError }) => {
       if (!mounted) return;
-      if (sessionError) setError(sessionError.message);
+
+      if (sessionError) {
+        setError(sessionError.message);
+      }
+
+      if (data.session) {
+        setLoading(true);
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+
       setSession(data.session);
-      if (!data.session) setLoading(false);
     });
 
     const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (mounted) setSession(nextSession);
+      if (!mounted) return;
+
+      if (nextSession) {
+        setLoading(true);
+        setError(null);
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+
+      setSession(nextSession);
     });
 
     return () => {
@@ -109,16 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!session?.user.id) return undefined;
+
     let cancelled = false;
-
-    if (!session?.user.id) {
-      setProfile(null);
-      setLoading(false);
-      return undefined;
-    }
-
-    setLoading(true);
-    setError(null);
 
     void fetchOrCreateProfile(session.user.id)
       .then((nextProfile) => {
