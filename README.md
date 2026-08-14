@@ -1,13 +1,25 @@
 # Mosaic
 
-Mosaic is the working codename for a research-driven mobile matchmaking system focused on mutually satisfying long-term relationships.
+**Working codename:** Mosaic
 
-The project will be developed as a mobile-first application with a separately testable scientific matching engine. The repository is intentionally structured so product code, data contracts, infrastructure, and analytical models can evolve without being coupled unnecessarily.
+Mosaic is an experimental mobile matchmaking system being developed around the objective of identifying mutually promising long-term relationships rather than maximizing swipe or engagement metrics.
 
-> **Naming note:** `Mosaic` is a project codename. Final product branding has not been selected.
+## Infrastructure status
 
-## Status
+- Phase 0: repository foundation — complete
+- Phase 1: Expo/React Native mobile shell — complete
+- Phase 2: Supabase/PostgreSQL authentication + private profile/RLS foundation — complete
+- Phase 3: FastAPI science-engine skeleton + versioned contracts — next
 
-Initial infrastructure and architecture planning.
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased implementation plan and exit criteria.
 
-See `docs/ROADMAP.md` once the bootstrap planning branch is merged.
+## Repository layout
+
+```text
+apps/mobile/          Expo / React Native / TypeScript client
+services/engine/      Python / FastAPI science engine (Phase 3)
+packages/contracts/   shared API/data contracts (Phase 3)
+supabase/             migrations, seed data, local configuration
+scripts/              development and integration utilities
+docs/                 architecture, ADRs, and roadmap
+```
