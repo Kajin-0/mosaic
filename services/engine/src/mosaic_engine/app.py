@@ -14,6 +14,19 @@ from mosaic_engine.calibration import (
 )
 from mosaic_engine.config import Settings, get_settings
 from mosaic_engine.logging import configure_logging
+from mosaic_engine.measurement import (
+    MeasurementConflictError,
+    MeasurementNotFoundError,
+    MeasurementService,
+)
+from mosaic_engine.measurement_models import (
+    MeasurementNextRequest,
+    MeasurementNextResponse,
+    MeasurementResponseReceipt,
+    MeasurementResponseRequest,
+    MeasurementScoreRequest,
+    MeasurementScoreResponse,
+)
 from mosaic_engine.mock import rank_candidates
 from mosaic_engine.models import (
     CalibrationNextRequest,
@@ -60,30 +73,32 @@ def create_app(
     *,
     subject_resolver: SubjectResolver | None = None,
     calibration_service: CalibrationService | None = None,
+    measurement_service: MeasurementService | None = None,
 ) -> FastAPI:
     resolved = settings or get_settings()
     configure_logging(resolved.log_level)
 
     gateway: SupabaseGateway | None = None
-    configuration_error: SupabaseConfigurationError | None = None
-    if subject_resolver is None or calibration_service is None:
+    if subject_resolver is None or calibration_service is None or measurement_service is None:
         try:
             gateway = SupabaseGateway(resolved)
-        except SupabaseConfigurationError as exc:
-            configuration_error = exc
+        except SupabaseConfigurationError:
+            gateway = None
 
     if subject_resolver is None and gateway is not None:
         subject_resolver = SupabaseSubjectResolver(gateway)
     if calibration_service is None and gateway is not None:
         calibration_service = CalibrationService(gateway)
+    if measurement_service is None and gateway is not None:
+        measurement_service = MeasurementService(gateway)
 
     app = FastAPI(
         title="Mosaic Engine API",
         version=CONTRACT_VERSION,
         description=(
-            "Server-authoritative Mosaic API boundary. Phase 4 calibration behavior is a "
-            "deterministic persisted infrastructure trial, not validated relationship-science "
-            "inference."
+            "Server-authoritative Mosaic API boundary. Phase 4 calibration and Phase 5 "
+            "measurement behavior are deterministic persisted infrastructure protocols, not "
+            "validated relationship-science inference."
         ),
         docs_url=None if resolved.environment == "production" else "/docs",
         redoc_url=None if resolved.environment == "production" else "/redoc",
@@ -132,10 +147,10 @@ def create_app(
         request: Request,
         credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
     ) -> UUID:
-        if configuration_error is not None or subject_resolver is None:
+        if subject_resolver is None:
             raise HTTPException(
                 status_code=503,
-                detail="Calibration persistence is not configured.",
+                detail="Authenticated science persistence is not configured.",
             )
         token = (
             credentials.credentials
@@ -152,7 +167,7 @@ def create_app(
         except SupabasePersistenceError as exc:
             raise HTTPException(
                 status_code=503,
-                detail="Calibration persistence is unavailable.",
+                detail="Science persistence is unavailable.",
             ) from exc
         request.state.subject_id = subject_id
         return subject_id
@@ -206,6 +221,83 @@ def create_app(
             raise HTTPException(
                 status_code=503,
                 detail="Calibration persistence is unavailable.",
+            ) from exc
+
+    @v1.post(
+        "/measurement/next",
+        response_model=MeasurementNextResponse,
+        operation_id="getNextMeasurementItem",
+    )
+    async def measurement_next(
+        payload: MeasurementNextRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> MeasurementNextResponse:
+        del payload
+        if measurement_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Measurement persistence is not configured.",
+            )
+        try:
+            return await measurement_service.next_item(subject_id)
+        except MeasurementConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Measurement persistence is unavailable.",
+            ) from exc
+
+    @v1.post(
+        "/measurement/response",
+        response_model=MeasurementResponseReceipt,
+        operation_id="submitMeasurementResponse",
+    )
+    async def measurement_response(
+        payload: MeasurementResponseRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> MeasurementResponseReceipt:
+        if measurement_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Measurement persistence is not configured.",
+            )
+        try:
+            return await measurement_service.submit_response(subject_id, payload)
+        except MeasurementNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except MeasurementConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Measurement persistence is unavailable.",
+            ) from exc
+
+    @v1.post(
+        "/measurement/score",
+        response_model=MeasurementScoreResponse,
+        operation_id="scoreMeasurementSession",
+    )
+    async def measurement_score(
+        payload: MeasurementScoreRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> MeasurementScoreResponse:
+        if measurement_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Measurement persistence is not configured.",
+            )
+        try:
+            return await measurement_service.score(subject_id, payload)
+        except MeasurementNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except MeasurementConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Measurement persistence is unavailable.",
             ) from exc
 
     @v1.post(

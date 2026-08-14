@@ -10,6 +10,9 @@ const expected = new Map([
   ['/version', ['get']],
   ['/v1/calibration/next', ['post']],
   ['/v1/calibration/response', ['post']],
+  ['/v1/measurement/next', ['post']],
+  ['/v1/measurement/response', ['post']],
+  ['/v1/measurement/score', ['post']],
   ['/v1/matches/rank', ['post']],
 ]);
 
@@ -29,6 +32,17 @@ for (const schemaName of [
   'CalibrationResponseRequest',
   'CalibrationResponseReceipt',
   'CalibrationNextStatus',
+  'MeasurementNextRequest',
+  'MeasurementNextResponse',
+  'MeasurementResponseRequest',
+  'MeasurementResponseReceipt',
+  'MeasurementScoreRequest',
+  'MeasurementScoreResponse',
+  'MeasurementScoringVersion',
+  'HardConstraintItem',
+  'RatingItem',
+  'ScenarioItem',
+  'ForcedChoiceItem',
   'MatchRankRequest',
   'MatchRankResponse',
 ]) {
@@ -36,19 +50,34 @@ for (const schemaName of [
 }
 
 const nextRequest = contract.components.schemas.CalibrationNextRequest;
-assert.deepEqual(nextRequest.properties ?? {}, {}, 'next-trial request must not accept client-owned progress state');
+assert.deepEqual(nextRequest.properties ?? {}, {}, 'calibration next request must not accept client-owned progress state');
+const measurementNextRequest = contract.components.schemas.MeasurementNextRequest;
+assert.deepEqual(
+  measurementNextRequest.properties ?? {},
+  {},
+  'measurement next request must not accept client-owned progress state',
+);
+
 assert.ok(contract.components.securitySchemes.HTTPBearer, 'missing bearer security scheme');
-assert.deepEqual(contract.paths['/v1/calibration/next'].post.security, [{ HTTPBearer: [] }]);
-assert.deepEqual(contract.paths['/v1/calibration/response'].post.security, [{ HTTPBearer: [] }]);
+for (const path of [
+  '/v1/calibration/next',
+  '/v1/calibration/response',
+  '/v1/measurement/next',
+  '/v1/measurement/response',
+  '/v1/measurement/score',
+]) {
+  assert.deepEqual(contract.paths[path].post.security, [{ HTTPBearer: [] }]);
+}
 
-const nextResponse = contract.components.schemas.CalibrationNextResponse.properties;
-assert.ok(nextResponse.completed_trial_count);
-assert.ok(nextResponse.target_trial_count);
-assert.ok(nextResponse.status);
+const measurementNext = contract.components.schemas.MeasurementNextResponse.properties;
+assert.ok(measurementNext.completed_item_count);
+assert.ok(measurementNext.target_item_count);
+assert.ok(measurementNext.instrument_version);
+assert.ok(measurementNext.selection_policy_version);
 
-const receipt = contract.components.schemas.CalibrationResponseReceipt.properties;
-assert.ok(receipt.duplicate);
-assert.ok(receipt.session_complete);
-assert.ok(receipt.server_timestamp);
+const score = contract.components.schemas.MeasurementScoreResponse.properties;
+assert.ok(score.scoring_version);
+assert.ok(score.evidence_fingerprint);
+assert.ok(score.scores);
 
-console.log('Mosaic Phase 4 OpenAPI contract surface check passed.');
+console.log('Mosaic Phase 5 OpenAPI contract surface check passed.');

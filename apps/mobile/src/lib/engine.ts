@@ -3,6 +3,12 @@ import type {
   CalibrationNextResponse,
   CalibrationResponseReceipt,
   CalibrationResponseRequest,
+  MeasurementNextRequest,
+  MeasurementNextResponse,
+  MeasurementResponseReceipt,
+  MeasurementResponseRequest,
+  MeasurementScoreRequest,
+  MeasurementScoreResponse,
 } from '@mosaic/contracts';
 
 const engineUrl = process.env.EXPO_PUBLIC_MOSAIC_ENGINE_URL?.replace(/\/$/, '');
@@ -65,4 +71,23 @@ export function submitCalibrationResponse(
   body: CalibrationResponseRequest,
 ): Promise<CalibrationResponseReceipt> {
   return engineRequest<CalibrationResponseReceipt>('/v1/calibration/response', accessToken, body);
+}
+
+export function getNextMeasurementItem(accessToken: string): Promise<MeasurementNextResponse> {
+  const body: MeasurementNextRequest = {};
+  return engineRequest<MeasurementNextResponse>('/v1/measurement/next', accessToken, body);
+}
+
+export function submitMeasurementResponse(
+  accessToken: string,
+  body: MeasurementResponseRequest,
+): Promise<MeasurementResponseReceipt> {
+  return engineRequest<MeasurementResponseReceipt>('/v1/measurement/response', accessToken, body);
+}
+
+export function scoreMeasurementSession(
+  accessToken: string,
+  body: MeasurementScoreRequest,
+): Promise<MeasurementScoreResponse> {
+  return engineRequest<MeasurementScoreResponse>('/v1/measurement/score', accessToken, body);
 }

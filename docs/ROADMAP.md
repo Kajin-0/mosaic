@@ -213,31 +213,68 @@ Phase 4 merged via PR #6 (`d3e6c5579e88ed1c1f1b33bb3551f2935c228f3f`).
 
 ---
 
-# Phase 5 — Onboarding and Measurement Infrastructure — ACTIVE
+# Phase 5 — Onboarding and Measurement Infrastructure — COMPLETE
 
 ## Objective
 Build the general measurement machinery required by Mosaic without yet claiming psychometric validity.
 
-## Implementation
-- Hard-constraint forms.
-- Generic adaptive-question renderer.
-- Scenario renderer.
-- Forced-choice renderer.
-- Response schema with instrument/version provenance.
-- Server-side session state.
-- Deterministic baseline question-selection policy.
-- Resume interrupted onboarding.
+## Implemented
+- A separate generic measurement ledger reuses the pseudonymous science-subject boundary without conflating onboarding measurement with Phase 4 attraction-calibration evidence.
+- The deterministic mock instrument contains exactly 20 versioned items: 5 hard constraints, 5 rating/adaptive-question items, 5 scenarios, and 5 forced-choice items.
+- `measurement_sessions` stores server-owned instrument state and completion status.
+- `measurement_presentations` immutably stores presentation order, item ID/version/kind, selection-policy version, and the exact authored item payload required for replay.
+- `measurement_responses` immutably stores typed raw answers, instrument and selection-policy provenance, idempotency UUIDs, and client/server timestamps.
+- `measurement_score_runs` is append-only derived state. Every run stores its scoring implementation version, response count, score payload, and SHA-256 evidence fingerprint.
+- Evidence fingerprints bind to the exact authored item payload, item/instrument/selection versions, and raw answer used for scoring rather than only high-level item IDs.
+- Two deliberately different mock scoring implementations prove that the same immutable evidence can be rescored into different versioned derived outputs without rewriting history.
+- Repeated next-item requests return the same unanswered presentation; exact response retries are idempotent and conflicting idempotency-key reuse is rejected.
+- The authenticated Expo onboarding route renders all four item families from generated TypeScript contracts and resumes entirely from server state.
+- ADR 0005 records the raw-evidence/derived-state separation; `docs/protocols/phase5-measurement-infrastructure.md` records the replayable 20-item protocol.
+- Permanent Phase 5 CI is read-only, installs frozen dependency graphs, rebuilds Supabase from migrations, reruns P4, executes the P5 protocol against the real FastAPI process, bundles all Expo targets, and rejects dependency/generated-contract drift.
 
-## Data principle
-Never store only a derived score. Preserve the raw response, exact instrument version, scoring/model version, and resulting posterior/derived state separately.
+## Data invariant
+Raw measurement evidence and derived scores are different persistence classes. A new scoring implementation creates a new score run over the same immutable evidence; it never updates historical presentations or responses.
 
-## Exit criteria
-- A versioned mock 20-item instrument can be completed, interrupted, resumed, and rescored.
-- Changing the scoring implementation does not mutate historical raw data.
+## Exit criteria — satisfied
+A clean GitHub runner proves:
+
+```text
+authenticated user
+        ↓
+server creates versioned measurement session
+        ↓
+20 heterogeneous authored items
+        ↓
+exact retries remain idempotent
+        ↓
+re-authenticate after item 10
+        ↓
+resume same server-owned session at item 11
+        ↓
+complete item 20
+        ↓
+reconstruct 20 presentations + 20 raw responses
+        ↓
+score immutable evidence with scoring version 1
+        ↓
+rescore identical evidence with scoring version 2
+        ↓
+same evidence fingerprint / different versioned derived output
+        ↓
+raw response serialization remains unchanged
+        ↓
+direct authenticated-client science write rejected
+        ↓
+presentation/response/score-provenance mutation rejected
+```
+
+On the permanent Phase 5 code head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, Phase 4 vertical-slice, and Phase 5 measurement workflows all pass together.
+
+Phase 5 implemented in PR #7.
 
 ---
 
-# Phase 6 — Synthetic Calibration Infrastructure
+# Phase 6 — Synthetic Calibration Infrastructure — ACTIVE
 
 ## Objective
 Create the experiment platform for controlled synthetic attraction calibration before optimizing its inference mathematics.
