@@ -14,6 +14,8 @@ from mosaic_engine.calibration import (
 )
 from mosaic_engine.config import Settings, get_settings
 from mosaic_engine.logging import configure_logging
+from mosaic_engine.match_service import MatchRankingConflictError, MatchRankingService
+from mosaic_engine.match_supabase import MatchSupabaseStore
 from mosaic_engine.measurement import (
     MeasurementConflictError,
     MeasurementNotFoundError,
@@ -27,7 +29,6 @@ from mosaic_engine.measurement_models import (
     MeasurementScoreRequest,
     MeasurementScoreResponse,
 )
-from mosaic_engine.mock import rank_candidates
 from mosaic_engine.models import (
     CalibrationNextRequest,
     CalibrationNextResponse,
@@ -35,7 +36,7 @@ from mosaic_engine.models import (
     CalibrationResponseRequest,
     HealthResponse,
     MatchRankRequest,
-    MatchRankResponse,
+    PersistedMatchRankResponse,
     VersionResponse,
 )
 from mosaic_engine.observability import (
@@ -92,6 +93,7 @@ def create_app(
     calibration_service: CalibrationService | None = None,
     measurement_service: MeasurementService | None = None,
     synthetic_calibration_service: SyntheticCalibrationService | None = None,
+    match_ranking_service: MatchRankingService | None = None,
 ) -> FastAPI:
     resolved = settings or get_settings()
     configure_logging(resolved.log_level)
@@ -102,6 +104,7 @@ def create_app(
         or calibration_service is None
         or measurement_service is None
         or synthetic_calibration_service is None
+        or match_ranking_service is None
     ):
         try:
             gateway = SupabaseGateway(resolved)
@@ -116,14 +119,17 @@ def create_app(
         measurement_service = MeasurementService(gateway)
     if synthetic_calibration_service is None and gateway is not None:
         synthetic_calibration_service = SyntheticCalibrationService(SyntheticSupabaseStore(gateway))
+    if match_ranking_service is None and gateway is not None:
+        match_ranking_service = MatchRankingService(MatchSupabaseStore(gateway))
 
     app = FastAPI(
         title="Mosaic Engine API",
         version=CONTRACT_VERSION,
         description=(
             "Server-authoritative Mosaic API boundary. Phase 4 calibration, Phase 5 "
-            "measurement, and Phase 6 synthetic-calibration behavior are deterministic "
-            "persisted infrastructure protocols, not validated relationship-science inference."
+            "measurement, Phase 6 synthetic calibration, and Phase 8 persisted mock-ranking "
+            "behavior are deterministic infrastructure protocols, not validated "
+            "relationship-science inference."
         ),
         docs_url=None if resolved.environment == "production" else "/docs",
         redoc_url=None if resolved.environment == "production" else "/redoc",
@@ -401,11 +407,27 @@ def create_app(
 
     @v1.post(
         "/matches/rank",
-        response_model=MatchRankResponse,
+        response_model=PersistedMatchRankResponse,
         operation_id="rankMatches",
     )
-    def matches_rank(payload: MatchRankRequest) -> MatchRankResponse:
-        return rank_candidates(payload)
+    async def matches_rank(
+        payload: MatchRankRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> PersistedMatchRankResponse:
+        if match_ranking_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Match-ranking persistence is not configured.",
+            )
+        try:
+            return await match_ranking_service.rank(subject_id, payload)
+        except MatchRankingConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Match-ranking persistence is unavailable.",
+            ) from exc
 
     app.include_router(v1)
     return app
