@@ -71,10 +71,13 @@ def _normal_expectation(
         return function(mean)
 
     scale = sqrt(2.0 * max(variance, 0.0))
-    return sum(
-        weight * function(mean + scale * node)
-        for node, weight in zip(_GH9_NODES, _GH9_WEIGHTS, strict=True)
-    ) / _SQRT_PI
+    return (
+        sum(
+            weight * function(mean + scale * node)
+            for node, weight in zip(_GH9_NODES, _GH9_WEIGHTS, strict=True)
+        )
+        / _SQRT_PI
+    )
 
 
 def posterior_score_moments(
@@ -277,9 +280,7 @@ def choose_uncertainty_aware_pair(
             information_a,
             information_b,
         )
-        score = 0.5 * (
-            _log_determinant_spd(updated_precision) - baseline_log_determinant
-        )
+        score = 0.5 * (_log_determinant_spd(updated_precision) - baseline_log_determinant)
         if score > best_score or (score == best_score and pair < best_pair):
             best_score = score
             best_pair = pair
