@@ -1,7 +1,11 @@
-import type { CalibrationNextResponse, CalibrationResponseChoice, CalibrationResponseRequest } from '@mosaic/contracts';
+import type {
+  CalibrationNextResponse,
+  CalibrationResponseChoice,
+  CalibrationResponseRequest,
+} from '@mosaic/contracts';
 import * as Crypto from 'expo-crypto';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
@@ -20,17 +24,18 @@ const choiceLabels: Record<CalibrationResponseChoice, string> = {
 export default function CalibrationScreen() {
   const router = useRouter();
   const { session, loading } = useAuth();
+  const accessToken = session?.access_token;
   const [trial, setTrial] = useState<CalibrationNextResponse | null>(null);
   const [pending, setPending] = useState<CalibrationResponseRequest | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadNext = useCallback(async () => {
-    if (!session?.access_token) return;
+  async function loadNext() {
+    if (!accessToken) return;
     setBusy(true);
     setError(null);
     try {
-      const next = await getNextCalibrationTrial(session.access_token);
+      const next = await getNextCalibrationTrial(accessToken);
       setTrial(next);
       setPending(null);
     } catch (loadError: unknown) {
@@ -38,23 +43,41 @@ export default function CalibrationScreen() {
     } finally {
       setBusy(false);
     }
-  }, [session?.access_token]);
+  }
 
   useEffect(() => {
     if (loading) return;
-    if (!session) {
+    if (!accessToken) {
       router.replace('/auth');
       return;
     }
-    void loadNext();
-  }, [loadNext, loading, router, session]);
+
+    let cancelled = false;
+    getNextCalibrationTrial(accessToken)
+      .then((next) => {
+        if (cancelled) return;
+        setTrial(next);
+        setPending(null);
+        setError(null);
+        setBusy(false);
+      })
+      .catch((loadError: unknown) => {
+        if (cancelled) return;
+        setError(loadError instanceof Error ? loadError.message : 'Unable to load calibration trial.');
+        setBusy(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, loading, router]);
 
   async function sendResponse(request: CalibrationResponseRequest) {
-    if (!session?.access_token) return;
+    if (!accessToken) return;
     setBusy(true);
     setError(null);
     try {
-      await submitCalibrationResponse(session.access_token, request);
+      await submitCalibrationResponse(accessToken, request);
       await loadNext();
     } catch (submitError: unknown) {
       setError(submitError instanceof Error ? submitError.message : 'Unable to submit response.');
@@ -140,7 +163,9 @@ export default function CalibrationScreen() {
             Retry same submission
           </PrimaryButton>
         ) : null}
-        {!trial && !busy ? <PrimaryButton onPress={() => void loadNext()}>Reload trial</PrimaryButton> : null}
+        {!trial && !busy ? (
+          <PrimaryButton onPress={() => void loadNext()}>Reload trial</PrimaryButton>
+        ) : null}
       </View>
     </AppScreen>
   );
