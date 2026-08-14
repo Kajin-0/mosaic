@@ -123,6 +123,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/synthetic-calibration/next": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Synthetic Calibration Next */
+        post: operations["getNextSyntheticCalibrationPair"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/synthetic-calibration/response": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Synthetic Calibration Response */
+        post: operations["submitSyntheticCalibrationResponse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/version": {
         parameters: {
             query?: never;
@@ -578,6 +612,166 @@ export interface components {
             /** Prompt */
             prompt: string;
         };
+        /** SyntheticAsset */
+        SyntheticAsset: {
+            /**
+             * Asset Id
+             * Format: uuid
+             */
+            asset_id: string;
+            /** Asset Uri */
+            asset_uri: string;
+            /** Content Sha256 */
+            content_sha256: string;
+            /** Media Type */
+            media_type: string;
+            provenance: components["schemas"]["SyntheticGenerationProvenance"];
+            /**
+             * Specification Id
+             * Format: uuid
+             */
+            specification_id: string;
+        };
+        /** SyntheticCalibrationNextRequest */
+        SyntheticCalibrationNextRequest: Record<string, never>;
+        /** SyntheticCalibrationNextResponse */
+        SyntheticCalibrationNextResponse: {
+            /** Cache Ready */
+            cache_ready: boolean;
+            /** Completed Trial Count */
+            completed_trial_count: number;
+            /** Generator Adapter Version */
+            generator_adapter_version: string;
+            /** Instrument Version */
+            instrument_version: string;
+            /**
+             * Is Mock
+             * @default true
+             * @constant
+             */
+            is_mock: true;
+            pair?: components["schemas"]["SyntheticCalibrationPair"] | null;
+            /** Pair Policy Version */
+            pair_policy_version: string;
+            /** Response Options */
+            response_options?: components["schemas"]["CalibrationResponseChoice"][];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            status: components["schemas"]["SyntheticCalibrationNextStatus"];
+            /** Target Trial Count */
+            target_trial_count: number;
+        };
+        /**
+         * SyntheticCalibrationNextStatus
+         * @enum {string}
+         */
+        SyntheticCalibrationNextStatus: "pair" | "complete";
+        /** SyntheticCalibrationPair */
+        SyntheticCalibrationPair: {
+            left: components["schemas"]["SyntheticAsset"];
+            /** Ordinal */
+            ordinal: number;
+            /**
+             * Pair Id
+             * Format: uuid
+             */
+            pair_id: string;
+            /** Pair Policy Version */
+            pair_policy_version: string;
+            /** Randomization Seed */
+            randomization_seed: number;
+            right: components["schemas"]["SyntheticAsset"];
+        };
+        /** SyntheticCalibrationResponseReceipt */
+        SyntheticCalibrationResponseReceipt: {
+            /**
+             * Accepted
+             * @default true
+             * @constant
+             */
+            accepted: true;
+            /**
+             * Client Response Id
+             * Format: uuid
+             */
+            client_response_id: string;
+            /** Completed Trial Count */
+            completed_trial_count: number;
+            /** Duplicate */
+            duplicate: boolean;
+            /**
+             * Is Mock
+             * @default true
+             * @constant
+             */
+            is_mock: true;
+            /**
+             * Pair Id
+             * Format: uuid
+             */
+            pair_id: string;
+            /** Pair Policy Version */
+            pair_policy_version: string;
+            /**
+             * Server Timestamp
+             * Format: date-time
+             */
+            server_timestamp: string;
+            /** Session Complete */
+            session_complete: boolean;
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+            /** Target Trial Count */
+            target_trial_count: number;
+        };
+        /** SyntheticCalibrationResponseRequest */
+        SyntheticCalibrationResponseRequest: {
+            /**
+             * Client Response Id
+             * Format: uuid
+             */
+            client_response_id: string;
+            /** Client Timestamp */
+            client_timestamp?: string | null;
+            /**
+             * Pair Id
+             * Format: uuid
+             */
+            pair_id: string;
+            response: components["schemas"]["CalibrationResponseChoice"];
+            /**
+             * Session Id
+             * Format: uuid
+             */
+            session_id: string;
+        };
+        /** SyntheticGenerationProvenance */
+        SyntheticGenerationProvenance: {
+            /** Adapter Key */
+            adapter_key: string;
+            /** Adapter Version */
+            adapter_version: string;
+            /** Model */
+            model: string;
+            /** Model Revision */
+            model_revision: string;
+            /** Parameters */
+            parameters: {
+                [key: string]: string | number | boolean;
+            };
+            /** Prompt */
+            prompt: string;
+            /** Provider */
+            provider: string;
+            /** Seed */
+            seed: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -820,6 +1014,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeasurementScoreResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    getNextSyntheticCalibrationPair: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyntheticCalibrationNextRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyntheticCalibrationNextResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submitSyntheticCalibrationResponse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SyntheticCalibrationResponseRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyntheticCalibrationResponseReceipt"];
                 };
             };
             /** @description Validation Error */

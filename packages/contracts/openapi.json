@@ -984,6 +984,359 @@
         "title": "ScenarioItem",
         "type": "object"
       },
+      "SyntheticAsset": {
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "format": "uuid",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "asset_uri": {
+            "title": "Asset Uri",
+            "type": "string"
+          },
+          "content_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Content Sha256",
+            "type": "string"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/SyntheticGenerationProvenance"
+          },
+          "specification_id": {
+            "format": "uuid",
+            "title": "Specification Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asset_id",
+          "specification_id",
+          "media_type",
+          "content_sha256",
+          "asset_uri",
+          "provenance"
+        ],
+        "title": "SyntheticAsset",
+        "type": "object"
+      },
+      "SyntheticCalibrationNextRequest": {
+        "additionalProperties": false,
+        "properties": {},
+        "title": "SyntheticCalibrationNextRequest",
+        "type": "object"
+      },
+      "SyntheticCalibrationNextResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cache_ready": {
+            "title": "Cache Ready",
+            "type": "boolean"
+          },
+          "completed_trial_count": {
+            "minimum": 0.0,
+            "title": "Completed Trial Count",
+            "type": "integer"
+          },
+          "generator_adapter_version": {
+            "title": "Generator Adapter Version",
+            "type": "string"
+          },
+          "instrument_version": {
+            "title": "Instrument Version",
+            "type": "string"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "pair": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyntheticCalibrationPair"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pair_policy_version": {
+            "title": "Pair Policy Version",
+            "type": "string"
+          },
+          "response_options": {
+            "items": {
+              "$ref": "#/components/schemas/CalibrationResponseChoice"
+            },
+            "title": "Response Options",
+            "type": "array"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SyntheticCalibrationNextStatus"
+          },
+          "target_trial_count": {
+            "minimum": 1.0,
+            "title": "Target Trial Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "status",
+          "completed_trial_count",
+          "target_trial_count",
+          "instrument_version",
+          "pair_policy_version",
+          "generator_adapter_version",
+          "cache_ready"
+        ],
+        "title": "SyntheticCalibrationNextResponse",
+        "type": "object"
+      },
+      "SyntheticCalibrationNextStatus": {
+        "enum": [
+          "pair",
+          "complete"
+        ],
+        "title": "SyntheticCalibrationNextStatus",
+        "type": "string"
+      },
+      "SyntheticCalibrationPair": {
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "$ref": "#/components/schemas/SyntheticAsset"
+          },
+          "ordinal": {
+            "minimum": 1.0,
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "pair_id": {
+            "format": "uuid",
+            "title": "Pair Id",
+            "type": "string"
+          },
+          "pair_policy_version": {
+            "title": "Pair Policy Version",
+            "type": "string"
+          },
+          "randomization_seed": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Randomization Seed",
+            "type": "integer"
+          },
+          "right": {
+            "$ref": "#/components/schemas/SyntheticAsset"
+          }
+        },
+        "required": [
+          "pair_id",
+          "ordinal",
+          "left",
+          "right",
+          "randomization_seed",
+          "pair_policy_version"
+        ],
+        "title": "SyntheticCalibrationPair",
+        "type": "object"
+      },
+      "SyntheticCalibrationResponseReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "const": true,
+            "default": true,
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "client_response_id": {
+            "format": "uuid",
+            "title": "Client Response Id",
+            "type": "string"
+          },
+          "completed_trial_count": {
+            "minimum": 1.0,
+            "title": "Completed Trial Count",
+            "type": "integer"
+          },
+          "duplicate": {
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "pair_id": {
+            "format": "uuid",
+            "title": "Pair Id",
+            "type": "string"
+          },
+          "pair_policy_version": {
+            "title": "Pair Policy Version",
+            "type": "string"
+          },
+          "server_timestamp": {
+            "format": "date-time",
+            "title": "Server Timestamp",
+            "type": "string"
+          },
+          "session_complete": {
+            "title": "Session Complete",
+            "type": "boolean"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "target_trial_count": {
+            "minimum": 1.0,
+            "title": "Target Trial Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "duplicate",
+          "session_id",
+          "pair_id",
+          "client_response_id",
+          "pair_policy_version",
+          "completed_trial_count",
+          "target_trial_count",
+          "session_complete",
+          "server_timestamp"
+        ],
+        "title": "SyntheticCalibrationResponseReceipt",
+        "type": "object"
+      },
+      "SyntheticCalibrationResponseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "client_response_id": {
+            "format": "uuid",
+            "title": "Client Response Id",
+            "type": "string"
+          },
+          "client_timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Timestamp"
+          },
+          "pair_id": {
+            "format": "uuid",
+            "title": "Pair Id",
+            "type": "string"
+          },
+          "response": {
+            "$ref": "#/components/schemas/CalibrationResponseChoice"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "pair_id",
+          "client_response_id",
+          "response"
+        ],
+        "title": "SyntheticCalibrationResponseRequest",
+        "type": "object"
+      },
+      "SyntheticGenerationProvenance": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter_key": {
+            "title": "Adapter Key",
+            "type": "string"
+          },
+          "adapter_version": {
+            "title": "Adapter Version",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "model_revision": {
+            "title": "Model Revision",
+            "type": "string"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "title": "Parameters",
+            "type": "object"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "seed": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Seed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "adapter_key",
+          "adapter_version",
+          "provider",
+          "model",
+          "model_revision",
+          "seed",
+          "prompt",
+          "parameters"
+        ],
+        "title": "SyntheticGenerationProvenance",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1072,9 +1425,9 @@
     }
   },
   "info": {
-    "description": "Server-authoritative Mosaic API boundary. Phase 4 calibration and Phase 5 measurement behavior are deterministic persisted infrastructure protocols, not validated relationship-science inference.",
+    "description": "Server-authoritative Mosaic API boundary. Phase 4 calibration, Phase 5 measurement, and Phase 6 synthetic-calibration behavior are deterministic persisted infrastructure protocols, not validated relationship-science inference.",
     "title": "Mosaic Engine API",
-    "version": "2026-08-14.3"
+    "version": "2026-08-14.4"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -1347,6 +1700,92 @@
           }
         ],
         "summary": "Measurement Score"
+      }
+    },
+    "/v1/synthetic-calibration/next": {
+      "post": {
+        "operationId": "getNextSyntheticCalibrationPair",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyntheticCalibrationNextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyntheticCalibrationNextResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Synthetic Calibration Next"
+      }
+    },
+    "/v1/synthetic-calibration/response": {
+      "post": {
+        "operationId": "submitSyntheticCalibrationResponse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyntheticCalibrationResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyntheticCalibrationResponseReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Synthetic Calibration Response"
       }
     },
     "/version": {
