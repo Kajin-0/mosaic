@@ -31,6 +31,17 @@ def _posterior(
     )
 
 
+def _quadratic_form(
+    matrix: tuple[tuple[float, ...], ...],
+    vector: tuple[float, ...],
+) -> float:
+    return sum(
+        vector[row] * matrix[row][column] * vector[column]
+        for row in range(len(vector))
+        for column in range(len(vector))
+    )
+
+
 def test_pair_predictive_moments_obey_binary_probability_bounds() -> None:
     posterior = _posterior(
         mean=(0.1, 0.4, -0.3),
@@ -91,7 +102,7 @@ def test_linear_bayes_mean_obeys_predictive_martingale_property() -> None:
     assert expected_mean == pytest.approx(posterior.mean, abs=1e-10)
 
 
-def test_linear_bayes_covariance_contracts_on_the_diagonal() -> None:
+def test_linear_bayes_covariance_contracts_and_remains_well_formed() -> None:
     posterior = _posterior(
         mean=(0.0, 0.0, 0.0),
         covariance=((2.0, 0.1, 0.0), (0.1, 1.5, 0.2), (0.0, 0.2, 1.0)),
@@ -102,8 +113,23 @@ def test_linear_bayes_covariance_contracts_on_the_diagonal() -> None:
 
     for index in range(len(posterior.mean)):
         assert 0.0 <= updated[index][index] <= posterior.covariance[index][index] + 1e-12
+        for column in range(len(posterior.mean)):
+            assert updated[index][column] == pytest.approx(updated[column][index], abs=1e-12)
+
+    probe_directions = (
+        (1.0, 0.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, 0.0, 1.0),
+        (1.0, 1.0, 1.0),
+        (1.0, -1.0, 0.5),
+        (-0.4, 0.7, 1.3),
+    )
+    for direction in probe_directions:
+        assert _quadratic_form(updated, direction) >= -1e-12
+
     for outcome in outcomes[1:]:
-        assert outcome.covariance == pytest.approx(updated)
+        for row, expected_row in zip(outcome.covariance, updated, strict=True):
+            assert row == pytest.approx(expected_row, abs=1e-12)
 
 
 def test_top_k_posterior_value_is_bounded_probability_average() -> None:
