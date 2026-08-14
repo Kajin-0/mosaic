@@ -150,7 +150,10 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-rating-conflict",
         RatingItem(
-            prompt="When a disagreement happens, how strongly do you prefer addressing it quickly?",
+            prompt=(
+                "When a disagreement happens, how strongly do you prefer addressing it "
+                "quickly?"
+            ),
             dimension_key="conflict_timing",
             min_label="Prefer substantial time first",
             max_label="Prefer addressing it immediately",
@@ -174,7 +177,10 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-scenario-purchase",
         ScenarioItem(
-            prompt="You disagree about a major discretionary purchase. What would you prefer to do first?",
+            prompt=(
+                "You disagree about a major discretionary purchase. What would you prefer "
+                "to do first?"
+            ),
             dimension_key="financial_coordination",
             options=[
                 _option("budget_review", "Review goals and numbers together"),
@@ -186,7 +192,10 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-scenario-family",
         ScenarioItem(
-            prompt="Both families expect you for the same holiday. What approach feels most natural?",
+            prompt=(
+                "Both families expect you for the same holiday. What approach feels most "
+                "natural?"
+            ),
             dimension_key="family_coordination",
             options=[
                 _option("alternate", "Create an explicit alternating plan"),
@@ -198,7 +207,10 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-scenario-career",
         ScenarioItem(
-            prompt="Your partner receives an exceptional career opportunity in another region. What is your first instinct?",
+            prompt=(
+                "Your partner receives an exceptional career opportunity in another region. "
+                "What is your first instinct?"
+            ),
             dimension_key="career_coordination",
             options=[
                 _option("explore_move", "Seriously explore moving together"),
@@ -210,7 +222,10 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-scenario-reassurance",
         ScenarioItem(
-            prompt="Communication has been lighter than usual for two days. What would you most likely do?",
+            prompt=(
+                "Communication has been lighter than usual for two days. What would you most "
+                "likely do?"
+            ),
             dimension_key="reassurance_style",
             options=[
                 _option("check_in", "Check in directly about the change"),
@@ -352,7 +367,8 @@ class MeasurementService:
         expected_ordinal = len(responses) + 1
         if presentation.ordinal != expected_ordinal:
             raise MeasurementConflictError(
-                f"Out-of-order response: expected ordinal {expected_ordinal}, got {presentation.ordinal}.",
+                "Out-of-order response: expected ordinal "
+                f"{expected_ordinal}, got {presentation.ordinal}.",
             )
 
         self._validate_answer(presentation.item, request.answer)
