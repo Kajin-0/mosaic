@@ -1,6 +1,7 @@
 import hashlib
 import json
 from datetime import UTC, datetime
+from typing import Any
 from uuid import UUID, uuid5
 
 from mosaic_engine.models import CalibrationResponseChoice
@@ -232,9 +233,13 @@ class SyntheticCalibrationService:
                 created_at=datetime.now(UTC),
             )
             try:
-                await self._store.create_synthetic_spec(spec_record)
-            except SupabaseConflictError:
-                pass
+                spec_record = await self._store.create_synthetic_spec(spec_record)
+            except SupabaseConflictError as exc:
+                existing_spec = await self._store.get_synthetic_spec(spec_id)
+                if existing_spec is None:
+                    raise
+                self._assert_same_spec(spec_record, existing_spec, exc)
+                spec_record = existing_spec
 
             generated = self._generator.generate(specification)
             asset_id = uuid5(
@@ -254,10 +259,11 @@ class SyntheticCalibrationService:
             )
             try:
                 asset_record = await self._store.create_synthetic_asset(asset_record)
-            except SupabaseConflictError:
+            except SupabaseConflictError as exc:
                 existing_asset = await self._store.get_synthetic_asset(asset_id)
                 if existing_asset is None:
                     raise
+                self._assert_same_asset(asset_record, existing_asset, exc)
                 asset_record = existing_asset
 
             decision = (
@@ -278,10 +284,14 @@ class SyntheticCalibrationService:
                 created_at=datetime.now(UTC),
             )
             try:
-                await self._store.create_synthetic_qc_event(qc_record)
-            except SupabaseConflictError:
-                pass
-            if decision != "accepted":
+                qc_record = await self._store.create_synthetic_qc_event(qc_record)
+            except SupabaseConflictError as exc:
+                existing_qc = await self._store.get_synthetic_qc_event(qc_record.id)
+                if existing_qc is None:
+                    raise
+                self._assert_same_qc(qc_record, existing_qc, exc)
+                qc_record = existing_qc
+            if qc_record.decision != "accepted":
                 raise SyntheticCalibrationConflictError(
                     "Synthetic mock generator produced an asset that failed deterministic QC.",
                 )
@@ -305,8 +315,11 @@ class SyntheticCalibrationService:
         )
         try:
             await self._store.create_synthetic_pair(pair_record)
-        except SupabaseConflictError:
-            pass
+        except SupabaseConflictError as exc:
+            existing_pair = await self._store.get_synthetic_pair(pair_record.id)
+            if existing_pair is None:
+                raise
+            self._assert_same_pair(pair_record, existing_pair, exc)
 
     def _build_specification(
         self,
@@ -425,6 +438,80 @@ class SyntheticCalibrationService:
                 "client_response_id was reused with a different immutable synthetic payload.",
             )
 
+    def _assert_same_spec(
+        self,
+        expected: SyntheticStimulusSpecRecord,
+        stored: SyntheticStimulusSpecRecord,
+        cause: Exception,
+    ) -> None:
+        if (
+            stored.session_id != expected.session_id
+            or stored.subject_id != expected.subject_id
+            or stored.stimulus_key != expected.stimulus_key
+            or stored.spec_version != expected.spec_version
+            or stored.specification_sha256 != expected.specification_sha256
+            or stored.specification != expected.specification
+        ):
+            raise SyntheticCalibrationConflictError(
+                "Synthetic specification ID collided with different immutable provenance.",
+            ) from cause
+
+    def _assert_same_asset(
+        self,
+        expected: SyntheticAssetRecord,
+        stored: SyntheticAssetRecord,
+        cause: Exception,
+    ) -> None:
+        if (
+            stored.spec_id != expected.spec_id
+            or stored.session_id != expected.session_id
+            or stored.subject_id != expected.subject_id
+            or stored.media_type != expected.media_type
+            or stored.content_sha256 != expected.content_sha256
+            or stored.asset_uri != expected.asset_uri
+            or stored.generation_provenance != expected.generation_provenance
+        ):
+            raise SyntheticCalibrationConflictError(
+                "Synthetic asset ID collided with different immutable provenance.",
+            ) from cause
+
+    def _assert_same_qc(
+        self,
+        expected: SyntheticQcEventRecord,
+        stored: SyntheticQcEventRecord,
+        cause: Exception,
+    ) -> None:
+        if (
+            stored.asset_id != expected.asset_id
+            or stored.session_id != expected.session_id
+            or stored.subject_id != expected.subject_id
+            or stored.qc_version != expected.qc_version
+            or stored.decision != expected.decision
+            or stored.reasons != expected.reasons
+        ):
+            raise SyntheticCalibrationConflictError(
+                "Synthetic QC event ID collided with different immutable adjudication.",
+            ) from cause
+
+    def _assert_same_pair(
+        self,
+        expected: SyntheticPairRecord,
+        stored: SyntheticPairRecord,
+        cause: Exception,
+    ) -> None:
+        if (
+            stored.session_id != expected.session_id
+            or stored.subject_id != expected.subject_id
+            or stored.ordinal != expected.ordinal
+            or stored.left_asset_id != expected.left_asset_id
+            or stored.right_asset_id != expected.right_asset_id
+            or stored.randomization_seed != expected.randomization_seed
+            or stored.pair_policy_version != expected.pair_policy_version
+        ):
+            raise SyntheticCalibrationConflictError(
+                "Synthetic pair ID collided with different immutable assignment.",
+            ) from cause
+
     def _asset_view(self, record: SyntheticAssetRecord) -> SyntheticAsset:
         return SyntheticAsset(
             asset_id=record.id,
@@ -436,8 +523,19 @@ class SyntheticCalibrationService:
         )
 
     def _seed(self, value: str) -> int:
-        return int.from_bytes(hashlib.sha256(value.encode()).digest()[:8], "big") & ((1 << 63) - 1)
+        digest = hashlib.sha256(value.encode()).digest()[:8]
+        return int.from_bytes(digest, "big") & ((1 << 63) - 1)
 
     def _sha256_json(self, value: dict[str, object]) -> str:
-        payload = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+        normalized = self._normalize_json_numbers(value)
+        payload = json.dumps(normalized, sort_keys=True, separators=(",", ":")).encode()
         return hashlib.sha256(payload).hexdigest()
+
+    def _normalize_json_numbers(self, value: Any) -> Any:
+        if isinstance(value, dict):
+            return {key: self._normalize_json_numbers(item) for key, item in value.items()}
+        if isinstance(value, list):
+            return [self._normalize_json_numbers(item) for item in value]
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
+        return value
