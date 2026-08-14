@@ -3,12 +3,14 @@ import type {
   CalibrationNextResponse,
   CalibrationResponseReceipt,
   CalibrationResponseRequest,
+  MatchRankRequest,
   MeasurementNextRequest,
   MeasurementNextResponse,
   MeasurementResponseReceipt,
   MeasurementResponseRequest,
   MeasurementScoreRequest,
   MeasurementScoreResponse,
+  PersistedMatchRankResponse,
   SyntheticCalibrationNextRequest,
   SyntheticCalibrationNextResponse,
   SyntheticCalibrationResponseReceipt,
@@ -116,4 +118,11 @@ export function submitSyntheticCalibrationResponse(
     accessToken,
     body,
   );
+}
+
+export function rankMatches(
+  accessToken: string,
+  body: MatchRankRequest,
+): Promise<PersistedMatchRankResponse> {
+  return engineRequest<PersistedMatchRankResponse>('/v1/matches/rank', accessToken, body);
 }
