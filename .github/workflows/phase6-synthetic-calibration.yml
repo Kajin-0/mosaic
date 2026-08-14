@@ -11,13 +11,14 @@ on:
       - 'scripts/test-phase4-vertical-slice.mjs'
       - 'scripts/test-phase5-measurement.mjs'
       - 'scripts/test-phase6-synthetic-calibration.mjs'
+      - 'scripts/test-phase6-session-provenance.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/phase6-synthetic-calibration.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate-synthetic-calibration:
@@ -25,10 +26,8 @@ jobs:
     timeout-minutes: 40
 
     steps:
-      - name: Checkout branch
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -76,7 +75,7 @@ jobs:
       - name: Validate engine
         run: npm run engine:check
 
-      - name: Generate and validate contracts
+      - name: Regenerate and validate contracts
         run: |
           npm run contracts:sync
           npm run contracts:check
@@ -119,18 +118,16 @@ jobs:
           echo "::error title=Phase 6 integration failure::$message"
           exit 1
 
-      - name: Commit initial Phase 6 generated contracts
-        if: github.event_name == 'pull_request'
-        shell: bash
+      - name: Verify Phase 6 session provenance immutability
+        run: node scripts/test-phase6-session-provenance.mjs
+
+      - name: Reject dependency or generated-contract drift
         run: |
-          if git diff --quiet -- packages/contracts/openapi.json packages/contracts/src/generated.ts; then
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages/contracts/openapi.json packages/contracts/src/generated.ts
-          git commit -m 'chore: generate Phase 6 contracts'
-          git push origin HEAD:${{ github.head_ref }}
+          git diff --exit-code -- \
+            services/engine/uv.lock \
+            package-lock.json \
+            packages/contracts/openapi.json \
+            packages/contracts/src/generated.ts
 
       - name: Show engine log on failure
         if: failure()
