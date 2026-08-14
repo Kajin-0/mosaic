@@ -209,7 +209,7 @@ OpenAPI/TypeScript/lock artifacts remain zero-diff
 
 On the permanent Phase 4 head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, and Phase 4 vertical-slice workflows all pass together.
 
-Phase 4 implemented in PR #6.
+Phase 4 merged via PR #6 (`d3e6c5579e88ed1c1f1b33bb3551f2935c228f3f`).
 
 ---
 
