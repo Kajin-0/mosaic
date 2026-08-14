@@ -51,6 +51,20 @@ The exact left/right asset IDs, ordinal, randomization seed, and pair-policy ver
 
 The raw A/B/Both/Neither observation is immutable and idempotently ingested. It references the exact persisted pair.
 
+## Cross-runtime canonical provenance
+
+Experimental provenance must serialize identically in every runtime expected to replay it. Integer-valued provenance that crosses JSON boundaries must therefore either be encoded as strings or remain within the IEEE-754 exact-integer range.
+
+Phase 6 keeps deterministic stimulus and pair seeds in the inclusive range
+
+```text
+0 ≤ seed ≤ 9,007,199,254,740,991 = 2^53 - 1
+```
+
+and enforces the same bound in the Pydantic wire models and PostgreSQL schema. This is not a randomness requirement; it is a reproducibility requirement. It prevents JavaScript from rounding a seed that Python and PostgreSQL retained exactly, which would make otherwise identical persisted specifications hash differently during replay.
+
+Canonical SHA-256 checks are defined over normalized JSON with sorted object keys, compact separators, and integer-valued floating-point fields normalized to integers before serialization.
+
 ## Collision behavior
 
 Deterministic IDs are convenience identifiers, not a substitute for provenance validation. If an attempted create collides with an existing deterministic ID, the server must read the existing record and verify the immutable payload is identical. A same-ID/different-content collision fails closed.
@@ -68,5 +82,6 @@ The mock images do not claim realism, attraction validity, psychometric validity
 - Historical trials remain interpretable after generator or QC implementations evolve.
 - A complete trial can be replayed from persisted experimental metadata.
 - A real generative-image provider can replace the mock adapter without changing the persistence contract.
+- Cross-language replay cannot silently lose deterministic-seed precision.
 - Storage requirements are higher because exact experimental artifacts and provenance are retained.
 - Generator/policy changes require explicit version changes rather than silent replacement.
