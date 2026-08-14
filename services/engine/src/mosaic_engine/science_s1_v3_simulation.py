@@ -10,9 +10,9 @@ from .science_s1_simulation import (
     BinaryObservation,
     CandidatePair,
     SimulationResult,
+    choose_pair,
     evaluate_ground_truth,
     fit_logistic_laplace,
-    choose_pair,
 )
 
 _BASE_POLICIES = {"random", "d_optimal"}
