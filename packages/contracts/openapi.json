@@ -1,0 +1,576 @@
+{
+  "components": {
+    "schemas": {
+      "CalibrationNextRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_trial_count": {
+            "maximum": 10000.0,
+            "minimum": 0.0,
+            "title": "Completed Trial Count",
+            "type": "integer"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "completed_trial_count"
+        ],
+        "title": "CalibrationNextRequest",
+        "type": "object"
+      },
+      "CalibrationNextResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "experiment_id": {
+            "format": "uuid",
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "ordinal": {
+            "minimum": 1.0,
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "response_options": {
+            "items": {
+              "$ref": "#/components/schemas/CalibrationResponseChoice"
+            },
+            "title": "Response Options",
+            "type": "array"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "stimulus": {
+            "$ref": "#/components/schemas/CalibrationStimulus"
+          }
+        },
+        "required": [
+          "session_id",
+          "experiment_id",
+          "ordinal",
+          "policy_version",
+          "stimulus",
+          "response_options"
+        ],
+        "title": "CalibrationNextResponse",
+        "type": "object"
+      },
+      "CalibrationResponseChoice": {
+        "enum": [
+          "left",
+          "right",
+          "both",
+          "neither"
+        ],
+        "title": "CalibrationResponseChoice",
+        "type": "string"
+      },
+      "CalibrationResponseReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "accepted": {
+            "const": true,
+            "default": true,
+            "title": "Accepted",
+            "type": "boolean"
+          },
+          "client_response_id": {
+            "format": "uuid",
+            "title": "Client Response Id",
+            "type": "string"
+          },
+          "duplicate": {
+            "const": false,
+            "default": false,
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "experiment_id": {
+            "format": "uuid",
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "experiment_id",
+          "client_response_id",
+          "policy_version"
+        ],
+        "title": "CalibrationResponseReceipt",
+        "type": "object"
+      },
+      "CalibrationResponseRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "client_response_id": {
+            "format": "uuid",
+            "title": "Client Response Id",
+            "type": "string"
+          },
+          "client_timestamp": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Timestamp"
+          },
+          "experiment_id": {
+            "format": "uuid",
+            "title": "Experiment Id",
+            "type": "string"
+          },
+          "response": {
+            "$ref": "#/components/schemas/CalibrationResponseChoice"
+          },
+          "session_id": {
+            "format": "uuid",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "experiment_id",
+          "client_response_id",
+          "response"
+        ],
+        "title": "CalibrationResponseRequest",
+        "type": "object"
+      },
+      "CalibrationStimulus": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "const": "text_pair",
+            "default": "text_pair",
+            "title": "Kind",
+            "type": "string"
+          },
+          "left": {
+            "$ref": "#/components/schemas/CalibrationStimulusOption"
+          },
+          "right": {
+            "$ref": "#/components/schemas/CalibrationStimulusOption"
+          }
+        },
+        "required": [
+          "left",
+          "right"
+        ],
+        "title": "CalibrationStimulus",
+        "type": "object"
+      },
+      "CalibrationStimulusOption": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "CalibrationStimulusOption",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "MatchRankRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Candidate Ids",
+            "type": "array"
+          },
+          "limit": {
+            "default": 10,
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidate_ids"
+        ],
+        "title": "MatchRankRequest",
+        "type": "object"
+      },
+      "MatchRankResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "ranked_candidates": {
+            "items": {
+              "$ref": "#/components/schemas/RankedCandidate"
+            },
+            "title": "Ranked Candidates",
+            "type": "array"
+          }
+        },
+        "required": [
+          "model_version",
+          "ranked_candidates"
+        ],
+        "title": "MatchRankResponse",
+        "type": "object"
+      },
+      "RankedCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "rank": {
+            "minimum": 1.0,
+            "title": "Rank",
+            "type": "integer"
+          },
+          "rank_score": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Rank Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "rank",
+          "rank_score"
+        ],
+        "title": "RankedCandidate",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VersionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "api_version": {
+            "title": "Api Version",
+            "type": "string"
+          },
+          "calibration_policy_version": {
+            "title": "Calibration Policy Version",
+            "type": "string"
+          },
+          "contract_version": {
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "engine_version": {
+            "title": "Engine Version",
+            "type": "string"
+          },
+          "ranker_model_version": {
+            "title": "Ranker Model Version",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          }
+        },
+        "required": [
+          "service",
+          "engine_version",
+          "api_version",
+          "contract_version",
+          "calibration_policy_version",
+          "ranker_model_version"
+        ],
+        "title": "VersionResponse",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Server-authoritative Mosaic API boundary. Phase 3 calibration and ranking behavior is deterministic mock infrastructure, not relationship-science inference.",
+    "title": "Mosaic Engine API",
+    "version": "2026-08-14.1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/v1/calibration/next": {
+      "post": {
+        "operationId": "getNextCalibrationTrial",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalibrationNextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibrationNextResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calibration Next"
+      }
+    },
+    "/v1/calibration/response": {
+      "post": {
+        "operationId": "submitCalibrationResponse",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalibrationResponseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibrationResponseReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Calibration Response"
+      }
+    },
+    "/v1/matches/rank": {
+      "post": {
+        "operationId": "rankMatches",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchRankRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchRankResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Matches Rank"
+      }
+    },
+    "/version": {
+      "get": {
+        "operationId": "getVersion",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Version"
+      }
+    }
+  }
+}
