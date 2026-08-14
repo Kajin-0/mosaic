@@ -42,7 +42,6 @@ grant insert (user_id, lifecycle_state) on table public.profiles to authenticate
 grant update (lifecycle_state) on table public.profiles to authenticated;
 
 revoke all on function public.bump_profile_revision() from public;
-grant execute on function public.bump_profile_revision() to authenticated;
 
 create policy "profiles_select_own"
 on public.profiles
