@@ -268,8 +268,7 @@ class SyntheticCalibrationService:
 
             decision = (
                 "accepted"
-                if asset_record.media_type == "image/png"
-                and len(asset_record.content_sha256) == 64
+                if asset_record.media_type == "image/png" and len(asset_record.content_sha256) == 64
                 else "rejected"
             )
             reasons = [] if decision == "accepted" else ["mock_generator_integrity_failure"]
