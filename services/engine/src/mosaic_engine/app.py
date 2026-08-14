@@ -44,6 +44,18 @@ from mosaic_engine.supabase import (
     SupabaseGateway,
     SupabasePersistenceError,
 )
+from mosaic_engine.synthetic_calibration import (
+    SyntheticCalibrationConflictError,
+    SyntheticCalibrationNotFoundError,
+    SyntheticCalibrationService,
+)
+from mosaic_engine.synthetic_models import (
+    SyntheticCalibrationNextRequest,
+    SyntheticCalibrationNextResponse,
+    SyntheticCalibrationResponseReceipt,
+    SyntheticCalibrationResponseRequest,
+)
+from mosaic_engine.synthetic_supabase import SyntheticSupabaseStore
 from mosaic_engine.version import (
     API_VERSION,
     CONTRACT_VERSION,
@@ -74,12 +86,18 @@ def create_app(
     subject_resolver: SubjectResolver | None = None,
     calibration_service: CalibrationService | None = None,
     measurement_service: MeasurementService | None = None,
+    synthetic_calibration_service: SyntheticCalibrationService | None = None,
 ) -> FastAPI:
     resolved = settings or get_settings()
     configure_logging(resolved.log_level)
 
     gateway: SupabaseGateway | None = None
-    if subject_resolver is None or calibration_service is None or measurement_service is None:
+    if (
+        subject_resolver is None
+        or calibration_service is None
+        or measurement_service is None
+        or synthetic_calibration_service is None
+    ):
         try:
             gateway = SupabaseGateway(resolved)
         except SupabaseConfigurationError:
@@ -91,14 +109,16 @@ def create_app(
         calibration_service = CalibrationService(gateway)
     if measurement_service is None and gateway is not None:
         measurement_service = MeasurementService(gateway)
+    if synthetic_calibration_service is None and gateway is not None:
+        synthetic_calibration_service = SyntheticCalibrationService(SyntheticSupabaseStore(gateway))
 
     app = FastAPI(
         title="Mosaic Engine API",
         version=CONTRACT_VERSION,
         description=(
-            "Server-authoritative Mosaic API boundary. Phase 4 calibration and Phase 5 "
-            "measurement behavior are deterministic persisted infrastructure protocols, not "
-            "validated relationship-science inference."
+            "Server-authoritative Mosaic API boundary. Phase 4 calibration, Phase 5 "
+            "measurement, and Phase 6 synthetic-calibration behavior are deterministic "
+            "persisted infrastructure protocols, not validated relationship-science inference."
         ),
         docs_url=None if resolved.environment == "production" else "/docs",
         redoc_url=None if resolved.environment == "production" else "/redoc",
@@ -298,6 +318,59 @@ def create_app(
             raise HTTPException(
                 status_code=503,
                 detail="Measurement persistence is unavailable.",
+            ) from exc
+
+    @v1.post(
+        "/synthetic-calibration/next",
+        response_model=SyntheticCalibrationNextResponse,
+        operation_id="getNextSyntheticCalibrationPair",
+    )
+    async def synthetic_calibration_next(
+        payload: SyntheticCalibrationNextRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> SyntheticCalibrationNextResponse:
+        del payload
+        if synthetic_calibration_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Synthetic calibration persistence is not configured.",
+            )
+        try:
+            return await synthetic_calibration_service.next_pair(subject_id)
+        except SyntheticCalibrationNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except SyntheticCalibrationConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Synthetic calibration persistence is unavailable.",
+            ) from exc
+
+    @v1.post(
+        "/synthetic-calibration/response",
+        response_model=SyntheticCalibrationResponseReceipt,
+        operation_id="submitSyntheticCalibrationResponse",
+    )
+    async def synthetic_calibration_response(
+        payload: SyntheticCalibrationResponseRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> SyntheticCalibrationResponseReceipt:
+        if synthetic_calibration_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Synthetic calibration persistence is not configured.",
+            )
+        try:
+            return await synthetic_calibration_service.submit_response(subject_id, payload)
+        except SyntheticCalibrationNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except SyntheticCalibrationConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Synthetic calibration persistence is unavailable.",
             ) from exc
 
     @v1.post(
