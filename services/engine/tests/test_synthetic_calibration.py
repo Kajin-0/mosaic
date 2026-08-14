@@ -219,9 +219,11 @@ def test_synthetic_cache_is_replayable_and_complete() -> None:
     assert {event.decision for event in store.qc_events.values()} == {"accepted"}
 
     uri = first.pair.left.asset_uri
-    prefix = "data:image/svg+xml;base64,"
+    prefix = "data:image/png;base64,"
+    assert first.pair.left.media_type == "image/png"
     assert uri.startswith(prefix)
     raw = base64.b64decode(uri.removeprefix(prefix))
+    assert raw.startswith(b"\x89PNG\r\n\x1a\n")
     assert hashlib.sha256(raw).hexdigest() == first.pair.left.content_sha256
     assert first.pair.left.provenance.provider == "mosaic-local-mock"
 
@@ -289,4 +291,4 @@ def test_synthetic_api_requires_authentication_and_returns_pair() -> None:
     assert payload["cache_ready"] is True
     assert payload["target_trial_count"] == MOCK_SYNTHETIC_TARGET_TRIALS
     assert payload["pair"]["left"]["content_sha256"]
-    assert payload["pair"]["right"]["provenance"]["adapter_key"] == "deterministic-svg"
+    assert payload["pair"]["right"]["provenance"]["adapter_key"] == "deterministic-png"
