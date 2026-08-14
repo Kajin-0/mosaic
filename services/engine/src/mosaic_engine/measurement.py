@@ -635,6 +635,10 @@ class MeasurementService:
                 "presentation_id": str(presentation.id),
                 "item_id": presentation.item_id,
                 "item_version": presentation.item_version,
+                "selection_policy_version": presentation.selection_policy_version,
+                "item": presentation.item.model_dump(mode="json"),
+                "instrument_version": response.instrument_version,
+                "response_selection_policy_version": response.selection_policy_version,
                 "answer": response.answer.model_dump(mode="json"),
             }
             for presentation, response in evidence
