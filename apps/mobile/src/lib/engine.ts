@@ -9,6 +9,10 @@ import type {
   MeasurementResponseRequest,
   MeasurementScoreRequest,
   MeasurementScoreResponse,
+  SyntheticCalibrationNextRequest,
+  SyntheticCalibrationNextResponse,
+  SyntheticCalibrationResponseReceipt,
+  SyntheticCalibrationResponseRequest,
 } from '@mosaic/contracts';
 
 const engineUrl = process.env.EXPO_PUBLIC_MOSAIC_ENGINE_URL?.replace(/\/$/, '');
@@ -90,4 +94,26 @@ export function scoreMeasurementSession(
   body: MeasurementScoreRequest,
 ): Promise<MeasurementScoreResponse> {
   return engineRequest<MeasurementScoreResponse>('/v1/measurement/score', accessToken, body);
+}
+
+export function getNextSyntheticCalibrationPair(
+  accessToken: string,
+): Promise<SyntheticCalibrationNextResponse> {
+  const body: SyntheticCalibrationNextRequest = {};
+  return engineRequest<SyntheticCalibrationNextResponse>(
+    '/v1/synthetic-calibration/next',
+    accessToken,
+    body,
+  );
+}
+
+export function submitSyntheticCalibrationResponse(
+  accessToken: string,
+  body: SyntheticCalibrationResponseRequest,
+): Promise<SyntheticCalibrationResponseReceipt> {
+  return engineRequest<SyntheticCalibrationResponseReceipt>(
+    '/v1/synthetic-calibration/response',
+    accessToken,
+    body,
+  );
 }
