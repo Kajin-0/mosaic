@@ -7,6 +7,8 @@ from pydantic import Field
 
 from mosaic_engine.models import ApiModel, CalibrationResponseChoice
 
+JSON_SAFE_INTEGER_MAX = 9_007_199_254_740_991
+
 
 class SyntheticCalibrationNextStatus(StrEnum):
     PAIR = "pair"
@@ -16,7 +18,7 @@ class SyntheticCalibrationNextStatus(StrEnum):
 class SyntheticStimulusSpecification(ApiModel):
     spec_version: str
     candidate_key: str
-    seed: int = Field(ge=0)
+    seed: int = Field(ge=0, le=JSON_SAFE_INTEGER_MAX)
     control_vector: dict[str, float]
     prompt_template: str
 
@@ -27,7 +29,7 @@ class SyntheticGenerationProvenance(ApiModel):
     provider: str
     model: str
     model_revision: str
-    seed: int = Field(ge=0)
+    seed: int = Field(ge=0, le=JSON_SAFE_INTEGER_MAX)
     prompt: str
     parameters: dict[str, str | int | float | bool]
 
@@ -46,7 +48,7 @@ class SyntheticCalibrationPair(ApiModel):
     ordinal: int = Field(ge=1)
     left: SyntheticAsset
     right: SyntheticAsset
-    randomization_seed: int = Field(ge=0)
+    randomization_seed: int = Field(ge=0, le=JSON_SAFE_INTEGER_MAX)
     pair_policy_version: str
 
 
