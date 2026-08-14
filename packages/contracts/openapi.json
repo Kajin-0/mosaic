@@ -3,32 +3,32 @@
     "schemas": {
       "CalibrationNextRequest": {
         "additionalProperties": false,
-        "properties": {
-          "completed_trial_count": {
-            "maximum": 10000.0,
-            "minimum": 0.0,
-            "title": "Completed Trial Count",
-            "type": "integer"
-          },
-          "session_id": {
-            "format": "uuid",
-            "title": "Session Id",
-            "type": "string"
-          }
-        },
-        "required": [
-          "session_id",
-          "completed_trial_count"
-        ],
+        "properties": {},
         "title": "CalibrationNextRequest",
         "type": "object"
       },
       "CalibrationNextResponse": {
         "additionalProperties": false,
         "properties": {
+          "completed_trial_count": {
+            "minimum": 0.0,
+            "title": "Completed Trial Count",
+            "type": "integer"
+          },
           "experiment_id": {
-            "format": "uuid",
-            "title": "Experiment Id",
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Id"
+          },
+          "instrument_version": {
+            "title": "Instrument Version",
             "type": "string"
           },
           "is_mock": {
@@ -38,9 +38,16 @@
             "type": "boolean"
           },
           "ordinal": {
-            "minimum": 1.0,
-            "title": "Ordinal",
-            "type": "integer"
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordinal"
           },
           "policy_version": {
             "title": "Policy Version",
@@ -58,20 +65,65 @@
             "title": "Session Id",
             "type": "string"
           },
+          "status": {
+            "$ref": "#/components/schemas/CalibrationNextStatus"
+          },
           "stimulus": {
-            "$ref": "#/components/schemas/CalibrationStimulus"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalibrationStimulus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stimulus_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stimulus Id"
+          },
+          "stimulus_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stimulus Version"
+          },
+          "target_trial_count": {
+            "minimum": 1.0,
+            "title": "Target Trial Count",
+            "type": "integer"
           }
         },
         "required": [
           "session_id",
-          "experiment_id",
-          "ordinal",
+          "status",
+          "completed_trial_count",
+          "target_trial_count",
           "policy_version",
-          "stimulus",
-          "response_options"
+          "instrument_version"
         ],
         "title": "CalibrationNextResponse",
         "type": "object"
+      },
+      "CalibrationNextStatus": {
+        "enum": [
+          "trial",
+          "complete"
+        ],
+        "title": "CalibrationNextStatus",
+        "type": "string"
       },
       "CalibrationResponseChoice": {
         "enum": [
@@ -97,9 +149,12 @@
             "title": "Client Response Id",
             "type": "string"
           },
+          "completed_trial_count": {
+            "minimum": 1.0,
+            "title": "Completed Trial Count",
+            "type": "integer"
+          },
           "duplicate": {
-            "const": false,
-            "default": false,
             "title": "Duplicate",
             "type": "boolean"
           },
@@ -118,17 +173,36 @@
             "title": "Policy Version",
             "type": "string"
           },
+          "server_timestamp": {
+            "format": "date-time",
+            "title": "Server Timestamp",
+            "type": "string"
+          },
+          "session_complete": {
+            "title": "Session Complete",
+            "type": "boolean"
+          },
           "session_id": {
             "format": "uuid",
             "title": "Session Id",
             "type": "string"
+          },
+          "target_trial_count": {
+            "minimum": 1.0,
+            "title": "Target Trial Count",
+            "type": "integer"
           }
         },
         "required": [
+          "duplicate",
           "session_id",
           "experiment_id",
           "client_response_id",
-          "policy_version"
+          "policy_version",
+          "completed_trial_count",
+          "target_trial_count",
+          "session_complete",
+          "server_timestamp"
         ],
         "title": "CalibrationResponseReceipt",
         "type": "object"
@@ -413,12 +487,18 @@
         "title": "VersionResponse",
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
-    "description": "Server-authoritative Mosaic API boundary. Phase 3 calibration and ranking behavior is deterministic mock infrastructure, not relationship-science inference.",
+    "description": "Server-authoritative Mosaic API boundary. Phase 4 calibration behavior is a deterministic persisted infrastructure trial, not validated relationship-science inference.",
     "title": "Mosaic Engine API",
-    "version": "2026-08-14.1"
+    "version": "2026-08-14.2"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -475,6 +555,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Calibration Next"
       }
     },
@@ -513,6 +598,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Calibration Response"
       }
     },
