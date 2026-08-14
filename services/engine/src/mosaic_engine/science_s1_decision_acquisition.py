@@ -282,12 +282,8 @@ def _linear_bayes_columns(
     covariance_a: list[float] = []
     covariance_b: list[float] = []
     for sigma_a_value, sigma_b_value in zip(sigma_a, sigma_b, strict=True):
-        projection_a = (
-            sigma_a_value * score_inverse[0][0] + sigma_b_value * score_inverse[1][0]
-        )
-        projection_b = (
-            sigma_a_value * score_inverse[0][1] + sigma_b_value * score_inverse[1][1]
-        )
+        projection_a = sigma_a_value * score_inverse[0][0] + sigma_b_value * score_inverse[1][0]
+        projection_b = sigma_a_value * score_inverse[0][1] + sigma_b_value * score_inverse[1][1]
         covariance_a.append(
             projection_a * score_response[0][0] + projection_b * score_response[1][0]
         )
