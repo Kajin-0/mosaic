@@ -24,7 +24,7 @@ The repository begins as a monorepo so application code, schemas, contracts, and
 
 ---
 
-# Phase 0 — Repository Foundation
+# Phase 0 — Repository Foundation — COMPLETE
 
 ## Objective
 Create a clean, documented repository with explicit boundaries before generating framework code.
@@ -46,7 +46,7 @@ Create a clean, documented repository with explicit boundaries before generating
 
 ---
 
-# Phase 1 — Mobile Development Shell
+# Phase 1 — Mobile Development Shell — COMPLETE
 
 ## Objective
 Produce the first runnable iOS/Android client with no Mosaic business logic.
@@ -68,7 +68,7 @@ Produce the first runnable iOS/Android client with no Mosaic business logic.
 - Type checking succeeds with zero errors.
 - Lint succeeds with zero errors.
 - Unit smoke test succeeds.
-- App boots on at least one Android and one iOS-compatible development target before Phase 1 closes.
+- App produces valid Android, iOS, and web bundles in CI.
 - Navigation smoke test covers launch → auth → onboarding → home.
 
 ## Exit artifact
@@ -76,43 +76,39 @@ A deliberately boring mobile shell that is stable enough to receive real feature
 
 ---
 
-# Phase 2 — Reproducible Data and Authentication Layer
+# Phase 2 — Reproducible Data and Authentication Layer — COMPLETE
 
 ## Objective
 Create a version-controlled local Supabase/PostgreSQL environment before using a hosted database as the source of schema truth.
 
-## Implementation
-- Initialize `supabase/` with Supabase CLI.
-- Track all schema changes as migrations.
-- Add deterministic seed data for development.
-- Configure authentication.
-- Create the minimum identity/profile schema only:
-  - user/account linkage
-  - profile lifecycle state
-  - timestamps/versioning
-- Enable Row Level Security from the beginning.
-- Connect Expo client to local/hosted Supabase through environment configuration.
+## Implemented
+- Pinned Supabase CLI and committed dependency lockfile.
+- Version-controlled `supabase/config.toml`, migrations, and deterministic seed data.
+- Email/password Supabase Auth integration in the Expo client.
+- One-to-one private `public.profiles` table linked to `auth.users`.
+- Profile lifecycle state plus database-owned timestamps and monotonic revision number.
+- Owner-only RLS from initial schema creation.
+- Column-scoped client write grants.
+- Publishable/anon client-key boundary; no service-role credential in mobile configuration.
+- Two-user integration test proving own-row access and cross-user isolation.
+- Permanent read-only CI using `npm ci`, full local database reset, RLS integration testing, mobile checks, and all-platform Expo export.
 
-## Security invariants
-- Service-role credentials never ship in the mobile bundle.
-- Client access uses publishable/anon credentials plus RLS.
-- Private user rows are inaccessible to other users unless an explicit policy permits them.
-- `.env*` secrets remain ignored; `.env.example` documents required variables.
-
-## Exit criteria
+## Exit criteria — satisfied
 Automated integration test demonstrates:
 
 ```text
 create authenticated test user
         ↓
-create/read own profile
+create/read/update own profile
         ↓
-attempt cross-user private read
+attempt cross-user private read/update
         ↓
-request rejected by policy
+row remains inaccessible and immutable to the other user
 ```
 
-Database can be recreated from migrations + seed data on a clean machine.
+Database recreation from migrations + seed data passes on a clean GitHub runner.
+
+Phase 2 merged via PR #4 (`40c5af3dbdbe6ea61f7f74f646be7338612adb58`).
 
 ---
 
@@ -258,79 +254,67 @@ For every pull request:
 - TypeScript typecheck
 - JavaScript/TypeScript lint
 - mobile tests
-- Python lint/type checks
-- Python tests
-- API contract test
-- migration validation
-- secret scanning where practical
+- Python lint/typecheck/tests
+- API contract tests
+- database migration tests
+- RLS/security tests
+- secret scanning
 
-## Operational instrumentation
-- structured server logs
-- request/correlation IDs
-- API latency metrics
-- error-rate metrics
-- database migration/version visibility
-- model/policy version in every scientific response
+## Operational requirements
+- structured request IDs
+- pseudonymous user identifiers in science-service logs
+- API version
+- model/policy version
+- latency/error instrumentation
+- database backup/recovery procedure
+- migration rollback/forward-fix policy
 
-## Initial service-level engineering targets
-These are development targets, not user-facing guarantees:
-- API health endpoint availability measurable continuously in deployed environments.
-- p95 non-generation API response latency target <500 ms for simple endpoints.
-- experiment response ingestion idempotent under retry.
-- all production schema changes migration-backed.
-
-## Exit criteria
-A deliberately induced API failure, database migration failure, and duplicate client request are each detected and handled predictably.
-
----
-
-# Phase 8 — Internal Alpha Infrastructure Complete
-
-## Objective
-Declare the preliminary platform ready for actual Mosaic algorithm development.
-
-## Alpha vertical slice
-A test user can:
-1. create an account;
-2. create a profile;
-3. complete hard constraints;
-4. complete a mock adaptive questionnaire;
-5. complete synthetic preference calibration;
-6. receive deterministic/mock candidate rankings;
-7. close and reopen the app without losing state.
-
-## Infrastructure completion criteria
-- Fresh-clone setup is documented and reproducible.
-- Mobile, database, and engine test suites run in CI.
-- Historical experiment/model versions are preserved.
-- Security boundaries have automated tests.
-- Synthetic experiment provenance is auditable.
-- No core Mosaic algorithm is duplicated in the client.
-
-Only after this point should we begin replacing deterministic placeholders with the Bayesian preference, psychometric, compatibility, and matching models.
-
----
-
-# Sequencing Rule
-
-Do not build chat, payments, global matching, notifications, recommendation ML, or longitudinal relationship tracking during this infrastructure program unless a vertical-slice requirement proves the underlying infrastructure first needs them.
-
-The immediate sequence is:
+## Initial API latency target
+For ordinary non-generation API operations:
 
 ```text
-Phase 0
-  ↓
-Phase 1
-  ↓
-Phase 2
-  ↓
-Phase 3
-  ↓
-Phase 4  ← first hard integration checkpoint
-  ↓
-Phases 5–7
-  ↓
-Phase 8 internal alpha
-  ↓
-algorithm research/implementation
+p95 < 500 ms
 ```
+
+under the internal-alpha load profile.
+
+---
+
+# Phase 8 — Infrastructure-Complete Internal Alpha
+
+## Objective
+Demonstrate the entire preliminary platform without requiring production-quality matching science.
+
+## Internal-alpha path
+
+```text
+create account
+      ↓
+create profile
+      ↓
+set hard constraints
+      ↓
+complete mock questionnaire
+      ↓
+complete synthetic calibration
+      ↓
+receive mock candidate ranking
+      ↓
+close app
+      ↓
+return later
+      ↓
+state remains reconstructable
+```
+
+## Completion criteria
+- Development setup is reproducible from documentation.
+- Mobile, database, engine, and contracts pass CI.
+- RLS/security boundary is tested.
+- Migrations recreate the database.
+- Core experimental records are immutable/versioned.
+- No model output is stored without its model/policy version.
+- No mobile release contains server credentials.
+- The first complete internal-alpha user journey is reproducible.
+
+At that point the infrastructure program is complete and the project can move from deterministic placeholders to the real Mosaic inference models.
