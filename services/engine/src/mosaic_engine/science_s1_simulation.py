@@ -229,7 +229,8 @@ def fit_logistic_laplace(
 
     converged = False
     iterations = 0
-    for iterations in range(1, max_iterations + 1):
+    for iteration in range(1, max_iterations + 1):
+        iterations = iteration
         gradient, hessian = _gradient_and_hessian(
             alpha,
             observations,
