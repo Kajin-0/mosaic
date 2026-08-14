@@ -1,0 +1,76 @@
+name: Science S1 Decision Benchmark v4a
+
+on:
+  push:
+    branches:
+      - science/s1-identifiable-preference-model
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout exact science head
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned uv
+        run: python -m pip install uv==0.12.4
+
+      - name: Install locked Python environment
+        run: uv sync --project services/engine --all-groups --frozen
+
+      - name: Run exploratory S1 v4a benchmark
+        run: |
+          uv run --project services/engine python -m mosaic_engine.science_s1_benchmark_v4a > s1-benchmark-v4a.json
+
+      - name: Print concise benchmark summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path('s1-benchmark-v4a.json').read_text())
+          print(result['benchmark_version'])
+          print(result['scientific_scope'])
+          print(f"raw_runs={len(result['raw_runs'])}")
+          print('d\tq\tpolicy\texcess_logloss\tprob_mse\ttopk_regret\ttopk_overlap\tcoef_rmse\tcoverage\tconv')
+          for cell in result['cells']:
+              metrics = cell['metrics']
+              print(
+                  f"{cell['feature_dimension']}\t{cell['query_count']}\t{cell['policy']}\t"
+                  f"{metrics['excess_log_loss']['mean']:.6f}\t"
+                  f"{metrics['probability_mse']['mean']:.6f}\t"
+                  f"{metrics['top_k_regret']['mean']:.6f}\t"
+                  f"{metrics['top_k_overlap']['mean']:.6f}\t"
+                  f"{metrics['coefficient_rmse']['mean']:.6f}\t"
+                  f"{metrics['interval_coverage']['mean']:.6f}\t"
+                  f"{cell['convergence_rate']:.6f}"
+              )
+
+          evsi = [
+              run for run in result['raw_runs']
+              if run['policy'] == 'expected_top_k_evsi'
+          ]
+          negative = sum(run['negative_decision_score_count'] for run in evsi)
+          score_means = [run['decision_score_mean'] for run in evsi]
+          print(f"evsi_runs={len(evsi)}")
+          print(f"selected_negative_evsi_scores={negative}")
+          print(f"mean_selected_evsi={sum(score_means) / len(score_means):.8f}")
+          PY
+
+      - name: Upload benchmark JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: s1-decision-benchmark-v4a
+          path: s1-benchmark-v4a.json
+          if-no-files-found: error
+          retention-days: 14
