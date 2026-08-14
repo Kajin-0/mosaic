@@ -13,6 +13,9 @@ def test_openapi_surface_is_explicit_versioned_and_secured() -> None:
         "/version",
         "/v1/calibration/next",
         "/v1/calibration/response",
+        "/v1/measurement/next",
+        "/v1/measurement/response",
+        "/v1/measurement/score",
         "/v1/matches/rank",
     }
     operation_ids = {
@@ -26,13 +29,18 @@ def test_openapi_surface_is_explicit_versioned_and_secured() -> None:
         "getVersion",
         "getNextCalibrationTrial",
         "submitCalibrationResponse",
+        "getNextMeasurementItem",
+        "submitMeasurementResponse",
+        "scoreMeasurementSession",
         "rankMatches",
     }
 
     assert "HTTPBearer" in schema["components"]["securitySchemes"]
-    assert schema["paths"]["/v1/calibration/next"]["post"]["security"] == [
-        {"HTTPBearer": []},
-    ]
-    assert schema["paths"]["/v1/calibration/response"]["post"]["security"] == [
-        {"HTTPBearer": []},
-    ]
+    for path in (
+        "/v1/calibration/next",
+        "/v1/calibration/response",
+        "/v1/measurement/next",
+        "/v1/measurement/response",
+        "/v1/measurement/score",
+    ):
+        assert schema["paths"][path]["post"]["security"] == [{"HTTPBearer": []}]

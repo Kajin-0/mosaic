@@ -314,9 +314,13 @@ def test_measurement_is_resumable_idempotent_and_rescorable() -> None:
     assert complete.json()["presentation_id"] is None
     assert complete.json()["item"] is None
 
+    assert session_id is not None
     raw_before = [
         response.model_dump(mode="json")
-        for response in awaitable_result(store.list_measurement_responses(UUID(session_id)))
+        for response in sorted(
+            store.responses.values(),
+            key=lambda value: value.server_timestamp,
+        )
     ]
 
     v1 = client.post(
@@ -339,13 +343,10 @@ def test_measurement_is_resumable_idempotent_and_rescorable() -> None:
 
     raw_after = [
         response.model_dump(mode="json")
-        for response in awaitable_result(store.list_measurement_responses(UUID(session_id)))
+        for response in sorted(
+            store.responses.values(),
+            key=lambda value: value.server_timestamp,
+        )
     ]
     assert raw_after == raw_before
     assert len(store.score_runs) == 2
-
-
-def awaitable_result(awaitable):
-    import asyncio
-
-    return asyncio.run(awaitable)
