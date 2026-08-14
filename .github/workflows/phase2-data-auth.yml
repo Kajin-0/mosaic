@@ -1,0 +1,82 @@
+name: Phase 2 Data and Auth
+
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'supabase/**'
+      - 'scripts/test-supabase-auth.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/phase2-data-auth.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate-data-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+
+      - name: Resolve Phase 2 dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify pinned Supabase CLI
+        run: test "$(npx supabase --version)" = "2.114.0"
+
+      - name: Verify Docker
+        run: docker info >/dev/null
+
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Rebuild database from migrations and seed
+        run: npx supabase db reset
+
+      - name: Export local client configuration
+        shell: bash
+        run: |
+          eval "$(npx supabase status -o env)"
+          echo "API_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+
+      - name: Test authenticated profile ownership and RLS
+        run: node scripts/test-supabase-auth.mjs
+
+      - name: Validate mobile auth integration
+        run: npm run mobile:check
+
+      - name: Bundle mobile client for all Expo targets
+        working-directory: apps/mobile
+        run: npx expo export --platform all --output-dir dist-p2-ci
+
+      - name: Commit initial Phase 2 lockfile update
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'chore: lock Phase 2 dependencies'
+          git push origin HEAD:${{ github.head_ref }}
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop --no-backup || true

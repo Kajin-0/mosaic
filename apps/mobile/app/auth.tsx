@@ -1,27 +1,99 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { useAuth } from '@/providers/AuthProvider';
 import { theme } from '@/theme';
 
-export default function AuthPlaceholderScreen() {
+export default function AuthScreen() {
   const router = useRouter();
+  const { session, profile, loading, error: authError, signIn, signUp } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loading || !session || !profile) return;
+    router.replace(profile.lifecycle_state === 'active' ? '/home' : '/onboarding');
+  }, [loading, profile, router, session]);
+
+  const credentialsReady = email.trim().length > 3 && password.length >= 6;
+
+  async function handleSignIn() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      await signIn(email.trim(), password);
+    } catch (signInError) {
+      setMessage(signInError instanceof Error ? signInError.message : 'Unable to sign in.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSignUp() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const result = await signUp(email.trim(), password);
+      if (result.requiresEmailConfirmation) {
+        setMessage('Account created. Confirm your email before signing in.');
+      }
+    } catch (signUpError) {
+      setMessage(signUpError instanceof Error ? signUpError.message : 'Unable to create account.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <AppScreen>
+    <AppScreen scroll>
       <View style={styles.content}>
         <Text style={styles.eyebrow}>ACCOUNT</Text>
-        <Text style={styles.title}>Authentication boundary ready.</Text>
+        <Text style={styles.title}>Create or resume your Mosaic account.</Text>
         <Text style={styles.body}>
-          Supabase authentication arrives in Phase 2. For Phase 1, this local test session proves the
-          navigation contract without inventing temporary authentication state.
+          Phase 2 stores authentication with Supabase and creates one private profile row owned by your account.
         </Text>
+
+        <View style={styles.form}>
+          <TextInput
+            accessibilityLabel="Email address"
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            onChangeText={setEmail}
+            placeholder="Email"
+            placeholderTextColor={theme.colors.muted}
+            style={styles.input}
+            value={email}
+          />
+          <TextInput
+            accessibilityLabel="Password"
+            autoCapitalize="none"
+            autoComplete="password"
+            onChangeText={setPassword}
+            placeholder="Password"
+            placeholderTextColor={theme.colors.muted}
+            secureTextEntry
+            style={styles.input}
+            value={password}
+          />
+        </View>
+
+        {(message ?? authError) ? <Text style={styles.message}>{message ?? authError}</Text> : null}
       </View>
 
-      <PrimaryButton onPress={() => router.push('/onboarding')} testID="auth-local-session">
-        Use local test session
-      </PrimaryButton>
+      <View style={styles.actions}>
+        <PrimaryButton disabled={!credentialsReady || busy} onPress={() => void handleSignIn()} testID="auth-sign-in">
+          {busy ? 'Working…' : 'Sign in'}
+        </PrimaryButton>
+        <PrimaryButton disabled={!credentialsReady || busy} onPress={() => void handleSignUp()} testID="auth-sign-up">
+          Create account
+        </PrimaryButton>
+      </View>
     </AppScreen>
   );
 }
@@ -49,5 +121,27 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     fontSize: 17,
     lineHeight: 25,
+  },
+  form: {
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+  },
+  input: {
+    minHeight: 54,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.button,
+    backgroundColor: theme.colors.surface,
+    color: theme.colors.text,
+    fontSize: 16,
+    paddingHorizontal: theme.spacing.md,
+  },
+  message: {
+    color: theme.colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  actions: {
+    gap: theme.spacing.sm,
   },
 });
