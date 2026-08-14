@@ -11,6 +11,7 @@ from mosaic_engine.synthetic_generation import (
     SyntheticGeneratorAdapter,
 )
 from mosaic_engine.synthetic_models import (
+    JSON_SAFE_INTEGER_MAX,
     SyntheticAsset,
     SyntheticCalibrationNextResponse,
     SyntheticCalibrationNextStatus,
@@ -523,7 +524,7 @@ class SyntheticCalibrationService:
 
     def _seed(self, value: str) -> int:
         digest = hashlib.sha256(value.encode()).digest()[:8]
-        return int.from_bytes(digest, "big") & ((1 << 63) - 1)
+        return int.from_bytes(digest, "big") & JSON_SAFE_INTEGER_MAX
 
     def _sha256_json(self, value: dict[str, object]) -> str:
         normalized = self._normalize_json_numbers(value)
