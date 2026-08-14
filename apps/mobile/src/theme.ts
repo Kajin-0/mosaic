@@ -7,6 +7,7 @@ export const theme = {
     border: '#DDDAD2',
     accent: '#171717',
     accentText: '#FFFFFF',
+    error: '#8A1C1C',
   },
   radius: {
     card: 18,
