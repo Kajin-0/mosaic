@@ -1,6 +1,7 @@
 {
   "name": "mosaic",
   "version": "0.0.0",
+  "description": "Mosaic experimental matchmaking research monorepo.",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
