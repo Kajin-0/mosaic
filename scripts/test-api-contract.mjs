@@ -54,7 +54,7 @@ for (const schemaName of [
   'SyntheticAsset',
   'SyntheticGenerationProvenance',
   'MatchRankRequest',
-  'MatchRankResponse',
+  'PersistedMatchRankResponse',
 ]) {
   assert.ok(contract.components.schemas[schemaName], `missing schema ${schemaName}`);
 }
@@ -87,6 +87,7 @@ for (const path of [
   '/v1/measurement/score',
   '/v1/synthetic-calibration/next',
   '/v1/synthetic-calibration/response',
+  '/v1/matches/rank',
 ]) {
   assert.deepEqual(contract.paths[path].post.security, [{ HTTPBearer: [] }]);
 }
@@ -116,4 +117,13 @@ assert.ok(syntheticAsset.content_sha256);
 assert.ok(syntheticAsset.asset_uri);
 assert.ok(syntheticAsset.provenance);
 
-console.log('Mosaic Phase 6 OpenAPI contract surface check passed.');
+const persistedRank = contract.components.schemas.PersistedMatchRankResponse.properties;
+assert.ok(persistedRank.run_id);
+assert.ok(persistedRank.model_version);
+assert.ok(persistedRank.request_fingerprint);
+assert.ok(persistedRank.ranked_candidates);
+assert.ok(persistedRank.created_at);
+assert.ok(persistedRank.persisted);
+assert.ok(persistedRank.is_mock);
+
+console.log('Mosaic Phase 8 OpenAPI contract surface check passed.');

@@ -112,6 +112,9 @@ jobs:
       - name: Verify Phase 6 session provenance immutability
         run: node scripts/test-phase6-session-provenance.mjs
 
+      - name: Replay Phase 8 complete internal-alpha journey
+        run: npm run phase8:test
+
       - name: Enforce internal-alpha latency target
         run: npm run phase7:latency
 

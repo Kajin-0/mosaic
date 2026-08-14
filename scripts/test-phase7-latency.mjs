@@ -90,6 +90,7 @@ const operations = {
   ranking: (requestId) =>
     request(`${engineUrl}/v1/matches/rank`, {
       method: 'POST',
+      token,
       body: rankPayload,
       requestId,
     }),

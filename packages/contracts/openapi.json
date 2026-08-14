@@ -420,34 +420,6 @@
         "title": "MatchRankRequest",
         "type": "object"
       },
-      "MatchRankResponse": {
-        "additionalProperties": false,
-        "properties": {
-          "is_mock": {
-            "const": true,
-            "default": true,
-            "title": "Is Mock",
-            "type": "boolean"
-          },
-          "model_version": {
-            "title": "Model Version",
-            "type": "string"
-          },
-          "ranked_candidates": {
-            "items": {
-              "$ref": "#/components/schemas/RankedCandidate"
-            },
-            "title": "Ranked Candidates",
-            "type": "array"
-          }
-        },
-        "required": [
-          "model_version",
-          "ranked_candidates"
-        ],
-        "title": "MatchRankResponse",
-        "type": "object"
-      },
       "MeasurementChoiceAnswer": {
         "additionalProperties": false,
         "properties": {
@@ -873,6 +845,59 @@
         ],
         "title": "MeasurementScoringVersion",
         "type": "string"
+      },
+      "PersistedMatchRankResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "is_mock": {
+            "const": true,
+            "default": true,
+            "title": "Is Mock",
+            "type": "boolean"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "persisted": {
+            "const": true,
+            "default": true,
+            "title": "Persisted",
+            "type": "boolean"
+          },
+          "ranked_candidates": {
+            "items": {
+              "$ref": "#/components/schemas/RankedCandidate"
+            },
+            "title": "Ranked Candidates",
+            "type": "array"
+          },
+          "request_fingerprint": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_version",
+          "ranked_candidates",
+          "run_id",
+          "request_fingerprint",
+          "created_at"
+        ],
+        "title": "PersistedMatchRankResponse",
+        "type": "object"
       },
       "RankedCandidate": {
         "additionalProperties": false,
@@ -1425,7 +1450,7 @@
     }
   },
   "info": {
-    "description": "Server-authoritative Mosaic API boundary. Phase 4 calibration, Phase 5 measurement, and Phase 6 synthetic-calibration behavior are deterministic persisted infrastructure protocols, not validated relationship-science inference.",
+    "description": "Server-authoritative Mosaic API boundary. Phase 4 calibration, Phase 5 measurement, Phase 6 synthetic calibration, and Phase 8 persisted mock-ranking behavior are deterministic infrastructure protocols, not validated relationship-science inference.",
     "title": "Mosaic Engine API",
     "version": "2026-08-14.4"
   },
@@ -1553,7 +1578,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MatchRankResponse"
+                  "$ref": "#/components/schemas/PersistedMatchRankResponse"
                 }
               }
             },
@@ -1570,6 +1595,11 @@
             "description": "Validation Error"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Matches Rank"
       }
     },

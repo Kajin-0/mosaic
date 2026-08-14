@@ -362,19 +362,6 @@ export interface components {
              */
             limit: number;
         };
-        /** MatchRankResponse */
-        MatchRankResponse: {
-            /**
-             * Is Mock
-             * @default true
-             * @constant
-             */
-            is_mock: true;
-            /** Model Version */
-            model_version: string;
-            /** Ranked Candidates */
-            ranked_candidates: components["schemas"]["RankedCandidate"][];
-        };
         /** MeasurementChoiceAnswer */
         MeasurementChoiceAnswer: {
             /**
@@ -560,6 +547,37 @@ export interface components {
          * @enum {string}
          */
         MeasurementScoringVersion: "mock-measurement-p5-score-1.0.0" | "mock-measurement-p5-score-2.0.0";
+        /** PersistedMatchRankResponse */
+        PersistedMatchRankResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Is Mock
+             * @default true
+             * @constant
+             */
+            is_mock: true;
+            /** Model Version */
+            model_version: string;
+            /**
+             * Persisted
+             * @default true
+             * @constant
+             */
+            persisted: true;
+            /** Ranked Candidates */
+            ranked_candidates: components["schemas"]["RankedCandidate"][];
+            /** Request Fingerprint */
+            request_fingerprint: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+        };
         /** RankedCandidate */
         RankedCandidate: {
             /**
@@ -914,7 +932,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MatchRankResponse"];
+                    "application/json": components["schemas"]["PersistedMatchRankResponse"];
                 };
             };
             /** @description Validation Error */

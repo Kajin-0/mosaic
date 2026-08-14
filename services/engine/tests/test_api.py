@@ -11,13 +11,19 @@ from mosaic_engine.calibration import (
     CalibrationService,
 )
 from mosaic_engine.config import Settings
-from mosaic_engine.models import CalibrationResponseChoice
+from mosaic_engine.match_service import MatchRankingService
+from mosaic_engine.match_store import MatchRankRunRecord
+from mosaic_engine.models import CalibrationResponseChoice, RankedCandidate
 from mosaic_engine.store import (
     CalibrationResponseRecord,
     CalibrationSessionRecord,
     CalibrationTrialRecord,
 )
-from mosaic_engine.version import CONTRACT_VERSION, ENGINE_VERSION, MOCK_CALIBRATION_POLICY_VERSION
+from mosaic_engine.version import (
+    CONTRACT_VERSION,
+    ENGINE_VERSION,
+    MOCK_CALIBRATION_POLICY_VERSION,
+)
 
 SUBJECT_ID = UUID("11111111-1111-4111-8111-111111111111")
 
@@ -159,12 +165,50 @@ class MemoryStore:
         return session
 
 
+class MemoryMatchStore:
+    def __init__(self) -> None:
+        self.runs: dict[tuple[UUID, str, str], MatchRankRunRecord] = {}
+
+    async def find_match_rank_run(
+        self,
+        subject_id: UUID,
+        model_version: str,
+        request_fingerprint: str,
+    ) -> MatchRankRunRecord | None:
+        return self.runs.get((subject_id, model_version, request_fingerprint))
+
+    async def create_match_rank_run(
+        self,
+        *,
+        subject_id: UUID,
+        model_version: str,
+        request_fingerprint: str,
+        candidate_ids: list[UUID],
+        requested_limit: int,
+        ranked_candidates: list[RankedCandidate],
+    ) -> MatchRankRunRecord:
+        record = MatchRankRunRecord(
+            id=uuid4(),
+            subject_id=subject_id,
+            model_version=model_version,
+            request_fingerprint=request_fingerprint,
+            candidate_ids=candidate_ids,
+            requested_limit=requested_limit,
+            ranked_candidates=ranked_candidates,
+            created_at=datetime.now(UTC),
+        )
+        self.runs[(subject_id, model_version, request_fingerprint)] = record
+        return record
+
+
 store = MemoryStore()
+match_store = MemoryMatchStore()
 client = TestClient(
     create_app(
         Settings(environment="test", log_level="CRITICAL"),
         subject_resolver=StaticSubjectResolver(),
         calibration_service=CalibrationService(store),
+        match_ranking_service=MatchRankingService(match_store),
     ),
 )
 AUTH = {"Authorization": "Bearer test-access-token"}
@@ -240,7 +284,7 @@ def test_ten_trials_are_idempotent_and_complete() -> None:
     assert len(store.responses) == MOCK_CALIBRATION_TARGET_TRIALS
 
 
-def test_match_rank_is_deterministic_and_limited() -> None:
+def test_match_rank_requires_authentication_and_reuses_persisted_run() -> None:
     payload = {
         "candidate_ids": [
             "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -250,9 +294,16 @@ def test_match_rank_is_deterministic_and_limited() -> None:
         "limit": 2,
     }
 
-    first = client.post("/v1/matches/rank", json=payload)
-    second = client.post("/v1/matches/rank", json=payload)
+    unauthenticated = client.post("/v1/matches/rank", json=payload)
+    assert unauthenticated.status_code == 401
+
+    first = client.post("/v1/matches/rank", headers=AUTH, json=payload)
+    second = client.post("/v1/matches/rank", headers=AUTH, json=payload)
 
     assert first.status_code == 200
     assert first.json() == second.json()
+    assert first.json()["persisted"] is True
+    assert len(first.json()["request_fingerprint"]) == 64
+    UUID(first.json()["run_id"])
     assert len(first.json()["ranked_candidates"]) == 2
+    assert len(match_store.runs) == 1

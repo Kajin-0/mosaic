@@ -9,7 +9,7 @@ const serviceRoleKey = process.env.SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERV
 assert.ok(supabaseUrl, 'Supabase API_URL is required.');
 assert.ok(serviceRoleKey, 'Supabase SERVICE_ROLE_KEY is required.');
 
-const backupPath = '/tmp/mosaic-science-evidence-backup.json';
+const backupPath = '/tmp/mosaic-science-state-backup.json';
 const tableDefinitions = [
   { name: 'science_subjects', select: 'subject_id,created_at', key: 'subject_id' },
   { name: 'calibration_sessions', select: '*', key: 'id' },
@@ -25,6 +25,7 @@ const tableDefinitions = [
   { name: 'synthetic_qc_events', select: '*', key: 'id' },
   { name: 'synthetic_pairs', select: '*', key: 'id' },
   { name: 'synthetic_calibration_responses', select: '*', key: 'id' },
+  { name: 'match_rank_runs', select: '*', key: 'id' },
 ];
 
 function stableStringify(value) {
@@ -82,7 +83,7 @@ async function snapshot() {
     tables[definition.name] = ordered(result.payload, definition.key);
   }
   return {
-    format: 'mosaic-science-evidence-backup-v1',
+    format: 'mosaic-science-state-backup-v2',
     account_linkage: 'detached',
     tables,
   };
@@ -126,6 +127,7 @@ const requiredTables = [
   'measurement_responses',
   'measurement_score_runs',
   'synthetic_calibration_responses',
+  'match_rank_runs',
 ];
 for (const table of requiredTables) {
   assert.ok(before.tables[table].length > 0, `${table} was empty before the recovery drill`);
@@ -160,7 +162,7 @@ const afterFingerprint = sha256(stableStringify(after));
 assert.equal(
   afterFingerprint,
   beforeFingerprint,
-  'restored science evidence does not exactly match the detached backup fingerprint',
+  'restored science state does not exactly match the detached backup fingerprint',
 );
 
 for (const definition of tableDefinitions) {

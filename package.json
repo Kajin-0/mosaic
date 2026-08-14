@@ -33,7 +33,8 @@
     "phase5:test": "node scripts/test-phase5-measurement.mjs",
     "phase6:test": "node scripts/test-phase6-synthetic-calibration.mjs",
     "phase7:latency": "node scripts/test-phase7-latency.mjs",
-    "phase7:recovery": "node scripts/test-phase7-science-recovery.mjs"
+    "phase7:recovery": "node scripts/test-phase7-science-recovery.mjs",
+    "phase8:test": "node scripts/test-phase8-internal-alpha.mjs"
   },
   "devDependencies": {
     "supabase": "2.114.0"

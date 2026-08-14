@@ -111,3 +111,10 @@ class MatchRankResponse(ApiModel):
     model_version: str
     ranked_candidates: list[RankedCandidate]
     is_mock: Literal[True] = True
+
+
+class PersistedMatchRankResponse(MatchRankResponse):
+    run_id: UUID
+    request_fingerprint: str = Field(min_length=64, max_length=64)
+    created_at: datetime
+    persisted: Literal[True] = True
