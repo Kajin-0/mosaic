@@ -4,7 +4,7 @@ from uuid import UUID
 
 from mosaic_engine.match_store import MatchRankRunRecord, MatchRankStore
 from mosaic_engine.mock import rank_candidates
-from mosaic_engine.models import MatchRankRequest, PersistedMatchRankResponse
+from mosaic_engine.models import MatchRankRequest, PersistedMatchRankResponse, RankedCandidate
 from mosaic_engine.supabase import SupabaseConflictError
 from mosaic_engine.version import MOCK_RANKER_MODEL_VERSION
 
@@ -73,11 +73,10 @@ class MatchRankingService:
         stored: MatchRankRunRecord,
         candidate_ids: list[UUID],
         requested_limit: int,
-        ranked_candidates: list,
+        ranked_candidates: list[RankedCandidate],
     ) -> None:
         if (
-            stored.subject_id is None
-            or stored.model_version != MOCK_RANKER_MODEL_VERSION
+            stored.model_version != MOCK_RANKER_MODEL_VERSION
             or stored.candidate_ids != candidate_ids
             or stored.requested_limit != requested_limit
             or stored.ranked_candidates != ranked_candidates
