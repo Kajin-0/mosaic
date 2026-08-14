@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted for Phase 7.
+Accepted for Phase 7 and extended by Phase 8.
 
 ## Context
 
@@ -35,13 +35,13 @@ After the Phase 7 dependency bootstrap, Mosaic uses one read-only repository-wid
 - database recreation from migrations and deterministic seed data;
 - authentication ownership and RLS tests;
 - all-platform Expo export;
-- the Phase 4, Phase 5, and Phase 6 live replay protocols;
+- the Phase 4, Phase 5, Phase 6, and Phase 8 live replay protocols;
 - synthetic-session provenance immutability;
 - secret scanning of repository history;
-- the Phase 7 latency regression protocol; and
-- the Phase 7 destructive science-evidence recovery drill.
+- the latency regression protocol; and
+- the destructive detached science-state recovery drill.
 
-The older phase-specific workflows are retired only after the consolidated gate proves those same invariants on the replacement head.
+The older phase-specific workflows were retired only after the consolidated gate proved those same invariants on the replacement head.
 
 ### 2. Request observability is pseudonymous and versioned
 
@@ -65,11 +65,11 @@ Unexpected exceptions emit the same request envelope plus an exception class bef
 
 ### 3. Latency is treated as an experimental-interface regression
 
-The Phase 7 CI latency gate is deliberately narrow. After warm-up, it measures 20 sequential requests for each of five ordinary local operations:
+The CI latency gate is deliberately narrow. After warm-up, it measures 20 sequential requests for each of five ordinary local operations:
 
 - health;
 - version;
-- deterministic mock ranking;
+- authenticated persisted deterministic mock ranking;
 - server-authoritative cached/pending calibration `next`; and
 - server-authoritative cached/pending measurement `next`.
 
@@ -83,18 +83,23 @@ This is a regression budget for non-generation control-plane behavior. It is **n
 
 The authoritative full-database/account recovery mechanism is the hosted Supabase backup/restore capability appropriate to the deployed plan, supplemented by documented logical exports when required. This layer is responsible for managed schemas and account linkage.
 
-#### Detached science-evidence recovery
+#### Detached science-state recovery
 
-Mosaic additionally maintains a provider-independent recovery representation for the pseudonymous experimental graph. The CI recovery snapshot includes:
+Mosaic additionally maintains a provider-independent recovery representation for the pseudonymous scientific state required for historical reconstruction. The representation preserves both immutable observations and versioned derived outputs while keeping those persistence classes conceptually distinct.
+
+The Phase 8 `mosaic-science-state-backup-v2` snapshot includes:
 
 - science subjects by `subject_id` and creation time, but intentionally excludes `science_subjects.user_id`;
 - Phase 4 sessions, presentations/trials, and responses;
-- Phase 5 sessions, presentations, responses, and score runs; and
-- Phase 6 sessions, stimulus specifications, assets, QC events, pairs, and responses.
+- Phase 5 sessions, presentations, responses, and score runs;
+- Phase 6 sessions, stimulus specifications, assets, QC events, pairs, and responses; and
+- Phase 8 append-only versioned `match_rank_runs`.
 
-The omission of `science_subjects.user_id` is deliberate. Experimental evidence must remain recoverable even when the authentication linkage cannot or should not be restored. Re-linking a recovered subject to an account is a separate privileged identity operation and must never be inferred from experimental data.
+Measurement score runs and match-ranking runs are derived state, not raw experimental observations. Their inclusion in recovery does not change that epistemic classification; it ensures the historical outputs required to interpret a prior application state remain reconstructable.
 
-The CI drill computes a canonical SHA-256 fingerprint, destroys/rebuilds the local database from migrations, verifies the experimental tables are empty, restores the detached graph in dependency order, and requires the post-restore fingerprint and every table row count to match exactly.
+The omission of `science_subjects.user_id` is deliberate. Scientific state must remain recoverable even when the authentication linkage cannot or should not be restored. Re-linking a recovered subject to an account is a separate privileged identity operation and must never be inferred from experimental data.
+
+The CI drill computes a canonical SHA-256 fingerprint, destroys/rebuilds the local database from migrations, verifies critical state tables are empty, restores the detached graph in dependency order, and requires the post-restore fingerprint and every table row count to match exactly.
 
 ### 5. Migrations are forward-owned after merge
 
@@ -120,7 +125,8 @@ Repository-history scanning is mandatory on pull requests. If a real secret is c
 - Operational regressions become review-blocking rather than informal observations.
 - Logs become more diagnostically useful without introducing raw account identity into science-service telemetry.
 - Recovery is demonstrated by restore, not inferred from the existence of a backup command.
-- Authentication recovery and scientific-evidence recovery are explicitly decoupled.
+- Authentication recovery and detached scientific-state recovery are explicitly decoupled.
+- Raw evidence and versioned derived outputs remain distinct even though both participate in reconstructable historical state.
 - The 500 ms target has a precise, limited interpretation and cannot honestly be cited as production scalability evidence.
 - Database changes become more deliberate because immutable evidence cannot rely on casual rollback semantics.
-- CI is longer, but there is one authoritative gate instead of overlapping phase workflows once Phase 7 is complete.
+- CI is longer, but there is one authoritative gate rather than overlapping phase workflows.
