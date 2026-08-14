@@ -2,7 +2,7 @@ import logging
 import time
 from collections.abc import Awaitable, Callable
 from typing import Annotated, Protocol
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -37,6 +37,11 @@ from mosaic_engine.models import (
     MatchRankRequest,
     MatchRankResponse,
     VersionResponse,
+)
+from mosaic_engine.observability import (
+    pseudonymous_subject_ref,
+    request_version_context,
+    resolve_request_id,
 )
 from mosaic_engine.supabase import (
     SupabaseAuthenticationError,
@@ -127,23 +132,44 @@ def create_app(
 
     @app.middleware("http")
     async def request_context(request: Request, call_next: RequestHandler) -> Response:
-        request_id = request.headers.get("x-request-id") or str(uuid4())
+        request_id = resolve_request_id(request.headers.get("x-request-id"))
+        request.state.request_id = request_id
         started = time.perf_counter()
-        response = await call_next(request)
+
+        def event_for(status_code: int, duration_ms: float) -> dict[str, object]:
+            event: dict[str, object] = {
+                "event": "http_request",
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": status_code,
+                "duration_ms": duration_ms,
+            }
+            event.update(request_version_context(request.url.path))
+            subject_id = getattr(request.state, "subject_id", None)
+            if isinstance(subject_id, UUID):
+                event["subject_ref"] = pseudonymous_subject_ref(subject_id)
+            return event
+
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            duration_ms = round((time.perf_counter() - started) * 1000, 3)
+            event = event_for(500, duration_ms)
+            event["error_type"] = type(exc).__name__
+            logging.getLogger("mosaic.http").exception("request_failed", extra=event)
+            raise
+
         duration_ms = round((time.perf_counter() - started) * 1000, 3)
         response.headers["x-request-id"] = request_id
-        event = {
-            "event": "http_request",
-            "request_id": request_id,
-            "method": request.method,
-            "path": request.url.path,
-            "status_code": response.status_code,
-            "duration_ms": duration_ms,
-        }
-        subject_id = getattr(request.state, "subject_id", None)
-        if subject_id is not None:
-            event["subject_id"] = str(subject_id)
-        logging.getLogger("mosaic.http").info("request_complete", extra=event)
+        event = event_for(response.status_code, duration_ms)
+        logger = logging.getLogger("mosaic.http")
+        if response.status_code >= 500:
+            logger.error("request_complete", extra=event)
+        elif response.status_code >= 400:
+            logger.warning("request_complete", extra=event)
+        else:
+            logger.info("request_complete", extra=event)
         return response
 
     @app.get("/health", response_model=HealthResponse, operation_id="getHealth")
