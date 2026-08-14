@@ -30,7 +30,10 @@ class SyntheticGeneratorAdapter(Protocol):
     key: str
     version: str
 
-    def generate(self, specification: SyntheticStimulusSpecification) -> GeneratedSyntheticAsset: ...
+    def generate(
+        self,
+        specification: SyntheticStimulusSpecification,
+    ) -> GeneratedSyntheticAsset: ...
 
 
 class DeterministicPngGenerator:
@@ -120,10 +123,12 @@ class DeterministicPngGenerator:
         image_data = zlib.compress(b"".join(rows), level=9)
         signature = b"\x89PNG\r\n\x1a\n"
         ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
-        return signature + self._chunk(b"IHDR", ihdr) + self._chunk(b"IDAT", image_data) + self._chunk(
-            b"IEND",
-            b"",
+        chunks = (
+            self._chunk(b"IHDR", ihdr),
+            self._chunk(b"IDAT", image_data),
+            self._chunk(b"IEND", b""),
         )
+        return signature + b"".join(chunks)
 
     def _chunk(self, kind: bytes, payload: bytes) -> bytes:
         checksum = binascii.crc32(kind + payload) & 0xFFFFFFFF
