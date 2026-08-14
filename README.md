@@ -12,7 +12,8 @@ Mosaic is an experimental mobile matchmaking system being developed around the o
 - Phase 3: FastAPI science-engine skeleton + generated versioned API contracts — complete
 - Phase 4: authenticated mobile → engine → PostgreSQL calibration vertical slice — complete
 - Phase 5: onboarding and measurement infrastructure — complete
-- Phase 6: synthetic calibration infrastructure — next
+- Phase 6: replayable synthetic calibration infrastructure — complete
+- Phase 7: CI, security, observability, and recovery — next
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased implementation plan and exit criteria.
 
