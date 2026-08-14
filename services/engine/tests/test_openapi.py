@@ -16,6 +16,8 @@ def test_openapi_surface_is_explicit_versioned_and_secured() -> None:
         "/v1/measurement/next",
         "/v1/measurement/response",
         "/v1/measurement/score",
+        "/v1/synthetic-calibration/next",
+        "/v1/synthetic-calibration/response",
         "/v1/matches/rank",
     }
     operation_ids = {
@@ -32,6 +34,8 @@ def test_openapi_surface_is_explicit_versioned_and_secured() -> None:
         "getNextMeasurementItem",
         "submitMeasurementResponse",
         "scoreMeasurementSession",
+        "getNextSyntheticCalibrationPair",
+        "submitSyntheticCalibrationResponse",
         "rankMatches",
     }
 
@@ -42,5 +46,7 @@ def test_openapi_surface_is_explicit_versioned_and_secured() -> None:
         "/v1/measurement/next",
         "/v1/measurement/response",
         "/v1/measurement/score",
+        "/v1/synthetic-calibration/next",
+        "/v1/synthetic-calibration/response",
     ):
         assert schema["paths"][path]["post"]["security"] == [{"HTTPBearer": []}]
