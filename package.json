@@ -18,7 +18,15 @@
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",
-    "supabase:test:auth": "node scripts/test-supabase-auth.mjs"
+    "supabase:test:auth": "node scripts/test-supabase-auth.mjs",
+    "engine:serve": "uv run --project services/engine uvicorn mosaic_engine.main:app --reload",
+    "engine:test": "uv run --project services/engine pytest services/engine/tests",
+    "engine:lint": "uv run --project services/engine ruff check services/engine && uv run --project services/engine ruff format --check services/engine",
+    "engine:check": "npm run engine:lint && npm run engine:test",
+    "engine:openapi": "uv run --project services/engine python -m mosaic_engine.export_openapi packages/contracts/openapi.json",
+    "contracts:generate": "npm run generate --workspace @mosaic/contracts",
+    "contracts:check": "npm run check --workspace @mosaic/contracts && node scripts/test-api-contract.mjs",
+    "contracts:sync": "npm run engine:openapi && npm run contracts:generate"
   },
   "devDependencies": {
     "supabase": "2.114.0"
