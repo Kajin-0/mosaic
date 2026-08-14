@@ -3,7 +3,7 @@ from mosaic_engine.config import Settings
 from mosaic_engine.version import CONTRACT_VERSION
 
 
-def test_openapi_surface_is_explicit_and_versioned() -> None:
+def test_openapi_surface_is_explicit_versioned_and_secured() -> None:
     app = create_app(Settings(environment="test", log_level="CRITICAL"))
     schema = app.openapi()
 
@@ -28,3 +28,11 @@ def test_openapi_surface_is_explicit_and_versioned() -> None:
         "submitCalibrationResponse",
         "rankMatches",
     }
+
+    assert "HTTPBearer" in schema["components"]["securitySchemes"]
+    assert schema["paths"]["/v1/calibration/next"]["post"]["security"] == [
+        {"HTTPBearer": []},
+    ]
+    assert schema["paths"]["/v1/calibration/response"]["post"]["security"] == [
+        {"HTTPBearer": []},
+    ]

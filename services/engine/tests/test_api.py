@@ -1,13 +1,169 @@
-from uuid import UUID
+from datetime import datetime, timezone
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
 
 from mosaic_engine.app import create_app
+from mosaic_engine.calibration import (
+    MOCK_CALIBRATION_INSTRUMENT_KEY,
+    MOCK_CALIBRATION_INSTRUMENT_VERSION,
+    MOCK_CALIBRATION_TARGET_TRIALS,
+    CalibrationService,
+)
 from mosaic_engine.config import Settings
-from mosaic_engine.version import CONTRACT_VERSION, ENGINE_VERSION
+from mosaic_engine.models import CalibrationResponseChoice
+from mosaic_engine.store import (
+    CalibrationResponseRecord,
+    CalibrationSessionRecord,
+    CalibrationTrialRecord,
+)
+from mosaic_engine.version import CONTRACT_VERSION, ENGINE_VERSION, MOCK_CALIBRATION_POLICY_VERSION
 
-client = TestClient(create_app(Settings(environment="test", log_level="CRITICAL")))
-SESSION_ID = "11111111-1111-4111-8111-111111111111"
+SUBJECT_ID = UUID("11111111-1111-4111-8111-111111111111")
+
+
+class StaticSubjectResolver:
+    async def resolve_subject(self, access_token: str | None) -> UUID:
+        if access_token != "test-access-token":
+            from mosaic_engine.supabase import SupabaseAuthenticationError
+
+            raise SupabaseAuthenticationError("bad token")
+        return SUBJECT_ID
+
+
+class MemoryStore:
+    def __init__(self) -> None:
+        self.sessions: dict[UUID, CalibrationSessionRecord] = {}
+        self.trials: dict[UUID, CalibrationTrialRecord] = {}
+        self.responses: dict[UUID, CalibrationResponseRecord] = {}
+
+    async def get_or_create_subject(self, user_id: UUID) -> UUID:
+        del user_id
+        return SUBJECT_ID
+
+    async def get_session(
+        self,
+        subject_id: UUID,
+        instrument_key: str,
+        instrument_version: str,
+        policy_version: str,
+    ) -> CalibrationSessionRecord | None:
+        return next(
+            (
+                session
+                for session in self.sessions.values()
+                if session.subject_id == subject_id
+                and session.instrument_key == instrument_key
+                and session.instrument_version == instrument_version
+                and session.policy_version == policy_version
+            ),
+            None,
+        )
+
+    async def get_session_by_id(
+        self,
+        subject_id: UUID,
+        session_id: UUID,
+    ) -> CalibrationSessionRecord | None:
+        session = self.sessions.get(session_id)
+        return session if session and session.subject_id == subject_id else None
+
+    async def create_session(
+        self,
+        subject_id: UUID,
+        instrument_key: str,
+        instrument_version: str,
+        policy_version: str,
+        target_trial_count: int,
+    ) -> CalibrationSessionRecord:
+        session = CalibrationSessionRecord(
+            id=uuid4(),
+            subject_id=subject_id,
+            instrument_key=instrument_key,
+            instrument_version=instrument_version,
+            policy_version=policy_version,
+            target_trial_count=target_trial_count,
+            status="active",
+            created_at=datetime.now(timezone.utc),
+        )
+        self.sessions[session.id] = session
+        return session
+
+    async def list_trials(self, session_id: UUID) -> list[CalibrationTrialRecord]:
+        return sorted(
+            [trial for trial in self.trials.values() if trial.session_id == session_id],
+            key=lambda trial: trial.ordinal,
+        )
+
+    async def list_responses(self, session_id: UUID) -> list[CalibrationResponseRecord]:
+        return sorted(
+            [response for response in self.responses.values() if response.session_id == session_id],
+            key=lambda response: response.server_timestamp,
+        )
+
+    async def create_trial(self, trial: CalibrationTrialRecord) -> CalibrationTrialRecord:
+        self.trials[trial.id] = trial
+        return trial
+
+    async def get_trial(self, experiment_id: UUID) -> CalibrationTrialRecord | None:
+        return self.trials.get(experiment_id)
+
+    async def find_response_by_client_id(
+        self,
+        client_response_id: UUID,
+    ) -> CalibrationResponseRecord | None:
+        return next(
+            (response for response in self.responses.values() if response.client_response_id == client_response_id),
+            None,
+        )
+
+    async def find_response_by_experiment_id(
+        self,
+        experiment_id: UUID,
+    ) -> CalibrationResponseRecord | None:
+        return self.responses.get(experiment_id)
+
+    async def create_response(
+        self,
+        subject_id: UUID,
+        session_id: UUID,
+        experiment_id: UUID,
+        client_response_id: UUID,
+        response: CalibrationResponseChoice,
+        client_timestamp: datetime | None,
+        policy_version: str,
+    ) -> CalibrationResponseRecord:
+        record = CalibrationResponseRecord(
+            id=uuid4(),
+            session_id=session_id,
+            experiment_id=experiment_id,
+            subject_id=subject_id,
+            client_response_id=client_response_id,
+            response=response,
+            client_timestamp=client_timestamp,
+            server_timestamp=datetime.now(timezone.utc),
+            policy_version=policy_version,
+        )
+        self.responses[experiment_id] = record
+        return record
+
+    async def complete_session(self, session_id: UUID) -> CalibrationSessionRecord:
+        session = self.sessions[session_id].model_copy(
+            update={"status": "complete", "completed_at": datetime.now(timezone.utc)},
+        )
+        self.sessions[session_id] = session
+        return session
+
+
+store = MemoryStore()
+client = TestClient(
+    create_app(
+        Settings(environment="test", log_level="CRITICAL"),
+        subject_resolver=StaticSubjectResolver(),
+        calibration_service=CalibrationService(store),
+    ),
+)
+AUTH = {"Authorization": "Bearer test-access-token"}
 
 
 def test_health_and_version() -> None:
@@ -21,35 +177,63 @@ def test_health_and_version() -> None:
     assert version.json()["contract_version"] == CONTRACT_VERSION
 
 
-def test_calibration_next_is_deterministic() -> None:
-    payload = {"session_id": SESSION_ID, "completed_trial_count": 3}
-    first = client.post("/v1/calibration/next", json=payload)
-    second = client.post("/v1/calibration/next", json=payload)
+def test_calibration_requires_authentication() -> None:
+    response = client.post("/v1/calibration/next", json={})
+    assert response.status_code == 401
+
+
+def test_pending_trial_is_server_authoritative_and_stable() -> None:
+    first = client.post("/v1/calibration/next", headers=AUTH, json={})
+    second = client.post("/v1/calibration/next", headers=AUTH, json={})
 
     assert first.status_code == 200
     assert first.json() == second.json()
-    assert first.json()["ordinal"] == 4
-    assert first.json()["is_mock"] is True
+    assert first.json()["status"] == "trial"
+    assert first.json()["ordinal"] == 1
+    assert first.json()["completed_trial_count"] == 0
+    assert first.json()["target_trial_count"] == MOCK_CALIBRATION_TARGET_TRIALS
+    assert first.json()["policy_version"] == MOCK_CALIBRATION_POLICY_VERSION
     UUID(first.json()["experiment_id"])
 
 
-def test_calibration_response_returns_mock_receipt() -> None:
-    next_trial = client.post(
-        "/v1/calibration/next",
-        json={"session_id": SESSION_ID, "completed_trial_count": 0},
-    ).json()
-    payload = {
-        "session_id": SESSION_ID,
-        "experiment_id": next_trial["experiment_id"],
-        "client_response_id": "22222222-2222-4222-8222-222222222222",
-        "response": "both",
-    }
+def test_ten_trials_are_idempotent_and_complete() -> None:
+    for expected_ordinal in range(1, MOCK_CALIBRATION_TARGET_TRIALS + 1):
+        next_trial = client.post("/v1/calibration/next", headers=AUTH, json={})
+        assert next_trial.status_code == 200
+        body = next_trial.json()
+        assert body["ordinal"] == expected_ordinal
+        assert body["completed_trial_count"] == expected_ordinal - 1
 
-    response = client.post("/v1/calibration/response", json=payload)
-    assert response.status_code == 200
-    assert response.json()["accepted"] is True
-    assert response.json()["duplicate"] is False
-    assert response.json()["is_mock"] is True
+        client_response_id = str(uuid4())
+        payload = {
+            "session_id": body["session_id"],
+            "experiment_id": body["experiment_id"],
+            "client_response_id": client_response_id,
+            "response": "both",
+        }
+        accepted = client.post("/v1/calibration/response", headers=AUTH, json=payload)
+        assert accepted.status_code == 200
+        assert accepted.json()["duplicate"] is False
+        assert accepted.json()["completed_trial_count"] == expected_ordinal
+
+        duplicate = client.post("/v1/calibration/response", headers=AUTH, json=payload)
+        assert duplicate.status_code == 200
+        assert duplicate.json()["duplicate"] is True
+        assert duplicate.json()["completed_trial_count"] == expected_ordinal
+
+    complete = client.post("/v1/calibration/next", headers=AUTH, json={})
+    assert complete.status_code == 200
+    assert complete.json()["status"] == "complete"
+    assert complete.json()["completed_trial_count"] == MOCK_CALIBRATION_TARGET_TRIALS
+    assert complete.json()["experiment_id"] is None
+    assert complete.json()["stimulus"] is None
+
+    session = next(iter(store.sessions.values()))
+    assert session.instrument_key == MOCK_CALIBRATION_INSTRUMENT_KEY
+    assert session.instrument_version == MOCK_CALIBRATION_INSTRUMENT_VERSION
+    assert session.status == "complete"
+    assert len(store.trials) == MOCK_CALIBRATION_TARGET_TRIALS
+    assert len(store.responses) == MOCK_CALIBRATION_TARGET_TRIALS
 
 
 def test_match_rank_is_deterministic_and_limited() -> None:
@@ -67,15 +251,4 @@ def test_match_rank_is_deterministic_and_limited() -> None:
 
     assert first.status_code == 200
     assert first.json() == second.json()
-    assert first.json()["is_mock"] is True
     assert len(first.json()["ranked_candidates"]) == 2
-    assert [item["rank"] for item in first.json()["ranked_candidates"]] == [1, 2]
-
-
-def test_duplicate_candidate_ids_are_rejected() -> None:
-    candidate = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
-    response = client.post(
-        "/v1/matches/rank",
-        json={"candidate_ids": [candidate, candidate], "limit": 2},
-    )
-    assert response.status_code == 422

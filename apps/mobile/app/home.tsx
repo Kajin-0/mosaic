@@ -9,7 +9,7 @@ import { theme } from '@/theme';
 
 const modules = [
   ['Profile', 'Phase 2', 'Authenticated and persisted user lifecycle state'],
-  ['Calibration', 'Phase 4+', 'Adaptive measurement and synthetic trials'],
+  ['Calibration', 'Phase 4', 'Authenticated, persisted ten-trial vertical slice'],
   ['Matches', 'Later', 'Directional attraction and dyadic ranking'],
 ] as const;
 
@@ -38,9 +38,9 @@ export default function HomePlaceholderScreen() {
     <AppScreen scroll>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>PROTOTYPE HOME</Text>
-        <Text style={styles.title}>Authenticated mobile shell online.</Text>
+        <Text style={styles.title}>Authenticated Mosaic infrastructure online.</Text>
         <Text style={styles.body}>
-          The private profile row is persisted through Supabase and protected by owner-only row-level security.
+          Profile state remains protected by Supabase RLS. Phase 4 calibration now crosses the authenticated FastAPI boundary and persists server-authored experimental records.
         </Text>
       </View>
 
@@ -63,9 +63,14 @@ export default function HomePlaceholderScreen() {
         ))}
       </View>
 
-      <PrimaryButton disabled={busy} onPress={() => void handleSignOut()} testID="home-sign-out">
-        {busy ? 'Signing out…' : 'Sign out'}
-      </PrimaryButton>
+      <View style={styles.actions}>
+        <PrimaryButton disabled={busy} onPress={() => router.push('/calibration')} testID="home-calibration">
+          Open calibration prototype
+        </PrimaryButton>
+        <PrimaryButton disabled={busy} onPress={() => void handleSignOut()} testID="home-sign-out">
+          {busy ? 'Signing out…' : 'Sign out'}
+        </PrimaryButton>
+      </View>
     </AppScreen>
   );
 }
@@ -149,5 +154,8 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     fontSize: 15,
     lineHeight: 22,
+  },
+  actions: {
+    gap: theme.spacing.sm,
   },
 });
