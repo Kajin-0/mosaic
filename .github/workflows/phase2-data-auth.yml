@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   validate-data-auth:
@@ -20,18 +20,17 @@ jobs:
     timeout-minutes: 25
 
     steps:
-      - name: Checkout branch
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.16.0'
+          cache: npm
 
-      - name: Resolve Phase 2 dependencies
-        run: npm install --no-audit --no-fund
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
 
       - name: Verify pinned Supabase CLI
         run: test "$(npx supabase --version)" = "2.114.0"
@@ -63,19 +62,6 @@ jobs:
       - name: Bundle mobile client for all Expo targets
         working-directory: apps/mobile
         run: npx expo export --platform all --output-dir dist-p2-ci
-
-      - name: Commit initial Phase 2 lockfile update
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          if git diff --quiet -- package-lock.json; then
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package-lock.json
-          git commit -m 'chore: lock Phase 2 dependencies'
-          git push origin HEAD:${{ github.head_ref }}
 
       - name: Stop local Supabase
         if: always()
