@@ -112,30 +112,53 @@ Phase 2 merged via PR #4 (`40c5af3dbdbe6ea61f7f74f646be7338612adb58`).
 
 ---
 
-# Phase 3 — Science Engine Skeleton and API Contract
+# Phase 3 — Science Engine Skeleton and API Contract — COMPLETE
 
 ## Objective
 Establish the boundary around Mosaic's scientific algorithms before implementing those algorithms.
 
-## Implementation
-- Create `services/engine` using Python + FastAPI.
-- Add typed configuration and structured logging.
-- Minimum endpoints:
+## Implemented
+- Python 3.13 `services/engine` project using FastAPI, Pydantic, Pydantic Settings, Uvicorn, uv, Ruff, and pytest.
+- Typed environment configuration and structured JSON request logging with request IDs and latency.
+- Explicit version metadata for the engine, API contract, mock calibration policy, and mock ranker.
+- Endpoints:
   - `GET /health`
   - `GET /version`
   - `POST /v1/calibration/next`
   - `POST /v1/calibration/response`
   - `POST /v1/matches/rank`
-- Calibration and matching endpoints initially return deterministic mock results.
-- Define request/response schemas independently from model implementation.
-- Generate or maintain TypeScript contracts used by the mobile client.
-- Add API versioning from day one.
+- Deterministic mock calibration and ranking behavior, explicitly marked `is_mock`.
+- Pydantic request/response models with strict extra-field rejection and stable operation IDs.
+- `packages/contracts` workspace generated from FastAPI's OpenAPI document.
+- ADR 0003 establishes FastAPI/OpenAPI as the sole wire-contract authority; TypeScript DTOs are generated rather than independently maintained.
+- Committed Python `uv.lock`, npm lockfile update, OpenAPI artifact, and generated TypeScript declarations.
+- Permanent read-only CI uses frozen Python dependencies, `npm ci`, Python lint/format/tests, OpenAPI regeneration, TypeScript generation/typecheck, contract-surface validation, and a zero-diff generated-contract gate.
 
 ## Design invariant
-The mobile application never imports or reimplements scientific equations. It consumes stable API contracts.
+The mobile application never imports or reimplements scientific equations. It consumes stable generated API contracts. Scientific implementations can later replace deterministic mocks behind that boundary or intentionally revise the contract with an explicit reviewable diff.
 
-## Exit criteria
-A contract test verifies that the TypeScript-facing API schema and FastAPI schema agree.
+## Exit criteria — satisfied
+A clean GitHub runner verifies:
+
+```text
+locked Python + Node environments
+        ↓
+FastAPI lint / format / tests
+        ↓
+OpenAPI regenerated from application
+        ↓
+TypeScript contract regenerated from OpenAPI
+        ↓
+TypeScript contract typechecks
+        ↓
+contract surface test passes
+        ↓
+generated artifacts have zero diff
+```
+
+Authentication/authorization of engine requests and persistence remain deliberately deferred to Phase 4.
+
+Phase 3 implemented in PR #5.
 
 ---
 
