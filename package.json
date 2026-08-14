@@ -27,7 +27,8 @@
     "contracts:generate": "npm run generate --workspace @mosaic/contracts",
     "contracts:check": "npm run check --workspace @mosaic/contracts && node scripts/test-api-contract.mjs",
     "contracts:sync": "npm run engine:openapi && npm run contracts:generate",
-    "phase4:test": "node scripts/test-phase4-vertical-slice.mjs"
+    "phase4:test": "node scripts/test-phase4-vertical-slice.mjs",
+    "phase5:test": "node scripts/test-phase5-measurement.mjs"
   },
   "devDependencies": {
     "supabase": "2.114.0"
