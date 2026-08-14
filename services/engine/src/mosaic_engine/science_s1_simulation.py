@@ -71,18 +71,14 @@ def _cholesky(matrix: Sequence[Sequence[float]]) -> list[list[float]]:
     lower = [[0.0] * dimension for _ in range(dimension)]
     for row in range(dimension):
         for column in range(row + 1):
-            previous = sum(
-                lower[row][index] * lower[column][index] for index in range(column)
-            )
+            previous = sum(lower[row][index] * lower[column][index] for index in range(column))
             if row == column:
                 diagonal = float(matrix[row][row]) - previous
                 if diagonal <= 0.0:
                     raise ValueError("matrix must be positive definite")
                 lower[row][column] = sqrt(diagonal)
             else:
-                lower[row][column] = (
-                    float(matrix[row][column]) - previous
-                ) / lower[column][column]
+                lower[row][column] = (float(matrix[row][column]) - previous) / lower[column][column]
     return lower
 
 
@@ -95,18 +91,14 @@ def _solve_spd(matrix: Sequence[Sequence[float]], right: Sequence[float]) -> Vec
     forward = [0.0] * dimension
     for row in range(dimension):
         forward[row] = (
-            float(right[row])
-            - sum(lower[row][column] * forward[column] for column in range(row))
+            float(right[row]) - sum(lower[row][column] * forward[column] for column in range(row))
         ) / lower[row][row]
 
     solution = [0.0] * dimension
     for row in range(dimension - 1, -1, -1):
         solution[row] = (
             forward[row]
-            - sum(
-                lower[column][row] * solution[column]
-                for column in range(row + 1, dimension)
-            )
+            - sum(lower[column][row] * solution[column] for column in range(row + 1, dimension))
         ) / lower[row][row]
     return tuple(solution)
 
@@ -120,8 +112,7 @@ def _inverse_spd(matrix: Sequence[Sequence[float]]) -> Matrix:
         columns.append(_solve_spd(matrix, basis))
 
     return tuple(
-        tuple(columns[column][row] for column in range(dimension))
-        for row in range(dimension)
+        tuple(columns[column][row] for column in range(dimension)) for row in range(dimension)
     )
 
 
@@ -135,8 +126,7 @@ def _add_matrices(
     right: Sequence[Sequence[float]],
 ) -> Matrix:
     if len(left) != len(right) or any(
-        len(left_row) != len(right_row)
-        for left_row, right_row in zip(left, right, strict=True)
+        len(left_row) != len(right_row) for left_row, right_row in zip(left, right, strict=True)
     ):
         raise ValueError("matrix dimensions must agree")
     return tuple(
@@ -220,10 +210,7 @@ def fit_logistic_laplace(
     if tolerance <= 0.0 or max_iterations <= 0:
         raise ValueError("tolerance and max_iterations must be positive")
 
-    alpha = [
-        float(value)
-        for value in (prior_mean if initial_mean is None else initial_mean)
-    ]
+    alpha = [float(value) for value in (prior_mean if initial_mean is None else initial_mean)]
     if len(alpha) != len(prior_mean):
         raise ValueError("initial_mean dimension must match prior")
 
@@ -253,8 +240,7 @@ def fit_logistic_laplace(
         accepted_step = False
         for _ in range(30):
             candidate = [
-                value - step_scale * step
-                for value, step in zip(alpha, newton_step, strict=True)
+                value - step_scale * step for value, step in zip(alpha, newton_step, strict=True)
             ]
             candidate_value = _negative_log_posterior(
                 candidate,
@@ -262,9 +248,7 @@ def fit_logistic_laplace(
                 prior_mean,
                 prior_variances,
             )
-            if candidate_value <= (
-                current_value - 1e-4 * step_scale * directional_derivative
-            ):
+            if candidate_value <= (current_value - 1e-4 * step_scale * directional_derivative):
                 alpha = candidate
                 accepted_step = True
                 break
@@ -298,10 +282,7 @@ def boundary_pair_score(
 ) -> float:
     probability_a = acceptance_probability(posterior_mean, features_a)
     probability_b = acceptance_probability(posterior_mean, features_b)
-    return (
-        probability_a * (1.0 - probability_a)
-        + probability_b * (1.0 - probability_b)
-    )
+    return probability_a * (1.0 - probability_a) + probability_b * (1.0 - probability_b)
 
 
 def d_optimal_pair_score(
@@ -312,8 +293,7 @@ def d_optimal_pair_score(
     information = pair_fisher_information(posterior.mean, features_a, features_b)
     updated_precision = _add_matrices(posterior.precision, information)
     return 0.5 * (
-        _log_determinant_spd(updated_precision)
-        - _log_determinant_spd(posterior.precision)
+        _log_determinant_spd(updated_precision) - _log_determinant_spd(posterior.precision)
     )
 
 
@@ -371,8 +351,7 @@ def evaluate_ground_truth(
         acceptance_probability(true_alpha, features) for features in heldout_features
     ]
     predicted_probabilities = [
-        acceptance_probability(posterior.mean, features)
-        for features in heldout_features
+        acceptance_probability(posterior.mean, features) for features in heldout_features
     ]
 
     expected_log_loss = 0.0
@@ -383,9 +362,7 @@ def evaluate_ground_truth(
         strict=True,
     ):
         clipped = min(max(prediction, 1e-15), 1.0 - 1e-15)
-        expected_log_loss += (
-            -truth * log(clipped) - (1.0 - truth) * log(1.0 - clipped)
-        )
+        expected_log_loss += -truth * log(clipped) - (1.0 - truth) * log(1.0 - clipped)
         probability_mse += (truth - prediction) ** 2
     expected_log_loss /= len(heldout_features)
     probability_mse /= len(heldout_features)
@@ -415,8 +392,7 @@ def evaluate_ground_truth(
         / len(true_alpha)
     )
     interval_coverage = sum(
-        abs(float(truth) - posterior.mean[index])
-        <= 1.96 * sqrt(posterior.covariance[index][index])
+        abs(float(truth) - posterior.mean[index]) <= 1.96 * sqrt(posterior.covariance[index][index])
         for index, truth in enumerate(true_alpha)
     ) / len(true_alpha)
 
