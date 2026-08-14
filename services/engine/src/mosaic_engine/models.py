@@ -31,6 +31,11 @@ class CalibrationResponseChoice(StrEnum):
     NEITHER = "neither"
 
 
+class CalibrationNextStatus(StrEnum):
+    TRIAL = "trial"
+    COMPLETE = "complete"
+
+
 class CalibrationStimulusOption(ApiModel):
     id: str
     label: str
@@ -43,17 +48,22 @@ class CalibrationStimulus(ApiModel):
 
 
 class CalibrationNextRequest(ApiModel):
-    session_id: UUID
-    completed_trial_count: int = Field(ge=0, le=10_000)
+    pass
 
 
 class CalibrationNextResponse(ApiModel):
     session_id: UUID
-    experiment_id: UUID
-    ordinal: int = Field(ge=1)
+    status: CalibrationNextStatus
+    completed_trial_count: int = Field(ge=0)
+    target_trial_count: int = Field(ge=1)
     policy_version: str
-    stimulus: CalibrationStimulus
-    response_options: list[CalibrationResponseChoice]
+    instrument_version: str
+    experiment_id: UUID | None = None
+    ordinal: int | None = Field(default=None, ge=1)
+    stimulus_id: str | None = None
+    stimulus_version: str | None = None
+    stimulus: CalibrationStimulus | None = None
+    response_options: list[CalibrationResponseChoice] = Field(default_factory=list)
     is_mock: Literal[True] = True
 
 
@@ -67,11 +77,15 @@ class CalibrationResponseRequest(ApiModel):
 
 class CalibrationResponseReceipt(ApiModel):
     accepted: Literal[True] = True
-    duplicate: Literal[False] = False
+    duplicate: bool
     session_id: UUID
     experiment_id: UUID
     client_response_id: UUID
     policy_version: str
+    completed_trial_count: int = Field(ge=1)
+    target_trial_count: int = Field(ge=1)
+    session_complete: bool
+    server_timestamp: datetime
     is_mock: Literal[True] = True
 
 

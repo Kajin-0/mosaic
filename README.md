@@ -10,7 +10,8 @@ Mosaic is an experimental mobile matchmaking system being developed around the o
 - Phase 1: Expo/React Native mobile shell — complete
 - Phase 2: Supabase/PostgreSQL authentication + private profile/RLS foundation — complete
 - Phase 3: FastAPI science-engine skeleton + generated versioned API contracts — complete
-- Phase 4: authenticated mobile → engine → PostgreSQL calibration vertical slice — next
+- Phase 4: authenticated mobile → engine → PostgreSQL calibration vertical slice — complete
+- Phase 5: onboarding and measurement infrastructure — next
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the phased implementation plan and exit criteria.
 
@@ -22,5 +23,5 @@ services/engine/      Python / FastAPI server-authoritative engine
 packages/contracts/   OpenAPI artifact + generated TypeScript API contracts
 supabase/             migrations, seed data, local configuration
 scripts/              development and integration utilities
-docs/                 architecture, ADRs, and roadmap
+docs/                 architecture, ADRs, protocols, and roadmap
 ```

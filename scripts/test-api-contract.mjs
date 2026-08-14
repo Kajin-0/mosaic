@@ -28,10 +28,27 @@ for (const schemaName of [
   'CalibrationNextResponse',
   'CalibrationResponseRequest',
   'CalibrationResponseReceipt',
+  'CalibrationNextStatus',
   'MatchRankRequest',
   'MatchRankResponse',
 ]) {
   assert.ok(contract.components.schemas[schemaName], `missing schema ${schemaName}`);
 }
 
-console.log('Mosaic Phase 3 OpenAPI contract surface check passed.');
+const nextRequest = contract.components.schemas.CalibrationNextRequest;
+assert.deepEqual(nextRequest.properties ?? {}, {}, 'next-trial request must not accept client-owned progress state');
+assert.ok(contract.components.securitySchemes.HTTPBearer, 'missing bearer security scheme');
+assert.deepEqual(contract.paths['/v1/calibration/next'].post.security, [{ HTTPBearer: [] }]);
+assert.deepEqual(contract.paths['/v1/calibration/response'].post.security, [{ HTTPBearer: [] }]);
+
+const nextResponse = contract.components.schemas.CalibrationNextResponse.properties;
+assert.ok(nextResponse.completed_trial_count);
+assert.ok(nextResponse.target_trial_count);
+assert.ok(nextResponse.status);
+
+const receipt = contract.components.schemas.CalibrationResponseReceipt.properties;
+assert.ok(receipt.duplicate);
+assert.ok(receipt.session_complete);
+assert.ok(receipt.server_timestamp);
+
+console.log('Mosaic Phase 4 OpenAPI contract surface check passed.');

@@ -1,13 +1,20 @@
 import logging
 import time
 from collections.abc import Awaitable, Callable
-from uuid import uuid4
+from typing import Annotated, Protocol
+from uuid import UUID, uuid4
 
-from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, Response
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from mosaic_engine.calibration import (
+    CalibrationConflictError,
+    CalibrationNotFoundError,
+    CalibrationService,
+)
 from mosaic_engine.config import Settings, get_settings
 from mosaic_engine.logging import configure_logging
-from mosaic_engine.mock import accept_calibration_response, next_calibration_trial, rank_candidates
+from mosaic_engine.mock import rank_candidates
 from mosaic_engine.models import (
     CalibrationNextRequest,
     CalibrationNextResponse,
@@ -17,6 +24,12 @@ from mosaic_engine.models import (
     MatchRankRequest,
     MatchRankResponse,
     VersionResponse,
+)
+from mosaic_engine.supabase import (
+    SupabaseAuthenticationError,
+    SupabaseConfigurationError,
+    SupabaseGateway,
+    SupabasePersistenceError,
 )
 from mosaic_engine.version import (
     API_VERSION,
@@ -29,16 +42,48 @@ from mosaic_engine.version import (
 RequestHandler = Callable[[Request], Awaitable[Response]]
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+class SubjectResolver(Protocol):
+    async def resolve_subject(self, access_token: str | None) -> UUID: ...
+
+
+class SupabaseSubjectResolver:
+    def __init__(self, gateway: SupabaseGateway) -> None:
+        self._gateway = gateway
+
+    async def resolve_subject(self, access_token: str | None) -> UUID:
+        user_id = await self._gateway.authenticate_user(access_token)
+        return await self._gateway.get_or_create_subject(user_id)
+
+
+def create_app(
+    settings: Settings | None = None,
+    *,
+    subject_resolver: SubjectResolver | None = None,
+    calibration_service: CalibrationService | None = None,
+) -> FastAPI:
     resolved = settings or get_settings()
     configure_logging(resolved.log_level)
+
+    gateway: SupabaseGateway | None = None
+    configuration_error: SupabaseConfigurationError | None = None
+    if subject_resolver is None or calibration_service is None:
+        try:
+            gateway = SupabaseGateway(resolved)
+        except SupabaseConfigurationError as exc:
+            configuration_error = exc
+
+    if subject_resolver is None and gateway is not None:
+        subject_resolver = SupabaseSubjectResolver(gateway)
+    if calibration_service is None and gateway is not None:
+        calibration_service = CalibrationService(gateway)
 
     app = FastAPI(
         title="Mosaic Engine API",
         version=CONTRACT_VERSION,
         description=(
-            "Server-authoritative Mosaic API boundary. Phase 3 calibration and ranking behavior "
-            "is deterministic mock infrastructure, not relationship-science inference."
+            "Server-authoritative Mosaic API boundary. Phase 4 calibration behavior is a "
+            "deterministic persisted infrastructure trial, not validated relationship-science "
+            "inference."
         ),
         docs_url=None if resolved.environment == "production" else "/docs",
         redoc_url=None if resolved.environment == "production" else "/redoc",
@@ -52,17 +97,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response = await call_next(request)
         duration_ms = round((time.perf_counter() - started) * 1000, 3)
         response.headers["x-request-id"] = request_id
-        logging.getLogger("mosaic.http").info(
-            "request_complete",
-            extra={
-                "event": "http_request",
-                "request_id": request_id,
-                "method": request.method,
-                "path": request.url.path,
-                "status_code": response.status_code,
-                "duration_ms": duration_ms,
-            },
-        )
+        event = {
+            "event": "http_request",
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "duration_ms": duration_ms,
+        }
+        subject_id = getattr(request.state, "subject_id", None)
+        if subject_id is not None:
+            event["subject_id"] = str(subject_id)
+        logging.getLogger("mosaic.http").info("request_complete", extra=event)
         return response
 
     @app.get("/health", response_model=HealthResponse, operation_id="getHealth")
@@ -80,6 +126,37 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             ranker_model_version=MOCK_RANKER_MODEL_VERSION,
         )
 
+    bearer = HTTPBearer(auto_error=False)
+
+    async def require_subject(
+        request: Request,
+        credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    ) -> UUID:
+        if configuration_error is not None or subject_resolver is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is not configured.",
+            )
+        token = (
+            credentials.credentials
+            if credentials and credentials.scheme.lower() == "bearer"
+            else None
+        )
+        try:
+            subject_id = await subject_resolver.resolve_subject(token)
+        except SupabaseAuthenticationError as exc:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or missing access token.",
+            ) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is unavailable.",
+            ) from exc
+        request.state.subject_id = subject_id
+        return subject_id
+
     v1 = APIRouter(prefix="/v1")
 
     @v1.post(
@@ -87,16 +164,49 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         response_model=CalibrationNextResponse,
         operation_id="getNextCalibrationTrial",
     )
-    def calibration_next(payload: CalibrationNextRequest) -> CalibrationNextResponse:
-        return next_calibration_trial(payload)
+    async def calibration_next(
+        payload: CalibrationNextRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> CalibrationNextResponse:
+        del payload
+        if calibration_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is not configured.",
+            )
+        try:
+            return await calibration_service.next_trial(subject_id)
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is unavailable.",
+            ) from exc
 
     @v1.post(
         "/calibration/response",
         response_model=CalibrationResponseReceipt,
         operation_id="submitCalibrationResponse",
     )
-    def calibration_response(payload: CalibrationResponseRequest) -> CalibrationResponseReceipt:
-        return accept_calibration_response(payload)
+    async def calibration_response(
+        payload: CalibrationResponseRequest,
+        subject_id: Annotated[UUID, Depends(require_subject)],
+    ) -> CalibrationResponseReceipt:
+        if calibration_service is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is not configured.",
+            )
+        try:
+            return await calibration_service.submit_response(subject_id, payload)
+        except CalibrationNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        except CalibrationConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except SupabasePersistenceError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Calibration persistence is unavailable.",
+            ) from exc
 
     @v1.post(
         "/matches/rank",

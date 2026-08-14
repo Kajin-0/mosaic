@@ -4,6 +4,8 @@ export type { components, operations, paths } from './generated';
 
 export type HealthResponse = components['schemas']['HealthResponse'];
 export type VersionResponse = components['schemas']['VersionResponse'];
+export type CalibrationResponseChoice = components['schemas']['CalibrationResponseChoice'];
+export type CalibrationNextStatus = components['schemas']['CalibrationNextStatus'];
 export type CalibrationNextRequest = components['schemas']['CalibrationNextRequest'];
 export type CalibrationNextResponse = components['schemas']['CalibrationNextResponse'];
 export type CalibrationResponseRequest = components['schemas']['CalibrationResponseRequest'];

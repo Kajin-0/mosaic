@@ -1,11 +1,12 @@
 [project]
 name = "mosaic-engine"
-version = "0.1.0"
+version = "0.2.0"
 description = "Server-authoritative API boundary for Mosaic scientific and application logic."
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
   "fastapi==0.141.1",
+  "httpx==0.28.1",
   "pydantic==2.13.4",
   "pydantic-settings==2.15.0",
   "uvicorn==0.52.3",
@@ -13,7 +14,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-  "httpx>=0.28,<0.29",
   "pytest>=9,<10",
   "ruff==0.16.3",
 ]

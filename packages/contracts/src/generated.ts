@@ -94,22 +94,15 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /** CalibrationNextRequest */
-        CalibrationNextRequest: {
-            /** Completed Trial Count */
-            completed_trial_count: number;
-            /**
-             * Session Id
-             * Format: uuid
-             */
-            session_id: string;
-        };
+        CalibrationNextRequest: Record<string, never>;
         /** CalibrationNextResponse */
         CalibrationNextResponse: {
-            /**
-             * Experiment Id
-             * Format: uuid
-             */
-            experiment_id: string;
+            /** Completed Trial Count */
+            completed_trial_count: number;
+            /** Experiment Id */
+            experiment_id?: string | null;
+            /** Instrument Version */
+            instrument_version: string;
             /**
              * Is Mock
              * @default true
@@ -117,18 +110,30 @@ export interface components {
              */
             is_mock: true;
             /** Ordinal */
-            ordinal: number;
+            ordinal?: number | null;
             /** Policy Version */
             policy_version: string;
             /** Response Options */
-            response_options: components["schemas"]["CalibrationResponseChoice"][];
+            response_options?: components["schemas"]["CalibrationResponseChoice"][];
             /**
              * Session Id
              * Format: uuid
              */
             session_id: string;
-            stimulus: components["schemas"]["CalibrationStimulus"];
+            status: components["schemas"]["CalibrationNextStatus"];
+            stimulus?: components["schemas"]["CalibrationStimulus"] | null;
+            /** Stimulus Id */
+            stimulus_id?: string | null;
+            /** Stimulus Version */
+            stimulus_version?: string | null;
+            /** Target Trial Count */
+            target_trial_count: number;
         };
+        /**
+         * CalibrationNextStatus
+         * @enum {string}
+         */
+        CalibrationNextStatus: "trial" | "complete";
         /**
          * CalibrationResponseChoice
          * @enum {string}
@@ -147,12 +152,10 @@ export interface components {
              * Format: uuid
              */
             client_response_id: string;
-            /**
-             * Duplicate
-             * @default false
-             * @constant
-             */
-            duplicate: false;
+            /** Completed Trial Count */
+            completed_trial_count: number;
+            /** Duplicate */
+            duplicate: boolean;
             /**
              * Experiment Id
              * Format: uuid
@@ -167,10 +170,19 @@ export interface components {
             /** Policy Version */
             policy_version: string;
             /**
+             * Server Timestamp
+             * Format: date-time
+             */
+            server_timestamp: string;
+            /** Session Complete */
+            session_complete: boolean;
+            /**
              * Session Id
              * Format: uuid
              */
             session_id: string;
+            /** Target Trial Count */
+            target_trial_count: number;
         };
         /** CalibrationResponseRequest */
         CalibrationResponseRequest: {

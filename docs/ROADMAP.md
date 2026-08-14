@@ -156,66 +156,64 @@ contract surface test passes
 generated artifacts have zero diff
 ```
 
-Authentication/authorization of engine requests and persistence remain deliberately deferred to Phase 4.
-
-Phase 3 implemented in PR #5.
+Phase 3 merged via PR #5 (`9674b5981b2abdbe42055e7ddb51c2777fb540d9`).
 
 ---
 
-# Phase 4 — First End-to-End Vertical Slice
+# Phase 4 — First End-to-End Vertical Slice — COMPLETE
 
 ## Objective
-Prove the architecture works before adding questionnaires, image generation, or matching intelligence.
+Prove the authenticated mobile → API → persistent-data architecture before adding questionnaires, synthetic images, or matching intelligence.
 
-## Flow
+## Implemented
+- Supabase access tokens are validated by the FastAPI engine before calibration access.
+- Authentication identity is mapped server-side to a separate pseudonymous `science_subjects.subject_id`.
+- The engine, not the mobile client, is authoritative for calibration sessions, authored trials, progress, and evidence ingestion.
+- A server-only Supabase credential performs science-table persistence; `anon` and `authenticated` clients have no direct write authority over those tables.
+- Versioned `calibration_sessions`, immutable `calibration_trials`, and immutable `calibration_responses` persist the complete experiment history.
+- Database triggers reject UPDATE and DELETE on raw trials and responses even through the privileged server role.
+- `client_response_id` provides response-ingestion idempotency. Exact retries return a duplicate receipt; conflicting reuse is rejected.
+- Repeated `/v1/calibration/next` calls return the same unanswered experiment rather than creating parallel pending trials.
+- Client-owned progress counters were removed from the API contract. Persisted server evidence determines the next ordinal.
+- The Expo client has a real authenticated calibration route using only generated TypeScript API contracts.
+- The Phase 4 instrument is a deterministic 10-trial text-pair protocol with `left`, `right`, `both`, and `neither` responses. It is infrastructure scaffolding, not a validated relationship instrument.
+- ADR 0004 records the server-authoritative persistence boundary; `docs/protocols/phase4-calibration-vertical-slice.md` records the replayable test protocol.
+- Permanent Phase 4 CI is read-only, installs frozen dependency graphs, rebuilds Supabase from migrations, regenerates API contracts, validates the mobile client, bundles all Expo platforms, starts the real FastAPI process, executes the authenticated ten-trial protocol, and rejects dependency/generated-contract drift.
+
+## Exit criteria — satisfied
+A clean GitHub runner proves:
 
 ```text
-mobile app
-   ↓ authenticated request
-science API
-   ↓
-PostgreSQL/Supabase
-   ↓
-science API returns deterministic next action
-   ↓
-mobile renders result
-   ↓
-user response is persisted
+authenticated user
+        ↓
+server creates pseudonymous science subject + session
+        ↓
+10 sequential authored trials
+        ↓
+exact retry remains idempotent
+        ↓
+re-authenticate after trial 5
+        ↓
+resume same server-owned session at trial 6
+        ↓
+complete trial 10
+        ↓
+reconstruct 10 trials + 10 responses from PostgreSQL
+        ↓
+direct authenticated-client science write rejected
+        ↓
+trial/response mutation probes rejected
+        ↓
+OpenAPI/TypeScript/lock artifacts remain zero-diff
 ```
 
-## Minimal feature
-Use a synthetic text-only calibration item initially. Example:
+On the permanent Phase 4 head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, and Phase 4 vertical-slice workflows all pass together.
 
-```text
-A / B / Both / Neither
-```
-
-No AI image generation yet.
-
-## Required event fields
-Every experiment/response must retain:
-- immutable experiment ID
-- user pseudonymous ID
-- stimulus/version ID
-- model/policy version
-- response
-- server timestamp
-- client timestamp where useful
-- presentation order
-- experiment metadata required to reproduce the decision
-
-## Exit criteria
-- One authenticated user can complete 10 sequential mock calibration trials.
-- Restarting the app does not lose state.
-- Duplicate submission is idempotent.
-- A complete event history can reconstruct the session.
-- No scientific model is needed for the test to pass.
-
-This is the first major infrastructure milestone.
+Phase 4 implemented in PR #6.
 
 ---
 
-# Phase 5 — Onboarding and Measurement Infrastructure
+# Phase 5 — Onboarding and Measurement Infrastructure — ACTIVE
 
 ## Objective
 Build the general measurement machinery required by Mosaic without yet claiming psychometric validity.

@@ -14,10 +14,12 @@
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
+    "@mosaic/contracts": "0.1.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "2.112.3",
     "expo": "~57.0.8",
     "expo-constants": "~57.0.7",
+    "expo-crypto": "~57.0.1",
     "expo-linking": "~57.0.4",
     "expo-router": "~57.0.8",
     "expo-status-bar": "~57.0.1",
