@@ -270,7 +270,7 @@ presentation/response/score-provenance mutation rejected
 
 On the permanent Phase 5 code head, the Phase 1 mobile, Phase 2 Supabase/Auth/RLS, Phase 3 engine/contracts, Phase 4 vertical-slice, and Phase 5 measurement workflows all pass together.
 
-Phase 5 implemented in PR #7.
+Phase 5 merged via PR #7 (`1623f7a13def648aa034ee6d946645179e65468f`).
 
 ---
 
