@@ -26,7 +26,8 @@
     "engine:openapi": "uv run --project services/engine python -m mosaic_engine.export_openapi packages/contracts/openapi.json",
     "contracts:generate": "npm run generate --workspace @mosaic/contracts",
     "contracts:check": "npm run check --workspace @mosaic/contracts && node scripts/test-api-contract.mjs",
-    "contracts:sync": "npm run engine:openapi && npm run contracts:generate"
+    "contracts:sync": "npm run engine:openapi && npm run contracts:generate",
+    "phase4:test": "node scripts/test-phase4-vertical-slice.mjs"
   },
   "devDependencies": {
     "supabase": "2.114.0"
