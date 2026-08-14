@@ -366,12 +366,9 @@ def evaluate_ground_truth(
     ):
         clipped_truth = min(max(truth, 1e-15), 1.0 - 1e-15)
         clipped_prediction = min(max(prediction, 1e-15), 1.0 - 1e-15)
-        oracle_log_loss += (
-            -truth * log(clipped_truth) - (1.0 - truth) * log(1.0 - clipped_truth)
-        )
-        expected_log_loss += (
-            -truth * log(clipped_prediction)
-            - (1.0 - truth) * log(1.0 - clipped_prediction)
+        oracle_log_loss += -truth * log(clipped_truth) - (1.0 - truth) * log(1.0 - clipped_truth)
+        expected_log_loss += -truth * log(clipped_prediction) - (1.0 - truth) * log(
+            1.0 - clipped_prediction
         )
         probability_mse += (truth - prediction) ** 2
     oracle_log_loss /= len(heldout_features)
