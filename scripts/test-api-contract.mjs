@@ -52,7 +52,6 @@ for (const schemaName of [
   'SyntheticCalibrationNextStatus',
   'SyntheticCalibrationPair',
   'SyntheticAsset',
-  'SyntheticStimulusSpecification',
   'SyntheticGenerationProvenance',
   'MatchRankRequest',
   'MatchRankResponse',
