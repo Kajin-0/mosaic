@@ -2,8 +2,18 @@
   "name": "mosaic",
   "version": "0.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "scripts": {
+    "mobile:start": "npm run start --workspace @mosaic/mobile",
+    "mobile:android": "npm run android --workspace @mosaic/mobile",
+    "mobile:ios": "npm run ios --workspace @mosaic/mobile",
+    "mobile:web": "npm run web --workspace @mosaic/mobile",
+    "mobile:check": "npm run check --workspace @mosaic/mobile"
+  }
 }

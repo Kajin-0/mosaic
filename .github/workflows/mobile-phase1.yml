@@ -1,0 +1,42 @@
+name: Mobile Phase 1
+
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/mobile-phase1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck, lint, and smoke test
+        run: npm run mobile:check
+
+      - name: Validate Expo public config
+        working-directory: apps/mobile
+        run: npx expo config --type public >/tmp/mosaic-expo-config.json
+
+      - name: Bundle all Expo platforms
+        working-directory: apps/mobile
+        run: npx expo export --platform all --output-dir dist-ci
