@@ -138,6 +138,14 @@ class SyntheticSupabaseStore:
         )
         return SyntheticStimulusSpecRecord.model_validate(rows[0])
 
+    async def get_synthetic_spec(self, spec_id: UUID) -> SyntheticStimulusSpecRecord | None:
+        rows = await self._gateway._service_request(
+            "GET",
+            "/rest/v1/synthetic_stimulus_specs",
+            params={"select": "*", "id": f"eq.{spec_id}", "limit": "1"},
+        )
+        return SyntheticStimulusSpecRecord.model_validate(rows[0]) if rows else None
+
     async def create_synthetic_asset(
         self,
         record: SyntheticAssetRecord,
@@ -160,6 +168,14 @@ class SyntheticSupabaseStore:
         )
         return SyntheticAssetRecord.model_validate(rows[0])
 
+    async def get_synthetic_asset(self, asset_id: UUID) -> SyntheticAssetRecord | None:
+        rows = await self._gateway._service_request(
+            "GET",
+            "/rest/v1/synthetic_assets",
+            params={"select": "*", "id": f"eq.{asset_id}", "limit": "1"},
+        )
+        return SyntheticAssetRecord.model_validate(rows[0]) if rows else None
+
     async def create_synthetic_qc_event(
         self,
         record: SyntheticQcEventRecord,
@@ -180,6 +196,17 @@ class SyntheticSupabaseStore:
             expected={201},
         )
         return SyntheticQcEventRecord.model_validate(rows[0])
+
+    async def get_synthetic_qc_event(
+        self,
+        qc_event_id: UUID,
+    ) -> SyntheticQcEventRecord | None:
+        rows = await self._gateway._service_request(
+            "GET",
+            "/rest/v1/synthetic_qc_events",
+            params={"select": "*", "id": f"eq.{qc_event_id}", "limit": "1"},
+        )
+        return SyntheticQcEventRecord.model_validate(rows[0]) if rows else None
 
     async def create_synthetic_pair(
         self,
@@ -210,14 +237,6 @@ class SyntheticSupabaseStore:
             params={"select": "*", "id": f"eq.{pair_id}", "limit": "1"},
         )
         return SyntheticPairRecord.model_validate(rows[0]) if rows else None
-
-    async def get_synthetic_asset(self, asset_id: UUID) -> SyntheticAssetRecord | None:
-        rows = await self._gateway._service_request(
-            "GET",
-            "/rest/v1/synthetic_assets",
-            params={"select": "*", "id": f"eq.{asset_id}", "limit": "1"},
-        )
-        return SyntheticAssetRecord.model_validate(rows[0]) if rows else None
 
     async def list_synthetic_responses(
         self,
