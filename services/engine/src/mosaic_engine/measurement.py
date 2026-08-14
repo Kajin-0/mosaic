@@ -150,10 +150,7 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-rating-conflict",
         RatingItem(
-            prompt=(
-                "When a disagreement happens, how strongly do you prefer addressing it "
-                "quickly?"
-            ),
+            prompt="When a disagreement happens, how strongly do you prefer addressing it quickly?",
             dimension_key="conflict_timing",
             min_label="Prefer substantial time first",
             max_label="Prefer addressing it immediately",
@@ -192,10 +189,7 @@ _ITEM_BANK: tuple[MockInstrumentItem, ...] = (
     MockInstrumentItem(
         "p5-scenario-family",
         ScenarioItem(
-            prompt=(
-                "Both families expect you for the same holiday. What approach feels most "
-                "natural?"
-            ),
+            prompt="Both families expect you for the same holiday. What approach feels most natural?",
             dimension_key="family_coordination",
             options=[
                 _option("alternate", "Create an explicit alternating plan"),
@@ -503,10 +497,7 @@ class MeasurementService:
     ) -> MeasurementPresentationRecord:
         presentation_id = uuid5(
             _MEASUREMENT_NAMESPACE,
-            (
-                f"{session.selection_policy_version}:{session.id}:"
-                f"{ordinal}:{item_spec.item_id}"
-            ),
+            (f"{session.selection_policy_version}:{session.id}:{ordinal}:{item_spec.item_id}"),
         )
         return MeasurementPresentationRecord(
             id=presentation_id,
@@ -627,9 +618,7 @@ class MeasurementService:
         presentations: list[MeasurementPresentationRecord],
         responses: list[MeasurementResponseRecord],
     ) -> list[tuple[MeasurementPresentationRecord, MeasurementResponseRecord]]:
-        response_by_presentation = {
-            response.presentation_id: response for response in responses
-        }
+        response_by_presentation = {response.presentation_id: response for response in responses}
         return [
             (presentation, response_by_presentation[presentation.id])
             for presentation in sorted(presentations, key=lambda value: value.ordinal)
