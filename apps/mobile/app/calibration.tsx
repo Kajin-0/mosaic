@@ -130,7 +130,7 @@ export default function CalibrationScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <View style={styles.actions}>
-        {trial?.response_options.map((choice) => (
+        {(trial?.response_options ?? []).map((choice) => (
           <PrimaryButton key={choice} disabled={busy} onPress={() => choose(choice)}>
             {choiceLabels[choice]}
           </PrimaryButton>
