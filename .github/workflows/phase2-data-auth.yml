@@ -1,0 +1,68 @@
+name: Phase 2 Data and Auth
+
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile/**'
+      - 'supabase/**'
+      - 'scripts/test-supabase-auth.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/phase2-data-auth.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-data-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify pinned Supabase CLI
+        run: test "$(npx supabase --version)" = "2.114.0"
+
+      - name: Verify Docker
+        run: docker info >/dev/null
+
+      - name: Start local Supabase
+        run: npx supabase start
+
+      - name: Rebuild database from migrations and seed
+        run: npx supabase db reset
+
+      - name: Export local client configuration
+        shell: bash
+        run: |
+          eval "$(npx supabase status -o env)"
+          echo "API_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "ANON_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY" >> "$GITHUB_ENV"
+
+      - name: Test authenticated profile ownership and RLS
+        run: node scripts/test-supabase-auth.mjs
+
+      - name: Validate mobile auth integration
+        run: npm run mobile:check
+
+      - name: Bundle mobile client for all Expo targets
+        working-directory: apps/mobile
+        run: npx expo export --platform all --output-dir dist-p2-ci
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop --no-backup || true

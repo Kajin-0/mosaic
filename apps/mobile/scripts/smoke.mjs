@@ -1,28 +1,31 @@
-import { access, readFile } from 'node:fs/promises';
-import path from 'node:path';
-import process from 'node:process';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
-const mobileRoot = path.resolve(import.meta.dirname, '..');
-const requiredRoutes = ['_layout.tsx', 'index.tsx', 'auth.tsx', 'onboarding.tsx', 'home.tsx'];
+const routeFiles = ['app/index.tsx', 'app/auth.tsx', 'app/onboarding.tsx', 'app/home.tsx'];
 
-for (const route of requiredRoutes) {
-  await access(path.join(mobileRoot, 'app', route));
+for (const routeFile of routeFiles) {
+  const source = await readFile(new URL(`../${routeFile}`, import.meta.url), 'utf8');
+  assert.match(source, /export default function/, `${routeFile} must export a route component`);
 }
 
-const appConfig = JSON.parse(await readFile(path.join(mobileRoot, 'app.json'), 'utf8'));
-const packageJson = JSON.parse(await readFile(path.join(mobileRoot, 'package.json'), 'utf8'));
+const packageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+assert.equal(packageJson.main, 'expo-router/entry');
+assert.equal(packageJson.dependencies['@supabase/supabase-js'], '2.112.3');
+assert.equal(packageJson.dependencies['@react-native-async-storage/async-storage'], '2.2.0');
 
-if (packageJson.main !== 'expo-router/entry') {
-  throw new Error('Expo Router entry point is not configured.');
-}
+const appJson = JSON.parse(await readFile(new URL('../app.json', import.meta.url), 'utf8'));
+assert.ok(appJson.expo.plugins.includes('expo-router'));
+assert.equal(appJson.expo.experiments.typedRoutes, true);
 
-if (!appConfig.expo?.plugins?.includes('expo-router')) {
-  throw new Error('expo-router plugin is not configured in app.json.');
-}
+const layout = await readFile(new URL('../app/_layout.tsx', import.meta.url), 'utf8');
+assert.match(layout, /AuthProvider/, 'root layout must establish the authentication provider boundary');
 
-if (appConfig.expo?.experiments?.typedRoutes !== true) {
-  throw new Error('Typed Expo Router routes must remain enabled.');
-}
+const authProvider = await readFile(new URL('../src/providers/AuthProvider.tsx', import.meta.url), 'utf8');
+assert.match(authProvider, /profiles/, 'auth provider must hydrate the private profile row');
 
-console.log('Phase 1 mobile scaffold smoke check passed.');
-process.exitCode = 0;
+const envExample = await readFile(new URL('../.env.example', import.meta.url), 'utf8');
+assert.match(envExample, /EXPO_PUBLIC_SUPABASE_URL/);
+assert.match(envExample, /EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+assert.doesNotMatch(envExample, /SERVICE_ROLE/i, 'mobile env example must not contain service-role credentials');
+
+console.log('Mosaic mobile Phase 2 scaffold smoke test passed.');

@@ -1,8 +1,10 @@
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { useAuth } from '@/providers/AuthProvider';
 import { theme } from '@/theme';
 
 const steps = [
@@ -14,15 +16,36 @@ const steps = [
 
 export default function OnboardingPlaceholderScreen() {
   const router = useRouter();
+  const { session, profile, loading, setLifecycleState } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) router.replace('/auth');
+    else if (profile?.lifecycle_state === 'active') router.replace('/home');
+  }, [loading, profile?.lifecycle_state, router, session]);
+
+  async function completeOnboarding() {
+    setBusy(true);
+    setError(null);
+    try {
+      await setLifecycleState('active');
+      router.replace('/home');
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Unable to update profile state.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <AppScreen scroll>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>ONBOARDING SHELL</Text>
-        <Text style={styles.title}>One inference pipeline, introduced in controlled stages.</Text>
+        <Text style={styles.title}>Authenticated profile state is now persistent.</Text>
         <Text style={styles.body}>
-          The controls are placeholders. Phase 2 adds identity persistence; later phases replace each
-          stage with versioned measurement instruments.
+          The measurement stages remain placeholders. This phase proves that onboarding lifecycle state belongs to the authenticated user and survives app restarts.
         </Text>
       </View>
 
@@ -36,8 +59,10 @@ export default function OnboardingPlaceholderScreen() {
         ))}
       </View>
 
-      <PrimaryButton onPress={() => router.replace('/home')} testID="onboarding-complete">
-        Enter prototype home
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <PrimaryButton disabled={loading || busy || !profile} onPress={() => void completeOnboarding()} testID="onboarding-complete">
+        {busy ? 'Saving…' : 'Mark profile active'}
       </PrimaryButton>
     </AppScreen>
   );
@@ -98,5 +123,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.9,
+  },
+  error: {
+    color: theme.colors.text,
+    fontSize: 14,
+    marginBottom: theme.spacing.md,
   },
 });

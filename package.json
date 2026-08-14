@@ -14,6 +14,13 @@
     "mobile:android": "npm run android --workspace @mosaic/mobile",
     "mobile:ios": "npm run ios --workspace @mosaic/mobile",
     "mobile:web": "npm run web --workspace @mosaic/mobile",
-    "mobile:check": "npm run check --workspace @mosaic/mobile"
+    "mobile:check": "npm run check --workspace @mosaic/mobile",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:test:auth": "node scripts/test-supabase-auth.mjs"
+  },
+  "devDependencies": {
+    "supabase": "2.114.0"
   }
 }

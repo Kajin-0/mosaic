@@ -1,24 +1,54 @@
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { AppScreen } from '@/components/AppScreen';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { useAuth } from '@/providers/AuthProvider';
 import { theme } from '@/theme';
 
 const modules = [
-  ['Profile', 'Phase 2', 'Identity and persisted user state'],
+  ['Profile', 'Phase 2', 'Authenticated and persisted user lifecycle state'],
   ['Calibration', 'Phase 4+', 'Adaptive measurement and synthetic trials'],
   ['Matches', 'Later', 'Directional attraction and dyadic ranking'],
 ] as const;
 
 export default function HomePlaceholderScreen() {
+  const router = useRouter();
+  const { session, profile, loading, signOut } = useAuth();
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session) router.replace('/auth');
+    else if (profile && profile.lifecycle_state !== 'active') router.replace('/onboarding');
+  }, [loading, profile, router, session]);
+
+  async function handleSignOut() {
+    setBusy(true);
+    try {
+      await signOut();
+      router.replace('/auth');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <AppScreen scroll>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>PROTOTYPE HOME</Text>
-        <Text style={styles.title}>Mobile shell online.</Text>
+        <Text style={styles.title}>Authenticated mobile shell online.</Text>
         <Text style={styles.body}>
-          Phase 1 stops here deliberately. Product modules remain inert until their infrastructure
-          boundaries are implemented and tested.
+          The private profile row is persisted through Supabase and protected by owner-only row-level security.
         </Text>
+      </View>
+
+      <View style={styles.statusBox}>
+        <Text style={styles.statusLabel}>PROFILE STATE</Text>
+        <Text style={styles.statusValue}>{profile?.lifecycle_state ?? 'loading'}</Text>
+        <Text style={styles.statusMeta}>Version {profile?.profile_version ?? '—'}</Text>
+        <Text style={styles.statusMeta}>User {session?.user.id.slice(0, 8) ?? '—'}…</Text>
       </View>
 
       <View style={styles.moduleList}>
@@ -33,10 +63,9 @@ export default function HomePlaceholderScreen() {
         ))}
       </View>
 
-      <View style={styles.statusBox}>
-        <Text style={styles.statusLabel}>PHASE 1 STATUS</Text>
-        <Text style={styles.statusValue}>Navigation boundary established</Text>
-      </View>
+      <PrimaryButton disabled={busy} onPress={() => void handleSignOut()} testID="home-sign-out">
+        {busy ? 'Signing out…' : 'Sign out'}
+      </PrimaryButton>
     </AppScreen>
   );
 }
@@ -64,8 +93,33 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
   },
+  statusBox: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.card,
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.xl,
+  },
+  statusLabel: {
+    color: theme.colors.muted,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+  },
+  statusValue: {
+    color: theme.colors.text,
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  statusMeta: {
+    color: theme.colors.muted,
+    fontSize: 13,
+  },
   moduleList: {
     gap: theme.spacing.sm,
+    marginBottom: theme.spacing.xl,
   },
   card: {
     borderWidth: 1,
@@ -95,23 +149,5 @@ const styles = StyleSheet.create({
     color: theme.colors.muted,
     fontSize: 15,
     lineHeight: 22,
-  },
-  statusBox: {
-    marginTop: theme.spacing.xl,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-    paddingTop: theme.spacing.lg,
-    gap: theme.spacing.xs,
-  },
-  statusLabel: {
-    color: theme.colors.muted,
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.1,
-  },
-  statusValue: {
-    color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
