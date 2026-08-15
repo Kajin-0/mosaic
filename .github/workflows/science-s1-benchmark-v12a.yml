@@ -1,0 +1,81 @@
+name: Science S1 Stopping Calibration Benchmark v12a
+
+on:
+  push:
+    branches:
+      - science/s1-identifiable-preference-model
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout exact science head
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned uv
+        run: python -m pip install uv==0.12.4
+
+      - name: Install locked Python environment
+        run: uv sync --project services/engine --all-groups --frozen
+
+      - name: Validate engine before benchmark
+        run: |
+          uv run --project services/engine ruff check services/engine/src services/engine/tests
+          uv run --project services/engine ruff format --check services/engine/src services/engine/tests
+          uv run --project services/engine mypy services/engine/src
+          uv run --project services/engine pytest services/engine/tests -q
+
+      - name: Run S1 v12a posterior stopping calibration benchmark
+        run: |
+          uv run --project services/engine python -m mosaic_engine.science_s1_benchmark_v12a > s1-benchmark-v12a.json
+
+      - name: Print concise benchmark summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path('s1-benchmark-v12a.json').read_text())
+          print(result['benchmark_version'])
+          print(result['scientific_scope'])
+          print(f"paths={len(result['paths'])}")
+          print('d\tB\ttarget\tstop\tfalse_all\tfalse_given_stop\tmiss_cap\tq_med\terr_stop_mean')
+          for cell in result['cells']:
+              for summary in cell['target_summaries']:
+                  q_med = summary['stopping_query_count']['median']
+                  err_mean = summary['true_error_given_stop']['mean']
+                  print(
+                      f"{cell['feature_dimension']}\t{cell['slope_norm']:.3f}\t"
+                      f"{summary['target_error']:.3f}\t{summary['stop_rate']:.6f}\t"
+                      f"{summary['false_stop_rate']:.6f}\t"
+                      f"{summary['false_stop_given_stop']:.6f}\t"
+                      f"{summary['missed_stop_at_cap_rate']:.6f}\t"
+                      f"{q_med if q_med is not None else 'NA'}\t"
+                      f"{err_mean if err_mean is not None else 'NA'}"
+                  )
+          print('norm-ratio: d\tB\tfirst_mean\tfinal_mean')
+          for cell in result['cells']:
+              ratio = cell['posterior_norm_ratio']
+              print(
+                  f"{cell['feature_dimension']}\t{cell['slope_norm']:.3f}\t"
+                  f"{ratio['first_round_mean']:.6f}\t{ratio['final_mean']:.6f}"
+              )
+          PY
+
+      - name: Upload benchmark JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: s1-stopping-calibration-benchmark-v12a
+          path: s1-benchmark-v12a.json
+          if-no-files-found: error
+          retention-days: 14
