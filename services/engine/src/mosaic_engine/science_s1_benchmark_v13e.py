@@ -96,13 +96,11 @@ def _prospective_validation(result: dict[str, object]) -> dict[str, object]:
 
     left, right = CANDIDATES
     left_only = sum(
-        _stopped_by(path, left, PRIMARY_HORIZON)
-        and not _stopped_by(path, right, PRIMARY_HORIZON)
+        _stopped_by(path, left, PRIMARY_HORIZON) and not _stopped_by(path, right, PRIMARY_HORIZON)
         for path in paths
     )
     right_only = sum(
-        _stopped_by(path, right, PRIMARY_HORIZON)
-        and not _stopped_by(path, left, PRIMARY_HORIZON)
+        _stopped_by(path, right, PRIMARY_HORIZON) and not _stopped_by(path, left, PRIMARY_HORIZON)
         for path in paths
     )
     head_to_head_p = _paired_exact_p_value(left_only, right_only)
