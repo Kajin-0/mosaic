@@ -102,9 +102,7 @@ def posterior_directional_risk(
             quantile=quantile,
         )
 
-    covariance = tuple(
-        tuple(float(value) for value in row[1:]) for row in posterior.covariance[1:]
-    )
+    covariance = tuple(tuple(float(value) for value in row[1:]) for row in posterior.covariance[1:])
     lower = _cholesky(covariance)
     random = Random(seed)
     errors: list[float] = []
