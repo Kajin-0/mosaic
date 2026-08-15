@@ -312,7 +312,8 @@ def run_benchmark_v13f(
             for path in paths
         ) / len(paths)
         maximum_radius_gaps[predictor] = max(
-            float(cast(dict[str, object], path["maximum_radius_gap"])[predictor]) for path in paths
+            cast(float, cast(dict[str, object], path["maximum_radius_gap"])[predictor])
+            for path in paths
         )
 
     return {
