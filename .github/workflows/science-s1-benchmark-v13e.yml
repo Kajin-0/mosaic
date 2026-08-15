@@ -1,0 +1,71 @@
+name: Science S1 Prospective Numerator Validation v13e
+
+on:
+  push:
+    branches:
+      - science/s1-identifiable-preference-model
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout exact science head
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned uv
+        run: python -m pip install uv==0.12.4
+
+      - name: Install locked Python environment
+        run: uv sync --project services/engine --all-groups --frozen
+
+      - name: Validate engine before benchmark
+        run: |
+          uv run --project services/engine ruff check services/engine/src services/engine/tests
+          uv run --project services/engine ruff format --check services/engine/src services/engine/tests
+          uv run --project services/engine mypy services/engine/src
+          uv run --project services/engine pytest services/engine/tests -q
+
+      - name: Run S1 v13e fresh-seed numerator validation
+        run: |
+          uv run --project services/engine python -m mosaic_engine.science_s1_benchmark_v13e > s1-benchmark-v13e.json
+
+      - name: Print concise validation summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path('s1-benchmark-v13e.json').read_text())
+          print(result['benchmark_version'])
+          print(result['scientific_scope'])
+          validation = result['prospective_validation']
+          print('control_stop_rate', validation['control_stop_rate'])
+          for candidate in validation['candidate_results']:
+              print(
+                  candidate['predictor'],
+                  f"stop={candidate['stop_rate']:.6f}",
+                  f"lift={candidate['absolute_stop_lift_vs_control']:.6f}",
+                  f"p={candidate['paired_exact_p_value']:.6g}",
+                  f"geometry_violations={candidate['geometry_violations']}",
+                  f"pass={candidate['passes_replication_gate']}",
+              )
+          print('head_to_head', validation['candidate_head_to_head'])
+          PY
+
+      - name: Upload benchmark JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: s1-numerator-validation-benchmark-v13e
+          path: s1-benchmark-v13e.json
+          if-no-files-found: error
+          retention-days: 14
