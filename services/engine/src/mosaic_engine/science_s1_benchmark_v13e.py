@@ -57,11 +57,11 @@ def _summary_by_predictor(result: dict[str, object], horizon: int) -> dict[str, 
 def _prospective_validation(result: dict[str, object]) -> dict[str, object]:
     paths = cast(list[dict[str, object]], result["paths"])
     by_predictor = _summary_by_predictor(result, PRIMARY_HORIZON)
-    control_stop_rate = float(by_predictor[CONTROL]["stop_rate"])
+    control_stop_rate = cast(float, by_predictor[CONTROL]["stop_rate"])
 
     candidate_results: list[dict[str, object]] = []
     for candidate in CANDIDATES:
-        candidate_stop_rate = float(by_predictor[candidate]["stop_rate"])
+        candidate_stop_rate = cast(float, by_predictor[candidate]["stop_rate"])
         candidate_only = sum(
             _stopped_by(path, candidate, PRIMARY_HORIZON)
             and not _stopped_by(path, CONTROL, PRIMARY_HORIZON)
