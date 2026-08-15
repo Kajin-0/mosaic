@@ -114,9 +114,7 @@ def _run_path(
     checkpoints: list[dict[str, object]] = []
 
     for round_index in range(candidate_count - 1):
-        round_pairs = schedule[
-            round_index * pairs_per_round : (round_index + 1) * pairs_per_round
-        ]
+        round_pairs = schedule[round_index * pairs_per_round : (round_index + 1) * pairs_per_round]
         for first, second in round_pairs:
             for candidate_index in (first, second):
                 features = tuple(float(value) for value in candidates[candidate_index])
