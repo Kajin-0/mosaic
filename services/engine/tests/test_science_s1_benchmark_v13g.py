@@ -22,15 +22,9 @@ def test_theta_challenger_excludes_candidate_null_from_mle_face() -> None:
         features,
     )
 
-    assert probabilities[0] == pytest.approx(
-        acceptance_probability(parameters[1], features)
-    )
-    assert probabilities[1] == pytest.approx(
-        acceptance_probability(parameters[0], features)
-    )
-    assert probabilities[2] == pytest.approx(
-        acceptance_probability(parameters[0], features)
-    )
+    assert probabilities[0] == pytest.approx(acceptance_probability(parameters[1], features))
+    assert probabilities[1] == pytest.approx(acceptance_probability(parameters[0], features))
+    assert probabilities[2] == pytest.approx(acceptance_probability(parameters[0], features))
 
 
 def test_theta_challenger_is_normalized_predictable_e_increment_for_every_null() -> None:
