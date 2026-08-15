@@ -6,6 +6,7 @@ from dataclasses import asdict
 from math import acos, pi, sqrt
 from random import Random
 from statistics import mean, median
+from typing import cast
 
 from .science_s1 import acceptance_probability
 from .science_s1_controlled_design import centered_orthogonalized_candidate_bank
@@ -78,6 +79,11 @@ def _quantile(values: Sequence[float], probability: float) -> float:
     upper = min(lower + 1, len(ordered) - 1)
     fraction = position - lower
     return ordered[lower] * (1.0 - fraction) + ordered[upper] * fraction
+
+
+def _path_checkpoint(path: dict[str, object], index: int) -> dict[str, object]:
+    checkpoints = cast(list[dict[str, object]], path["checkpoints"])
+    return checkpoints[index]
 
 
 def _run_path(
@@ -165,23 +171,18 @@ def _summarize_target(
 ) -> dict[str, object]:
     outcomes: list[dict[str, object]] = []
     for path in paths:
-        checkpoints = path["checkpoints"]
-        assert isinstance(checkpoints, list)
+        checkpoints = cast(list[dict[str, object]], path["checkpoints"])
         stop_checkpoint = None
         for checkpoint in checkpoints:
-            assert isinstance(checkpoint, dict)
-            risk = checkpoint["posterior_directional_risk"]
-            assert isinstance(risk, dict)
-            if float(risk["upper_error"]) <= target_error:
+            risk = cast(dict[str, object], checkpoint["posterior_directional_risk"])
+            if float(cast(float, risk["upper_error"])) <= target_error:
                 stop_checkpoint = checkpoint
                 break
 
         final_checkpoint = checkpoints[-1]
-        assert isinstance(final_checkpoint, dict)
         if stop_checkpoint is None:
-            final_error = float(final_checkpoint["true_population_ordering_error"])
-            final_risk = final_checkpoint["posterior_directional_risk"]
-            assert isinstance(final_risk, dict)
+            final_error = float(cast(float, final_checkpoint["true_population_ordering_error"]))
+            final_risk = cast(dict[str, object], final_checkpoint["posterior_directional_risk"])
             outcomes.append(
                 {
                     "seed": path["seed"],
@@ -190,29 +191,28 @@ def _summarize_target(
                     "missed_stop_at_cap": final_error <= target_error,
                     "query_count": None,
                     "true_error_at_decision": final_error,
-                    "posterior_upper_at_decision": float(final_risk["upper_error"]),
+                    "posterior_upper_at_decision": float(cast(float, final_risk["upper_error"])),
                 }
             )
         else:
-            true_error = float(stop_checkpoint["true_population_ordering_error"])
-            stop_risk = stop_checkpoint["posterior_directional_risk"]
-            assert isinstance(stop_risk, dict)
+            true_error = float(cast(float, stop_checkpoint["true_population_ordering_error"]))
+            stop_risk = cast(dict[str, object], stop_checkpoint["posterior_directional_risk"])
             outcomes.append(
                 {
                     "seed": path["seed"],
                     "stopped": True,
                     "false_stop": true_error > target_error,
                     "missed_stop_at_cap": False,
-                    "query_count": int(stop_checkpoint["query_count"]),
+                    "query_count": int(cast(int, stop_checkpoint["query_count"])),
                     "true_error_at_decision": true_error,
-                    "posterior_upper_at_decision": float(stop_risk["upper_error"]),
+                    "posterior_upper_at_decision": float(cast(float, stop_risk["upper_error"])),
                 }
             )
 
     stopped = [outcome for outcome in outcomes if outcome["stopped"]]
     false_stops = [outcome for outcome in outcomes if outcome["false_stop"]]
-    query_counts = [int(outcome["query_count"]) for outcome in stopped]
-    stopped_errors = [float(outcome["true_error_at_decision"]) for outcome in stopped]
+    query_counts = [cast(int, outcome["query_count"]) for outcome in stopped]
+    stopped_errors = [cast(float, outcome["true_error_at_decision"]) for outcome in stopped]
 
     return {
         "target_error": target_error,
@@ -301,11 +301,11 @@ def run_benchmark_v12a(
                 _summarize_target(condition_paths, target_error=target) for target in targets
             ]
             first_round_norm_ratios = [
-                float(path["checkpoints"][0]["posterior_slope_norm"]) / slope_norm
+                float(cast(float, _path_checkpoint(path, 0)["posterior_slope_norm"])) / slope_norm
                 for path in condition_paths
             ]
             final_norm_ratios = [
-                float(path["checkpoints"][-1]["posterior_slope_norm"]) / slope_norm
+                float(cast(float, _path_checkpoint(path, -1)["posterior_slope_norm"])) / slope_norm
                 for path in condition_paths
             ]
             cells.append(
