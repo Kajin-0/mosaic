@@ -51,7 +51,10 @@ def _select_predictable_feature(
 ) -> tuple[float, ...]:
     if len(log_null_likelihoods) != len(null_parameters) or not null_parameters:
         raise ValueError("null likelihood and parameter dimensions must agree and be nonempty")
-    best_null_index = max(range(len(null_parameters)), key=lambda index: log_null_likelihoods[index])
+    best_null_index = max(
+        range(len(null_parameters)),
+        key=lambda index: log_null_likelihoods[index],
+    )
     best_null = null_parameters[best_null_index]
 
     def information_score(features: Sequence[float]) -> float:
