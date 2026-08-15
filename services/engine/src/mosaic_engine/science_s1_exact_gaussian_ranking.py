@@ -144,7 +144,11 @@ def gaussian_expected_norms(
 
     # A degenerate exact posterior needs no quadrature and avoids accumulating
     # tiny numerical Jensen gaps.
-    if all(abs(float(covariance[row][column])) <= 1e-15 for row in range(dimension) for column in range(dimension)):
+    if all(
+        abs(float(covariance[row][column])) <= 1e-15
+        for row in range(dimension)
+        for column in range(dimension)
+    ):
         return tuple(_euclidean_norm(mean) for mean in means)
 
     totals = [0.0] * len(means)
