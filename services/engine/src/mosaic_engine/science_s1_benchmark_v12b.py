@@ -39,7 +39,12 @@ def _quantile(values: Sequence[float], probability: float) -> float:
     return ordered[lower] * (1.0 - fraction) + ordered[upper] * fraction
 
 
-def _wilson_interval(successes: int, trials: int, *, z: float = 1.959963984540054) -> tuple[float, float]:
+def _wilson_interval(
+    successes: int,
+    trials: int,
+    *,
+    z: float = 1.959963984540054,
+) -> tuple[float, float]:
     if trials <= 0:
         return (0.0, 1.0)
     if successes < 0 or successes > trials:
@@ -70,7 +75,11 @@ def _first_stop(
 
     if rule == "single_crossing":
         return next(
-            (checkpoint for checkpoint in checkpoints if _posterior_upper(checkpoint) <= target_error),
+            (
+                checkpoint
+                for checkpoint in checkpoints
+                if _posterior_upper(checkpoint) <= target_error
+            ),
             None,
         )
 
