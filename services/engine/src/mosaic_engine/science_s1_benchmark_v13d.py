@@ -49,10 +49,13 @@ def _likelihood_weighted_probability(
     maximum = max(float(log_likelihoods[index]) for index in indices)
     raw_weights = tuple(exp(float(log_likelihoods[index]) - maximum) for index in indices)
     total = sum(raw_weights)
-    return sum(
-        weight * acceptance_probability(parameters[index], features)
-        for weight, index in zip(raw_weights, indices, strict=True)
-    ) / total
+    return (
+        sum(
+            weight * acceptance_probability(parameters[index], features)
+            for weight, index in zip(raw_weights, indices, strict=True)
+        )
+        / total
+    )
 
 
 def _mle_face_predictive_probability(
@@ -63,11 +66,7 @@ def _mle_face_predictive_probability(
     if not log_likelihoods:
         raise ValueError("log_likelihoods must not be empty")
     maximum = max(float(value) for value in log_likelihoods)
-    maximizers = tuple(
-        index
-        for index, value in enumerate(log_likelihoods)
-        if abs(float(value) - maximum) <= 1e-12
-    )
+    maximizers = tuple(index for index, value in enumerate(log_likelihoods) if value == maximum)
     return sum(acceptance_probability(parameters[index], features) for index in maximizers) / len(
         maximizers
     )
@@ -256,10 +255,8 @@ def _summarize_predictor(
         )
 
     stopping_observations = [cast(int, stop["observation_count"]) for stop in stopped]
-    regrets = [
-        oracle - predictor
-        for oracle, predictor in zip(oracle_log_q, predictor_log_q, strict=True)
-    ]
+    regret_pairs = zip(oracle_log_q, predictor_log_q, strict=True)
+    regrets = [oracle - predictor for oracle, predictor in regret_pairs]
     return {
         "predictor": predictor_name,
         "horizon": horizon,
