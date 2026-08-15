@@ -1,5 +1,11 @@
+from math import sqrt
+
 from mosaic_engine.science_s1_simulation import LaplacePosterior
-from mosaic_engine.science_s1_stopping import posterior_directional_risk
+from mosaic_engine.science_s1_stopping import (
+    posterior_directional_risk,
+    posterior_radial_debiased_directional_risk,
+    posterior_radial_signal,
+)
 
 
 def test_posterior_directional_risk_shrinks_with_covariance() -> None:
@@ -52,5 +58,63 @@ def test_zero_slope_mean_is_conservative() -> None:
 
     risk = posterior_directional_risk(posterior, sample_count=32, seed=1)
 
+    assert risk.mean_error == 0.5
+    assert risk.upper_error == 0.5
+
+
+def test_radial_signal_subtracts_covariance_trace_from_squared_norm() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 1.0, 0.0),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.1, 0.0), (0.0, 0.0, 0.2)),
+        precision=((10.0, 0.0, 0.0), (0.0, 10.0, 0.0), (0.0, 0.0, 5.0)),
+        converged=True,
+        iterations=1,
+    )
+
+    signal = posterior_radial_signal(posterior)
+
+    assert signal.raw_norm == 1.0
+    assert signal.raw_norm_sq == 1.0
+    assert abs(signal.covariance_trace - 0.3) < 1e-12
+    assert abs(signal.debiased_norm_sq - 0.7) < 1e-12
+    assert abs(signal.debiased_norm - sqrt(0.7)) < 1e-12
+    assert signal.retained_fraction < 1.0
+
+
+def test_radial_debiased_risk_is_more_conservative_when_noise_inflates_norm() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 1.0, 0.0),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.12, 0.0), (0.0, 0.0, 0.18)),
+        precision=((10.0, 0.0, 0.0), (0.0, 8.3333333333, 0.0), (0.0, 0.0, 5.5555555556)),
+        converged=True,
+        iterations=1,
+    )
+
+    ordinary = posterior_directional_risk(posterior, sample_count=4096, seed=23)
+    corrected = posterior_radial_debiased_directional_risk(
+        posterior,
+        sample_count=4096,
+        seed=23,
+    )
+
+    assert corrected.slope_norm < ordinary.slope_norm
+    assert corrected.mean_error > ordinary.mean_error
+    assert corrected.upper_error > ordinary.upper_error
+
+
+def test_noise_dominated_radial_signal_refuses_confident_direction() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 0.2, 0.0),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.1, 0.0), (0.0, 0.0, 0.1)),
+        precision=((10.0, 0.0, 0.0), (0.0, 10.0, 0.0), (0.0, 0.0, 10.0)),
+        converged=True,
+        iterations=1,
+    )
+
+    signal = posterior_radial_signal(posterior)
+    risk = posterior_radial_debiased_directional_risk(posterior, sample_count=64, seed=2)
+
+    assert signal.debiased_norm == 0.0
+    assert signal.retained_fraction == 0.0
     assert risk.mean_error == 0.5
     assert risk.upper_error == 0.5
