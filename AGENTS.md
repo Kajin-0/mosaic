@@ -12,39 +12,48 @@ The active S1 question is: what is the smallest user-specific preference state t
 
 The first observable is a user's **willingness-to-meet probability over a versioned synthetic candidate feature space**, not a domain-general latent essence called attraction. The provisional identifiable state is a linear-logistic acceptance surface `alpha=[b,beta]`. Separate preference magnitude and response consistency are not treated as identified without an independent scale anchor.
 
-Current experimental boundary: `docs/science/results/s1-numerator-efficiency-benchmark-v13d.md`.
+Current experimental boundary: `docs/science/results/s1-nested-confidence-benchmark-v13f.md`.
 
 ## S1 scientific history and current boundary
 
 - v7a–v9a established that finite query geometry matters and that `kappa=2q/(d+1)` alone is not a sufficient finite-dimensional sample-complexity coordinate.
 - v10a/v11a supported the synthetic large-dimensional mean information coordinate `eta_F=B^2 kappa a(B)`, with `a(B)=E[sigmoid(BZ)(1-sigmoid(BZ))]`. This is a mean-risk law, not an individual stopping guarantee.
-- v12a–v12e falsified the Laplace-posterior angular-q95 stopping family. Raw q95 undercovered; persistence failed weak/high-dimensional subgroups; radial/transverse corrections restored safety by becoming too conservative; tangent projection restored utility by becoming anti-conservative. **That family is closed. Do not revive it with empirical threshold tuning without a new theorem-level argument.**
-- v13 introduced a prequential likelihood-ratio e-process. For fixed correctly specified `theta` and any normalized numerator `q_t` chosen predictably before the current outcome, `E_t(theta)=prod q_t(Y_t)/p_theta(Y_t|x_t)` is a nonnegative martingale, including predictable adaptive query selection. Ville's inequality supplies an anytime-valid parameter confidence sequence.
-- v13a verified the finite fixed-null machinery: valid true-null rejection `22/4608=0.477%` at nominal alpha 5%; an outcome-leaking invalid numerator rejected `4608/4608=100%`; fixed-alternative power was 37.9% by 80 observations.
-- v13b implemented the intended finite operational sequence `predictable numerator -> anytime C_t -> adaptive query -> exact confidence-set directional radius -> stop`. Across 6,144 paths, truth was ever excluded on 2.865%; **zero false stops occurred while truth remained in C_t**. The strict target 0.15 had no stops by 120 observations.
-- v13c separated grid resolution from horizon at target 0.15. Refining 15° -> 5° increased the 240-observation stop rate from 2.73% to 7.55%, but every grid had zero stops through 180 and the 5° median stop was 237. **Discretization matters, but evidence accumulation is the dominant burden.**
-- v13d then held every query and response fixed across numerator variants on a 5° grid. The existing all-grid mixture stopped on 7.81% by 240; lagged MLE-face stopped on 26.30%; SNML on 25.85%; confidence-restricted mixture on 8.07%. A synthetic-truth oracle numerator stopped on 76.43% by 180 and 96.55% by 240 on exactly the same query paths. **The current query sequence is informative enough; prequential predictive regret is now the dominant identified efficiency bottleneck.**
-- v13d does **not** establish MLE > SNML. MLE had 404 stops versus SNML 397; paired discordant counts were 45 versus 38 (`p≈0.51`). Treat them as co-leading exploratory candidates requiring fresh-seed validation.
+- v12a–v12e falsified the Laplace-posterior angular-q95 stopping family. **That family is closed. Do not revive it with empirical threshold tuning without a new theorem-level argument.**
+- v13 introduced a prequential likelihood-ratio e-process. For fixed correctly specified `theta` and any normalized numerator chosen predictably before the current outcome, `E_t(theta)=prod q_t(Y_t)/p_theta(Y_t|x_t)` is a nonnegative martingale, including predictable adaptive query selection. Ville's inequality supplies an anytime-valid parameter confidence sequence.
+- v13a verified the finite fixed-null machinery: valid true-null rejection `22/4608=0.477%` at nominal alpha 5%; an outcome-leaking invalid numerator rejected 100%.
+- v13b implemented `predictable numerator -> anytime C_t -> adaptive query -> exact confidence-set directional radius -> stop`. Across 6,144 paths, truth was ever excluded on 2.865%; **zero false stops occurred while truth remained in C_t**.
+- v13c showed the strict-target burden is not mainly angular-grid quantization. Refining 15° -> 5° increased the 240-observation stop rate from 2.73% to 7.55%, but all grids remained at zero through 180 and the 5° median stop was 237.
+- v13d held every query/response fixed across numerator variants. Current-time `mixture_all` stopped on 7.81% by 240, MLE-face on 26.30%, SNML on 25.85%, while a synthetic-truth oracle stopped on 96.55% on the same paths. This identified prequential predictive regret as a major efficiency bottleneck under the then-current set representation.
+- v13e prospectively replicated the adaptive-numerator effect on fresh seeds `192..319`: mixture control 7.16%, MLE-face 26.89% (+19.73 pp, paired `p≈7.9e-76`), SNML 25.72% (+18.55 pp, `p≈2.5e-72`), zero geometry violations. MLE versus SNML crossed the prespecified ranking threshold (`44` vs `26` discordant stops, `p=0.0414`) but differed by only ~1.17 pp.
+- v13f then corrected a more fundamental efficiency mistake: v13b–v13e used the **current-time** set `C_t={theta:E_t(theta)<1/alpha}`, allowing previously rejected parameters to re-enter. The running intersection `C_t^cap=intersection_{s<=t} C_s={theta:max_{s<=t}E_s(theta)<1/alpha}` has the same simultaneous coverage event and remembers all past valid crossings.
+- On fresh seeds `320..447`, v13f changed only set representation and held the same global finite-grid MLE center between comparisons. Nesting produced very large gains: mixture `7.23% -> 70.25%`, MLE-face `26.56% -> 53.97%`, SNML `26.17% -> 58.53%` by 240. MLE nested median stop fell to 201 from 219.5. **No current-time stop was lost and geometry violations remained zero.**
+- v13f therefore reverses the observed numerator ranking: under the now-preferred nested representation, the original all-grid mixture is the observed leader at 70.25%, ahead of SNML and MLE. v13e's MLE preference is valid only for the inferior current-time-set representation and must not be carried forward unqualified.
 
 ### Current conclusion
 
-The finite-grid safety mechanism is working and the present strict-target burden is mechanistically localized.
+The strongest finite-grid S1 confidence route is now:
 
 ```text
-predictable normalized numerator
+predictable normalized e-process numerator(s)
         ↓
-anytime-valid parameter confidence sequence C_t
+current-time e-process sets
         ↓
-certified geometry of all directions represented in C_t
+running intersection / nested confidence sequence C_t^cap
         ↓
-stop only when the entire confidence set is concentrated enough
+reported finite-grid MLE direction
+        ↓
+certify every direction retained in C_t^cap lies inside target cone
+        ↓
+stop
 ```
 
-Do not repeatedly test a moving data-dependent angular null as though fixed. Construct `C_t` first and certify geometry afterward.
+Do not repeatedly test a moving data-dependent angular null as though fixed. Construct the parameter confidence sequence first and certify its geometry afterward.
 
-The immediate checkpoint is a **fresh-seed prospective numerator validation** with the v13d design frozen: `mixture_all` control, `mle_face` and `snml` candidates, 5° grid, `B=0.9`, target 0.15, alpha 0.05, the same candidate bank and disagreement-query controller, and a 240-observation cap. Primary endpoint is stop rate by 240; burden is median stopping observation; safety diagnostics are truth-exclusion and false-stop rates. Any false directional stop while truth is still in `C_t` is a critical implementation failure.
+**Future finite-grid work should use the nested confidence sequence by default.** Current-time-only sets remain historical comparators.
 
-After that replication, attack the remaining oracle gap with a theorem-preserving **predictable challenger/test-specific numerator** or other regret-reduction construction before changing query policy. Query-policy optimization should remain an isolated later experiment.
+The next exact checkpoint is a theorem-preserving **theta-specific predictable challenger numerator** with the query policy frozen. For each candidate null `theta_j`, its own normalized predictable `q_{t,j}` may be generated from the strongest one-step-lagged alternative excluding `theta_j`. The e-process for `theta_j` remains valid because its numerator is normalized and predictable; a common numerator across all null parameters is not required.
+
+Use the nested all-grid mixture as the baseline control, retain MLE/SNML nested as useful comparators, and test the challenger construction on a fresh disjoint seed block. Do **not** change the acquisition policy in the same checkpoint.
 
 The continuous problem remains unresolved: certify conservatively that the entire continuous confidence set lies inside a candidate directional cone, including nuisance intercept and slope magnitude. Any numerical method must provide a genuine upper bound on the best outside-cone likelihood; underestimating that supremum is anti-conservative and invalid.
 
@@ -53,15 +62,17 @@ The continuous problem remains unresolved: certify conservatively that the entir
 1. `README.md`
 2. `docs/science/README.md`
 3. `docs/science/s1-identifiable-preference-model.md`
-4. `docs/science/results/s1-numerator-efficiency-benchmark-v13d.md`
-5. `docs/science/results/s1-resolution-horizon-benchmark-v13c.md`
-6. `docs/science/results/s1-finite-confidence-geometry-benchmark-v13b.md`
-7. `docs/science/results/s1-finite-null-eprocess-benchmark-v13a.md`
-8. `docs/science/s1-anytime-likelihood-confidence.md`
-9. v12a–v12e result documents for the rejected posterior-q95 family.
-10. v7a–v11a result documents for the geometry/sample-complexity/Fisher-law argument.
-11. ADR 0009 for the first scientific-state boundary.
-12. `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, ADRs 0004–0008, `docs/protocols/phase8-internal-alpha.md`, and `docs/operations/database-recovery.md` when relevant to persistence/operations.
+4. `docs/science/results/s1-nested-confidence-benchmark-v13f.md`
+5. `docs/science/results/s1-numerator-validation-benchmark-v13e.md`
+6. `docs/science/results/s1-numerator-efficiency-benchmark-v13d.md`
+7. `docs/science/results/s1-resolution-horizon-benchmark-v13c.md`
+8. `docs/science/results/s1-finite-confidence-geometry-benchmark-v13b.md`
+9. `docs/science/results/s1-finite-null-eprocess-benchmark-v13a.md`
+10. `docs/science/s1-anytime-likelihood-confidence.md`
+11. v12a–v12e result documents for the rejected posterior-q95 family.
+12. v7a–v11a result documents for the geometry/sample-complexity/Fisher-law argument.
+13. ADR 0009 for the first scientific-state boundary.
+14. `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, ADRs 0004–0008, `docs/protocols/phase8-internal-alpha.md`, and `docs/operations/database-recovery.md` when relevant to persistence/operations.
 
 ## Active S1 scientific invariants
 
@@ -76,12 +87,16 @@ The continuous problem remains unresolved: certify conservatively that the entir
 - Every v13 validity numerator must be normalized and **predictable before the current outcome is observed**. v13a shows catastrophic failure when this is violated.
 - Adaptive query covariates may depend on the past but not on the current unseen outcome.
 - Fixed-parameter e-process validity comes from the martingale/Ville argument; simulation measures implementation and operating characteristics rather than creating the theorem.
+- A common numerator across all candidate null parameters is **not** required. Parameter-specific predictable normalized numerators are allowed; each candidate's validity is judged under that candidate parameter.
 - Fixed-composite-null likelihood suprema must be genuine upper bounds. Underestimating a null supremum is invalid.
-- Prefer `construct C_t -> certify all of C_t -> stop` over moving data-dependent null tests.
-- Finite-grid false stopping is structurally impossible while the true grid parameter remains in `C_t`; v13b–v13d have not shown a counterexample.
-- Numerator **mean** log loss alone is not an adequate efficiency metric. v13d shows stopping depends on the pathwise distribution/tails of realized `log Q` and confidence contraction.
+- Prefer `construct confidence sequence -> certify all retained parameters -> stop` over moving data-dependent null tests.
+- The preferred finite-grid confidence object is the nested running intersection `C_t^cap`. It has the same simultaneous truth-coverage event as the sequence of current-time sets and prevents rejected hypotheses from re-entering.
+- An empty nested set is a confidence/model failure state, not a successful certificate.
+- When current and nested radii are compared about the same center, nested radius must never exceed current radius. v13f enforces this as a hard assertion.
+- Finite-grid false directional stopping is structurally impossible while the true grid parameter remains in the certified set; v13b–v13f have shown zero geometry violations.
+- Numerator **mean** log loss alone is not an adequate efficiency metric. Stopping depends on the pathwise distribution/tails of realized e-values and confidence contraction.
 - `oracle_true` is a synthetic diagnostic ceiling only and must never be used operationally.
-- Do not declare MLE-face or SNML selected from v13d without fresh-seed prospective replication.
+- v13e's MLE-over-SNML ranking is scoped to current-time confidence sets. Under nesting, v13f's observed ranking is mixture > SNML > MLE; do not conflate these regimes.
 - Do not trade away confidence-sequence validity merely to reduce query burden.
 - E-process validity remains conditional on likelihood specification. Pair context, nonlinear curvature, interactions, multimodality, and generator/feature error are still required misspecification regimes.
 - Synthetic-domain identification does not establish transfer to real profiles, in-person attraction, relationship formation, compatibility, or long-term relationship quality.
