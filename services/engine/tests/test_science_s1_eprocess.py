@@ -71,8 +71,10 @@ def test_confidence_likelihood_cutoff_matches_e_threshold() -> None:
 
     assert threshold == pytest.approx(log_predictive_joint + log(alpha_level))
     boundary_log_e = log_predictive_joint - threshold
-    assert boundary_log_e == pytest.approx(anytime_log_threshold(alpha_level))
-    assert reject_fixed_parameter(boundary_log_e, alpha_level=alpha_level)
+    exact_threshold = anytime_log_threshold(alpha_level)
+    assert boundary_log_e == pytest.approx(exact_threshold)
+    assert not reject_fixed_parameter(exact_threshold - 1e-12, alpha_level=alpha_level)
+    assert reject_fixed_parameter(exact_threshold + 1e-12, alpha_level=alpha_level)
 
 
 def test_composite_null_uses_upper_likelihood_bound_conservatively() -> None:
