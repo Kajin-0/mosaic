@@ -92,9 +92,7 @@ def _run_path(
     checkpoints: list[dict[str, object]] = []
 
     for round_index in range(candidate_count - 1):
-        round_pairs = schedule[
-            round_index * pairs_per_round : (round_index + 1) * pairs_per_round
-        ]
+        round_pairs = schedule[round_index * pairs_per_round : (round_index + 1) * pairs_per_round]
         for first, second in round_pairs:
             for candidate_index in (first, second):
                 features = tuple(float(value) for value in candidates[candidate_index])
@@ -235,9 +233,7 @@ def _summarize_rule(
                 "missed_stop_at_cap": False,
                 "query_count": int(cast(int, stop["query_count"])),
                 "true_error_at_decision": true_error,
-                "transverse_retained_fraction": float(
-                    cast(float, signal["retained_fraction"])
-                ),
+                "transverse_retained_fraction": float(cast(float, signal["retained_fraction"])),
             }
         )
 
@@ -353,8 +349,7 @@ def _evaluate_primary_gate(
             if stops >= SUBGROUP_MIN_STOPS:
                 sampled_subgroups += 1
                 subgroup_safe = subgroup_safe and (
-                    float(cast(float, summary["false_stop_given_stop"]))
-                    <= SUBGROUP_FALSE_STOP_GATE
+                    float(cast(float, summary["false_stop_given_stop"])) <= SUBGROUP_FALSE_STOP_GATE
                 )
             if signal == 1.5:
                 strong_signal_safe = strong_signal_safe and (
@@ -450,9 +445,7 @@ def run_benchmark_v12e(
                     "slope_norm": slope_norm,
                     "runs": len(condition_paths),
                     "rule_summaries": rule_summaries,
-                    "fixed_checkpoint_diagnostics": _fixed_checkpoint_diagnostics(
-                        condition_paths
-                    ),
+                    "fixed_checkpoint_diagnostics": _fixed_checkpoint_diagnostics(condition_paths),
                 }
             )
 
