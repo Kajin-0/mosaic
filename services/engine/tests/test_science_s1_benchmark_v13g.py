@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from mosaic_engine.science_s1 import acceptance_probability
 from mosaic_engine.science_s1_benchmark_v13c import _alpha_from_angle
 from mosaic_engine.science_s1_benchmark_v13g import (
     THETA_CHALLENGER,
@@ -21,15 +22,15 @@ def test_theta_challenger_excludes_candidate_null_from_mle_face() -> None:
         features,
     )
 
-    expected_null_zero = 0.5
-    expected_other_nulls = 1.0 / (1.0 + pytest.approx(0.0)) if False else None
-    assert probabilities[0] == pytest.approx(0.5)
-    assert probabilities[1] == pytest.approx(
-        1.0 / (1.0 + 2.718281828459045 ** -0.9)
+    assert probabilities[0] == pytest.approx(
+        acceptance_probability(parameters[1], features)
     )
-    assert probabilities[2] == pytest.approx(probabilities[1])
-    assert expected_null_zero == 0.5
-    assert expected_other_nulls is None
+    assert probabilities[1] == pytest.approx(
+        acceptance_probability(parameters[0], features)
+    )
+    assert probabilities[2] == pytest.approx(
+        acceptance_probability(parameters[0], features)
+    )
 
 
 def test_theta_challenger_is_normalized_predictable_e_increment_for_every_null() -> None:
