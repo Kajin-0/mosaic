@@ -7,6 +7,7 @@ from mosaic_engine.science_s1_stopping import (
     posterior_radial_signal,
     posterior_transverse_debiased_directional_risk,
     posterior_transverse_signal,
+    posterior_transverse_tangent_directional_risk,
 )
 
 
@@ -150,6 +151,56 @@ def test_transverse_risk_lies_between_raw_and_full_trace_corrections() -> None:
     assert raw.upper_error < transverse.upper_error < full.upper_error
 
 
+def test_tangent_risk_is_deterministic_and_uses_transverse_signal_norm() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 0.8, -0.3),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.08, 0.01), (0.0, 0.01, 0.12)),
+        precision=((10.0, 0.0, 0.0), (0.0, 12.63, -1.05), (0.0, -1.05, 8.42)),
+        converged=True,
+        iterations=1,
+    )
+
+    signal = posterior_transverse_signal(posterior)
+    first = posterior_transverse_tangent_directional_risk(
+        posterior,
+        sample_count=512,
+        seed=41,
+    )
+    second = posterior_transverse_tangent_directional_risk(
+        posterior,
+        sample_count=512,
+        seed=41,
+    )
+
+    assert first == second
+    assert first.slope_norm == signal.debiased_norm
+
+
+def test_tangent_projection_removes_longitudinal_angular_noise() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 1.0, 0.0),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.40, 0.0), (0.0, 0.0, 0.01)),
+        precision=((10.0, 0.0, 0.0), (0.0, 2.5, 0.0), (0.0, 0.0, 100.0)),
+        converged=True,
+        iterations=1,
+    )
+
+    full_noise = posterior_transverse_debiased_directional_risk(
+        posterior,
+        sample_count=4096,
+        seed=17,
+    )
+    tangent = posterior_transverse_tangent_directional_risk(
+        posterior,
+        sample_count=4096,
+        seed=17,
+    )
+
+    assert tangent.slope_norm == full_noise.slope_norm
+    assert tangent.mean_error < full_noise.mean_error
+    assert tangent.upper_error < full_noise.upper_error
+
+
 def test_noise_dominated_radial_signal_refuses_confident_direction() -> None:
     posterior = LaplacePosterior(
         mean=(0.0, 0.2, 0.0),
@@ -183,8 +234,15 @@ def test_noise_dominated_transverse_signal_refuses_confident_direction() -> None
         sample_count=64,
         seed=2,
     )
+    tangent = posterior_transverse_tangent_directional_risk(
+        posterior,
+        sample_count=64,
+        seed=2,
+    )
 
     assert signal.transverse_variance == 0.1
     assert signal.debiased_norm == 0.0
     assert risk.mean_error == 0.5
     assert risk.upper_error == 0.5
+    assert tangent.mean_error == 0.5
+    assert tangent.upper_error == 0.5
