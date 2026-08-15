@@ -110,8 +110,7 @@ def _solve_cholesky(lower: Sequence[Sequence[float]], right: Sequence[float]) ->
     solution = [0.0] * dimension
     for row in range(dimension - 1, -1, -1):
         previous = sum(
-            float(lower[column][row]) * solution[column]
-            for column in range(row + 1, dimension)
+            float(lower[column][row]) * solution[column] for column in range(row + 1, dimension)
         )
         solution[row] = (forward[row] - previous) / float(lower[row][row])
     return tuple(solution)
@@ -157,8 +156,7 @@ def gaussian_expected_norms(
         t = ratio * ratio
         matrix = tuple(
             tuple(
-                (1.0 if row == column else 0.0)
-                + 2.0 * t * float(covariance[row][column])
+                (1.0 if row == column else 0.0) + 2.0 * t * float(covariance[row][column])
                 for column in range(dimension)
             )
             for row in range(dimension)
@@ -169,9 +167,7 @@ def gaussian_expected_norms(
 
         for mean_index, mean in enumerate(means):
             solution = _solve_cholesky(lower, mean)
-            quadratic = sum(
-                float(mean[index]) * solution[index] for index in range(dimension)
-            )
+            quadratic = sum(float(mean[index]) * solution[index] for index in range(dimension))
             laplace_transform = determinant_factor * exp(-t * quadratic)
             totals[mean_index] += weight * (1.0 - laplace_transform) / (u * u)
 
@@ -204,9 +200,7 @@ def _slope_state(posterior: LaplacePosterior) -> tuple[Vector, Matrix]:
     if len(posterior.mean) < 2:
         raise ValueError("posterior must contain intercept plus at least one slope")
     mean = tuple(float(value) for value in posterior.mean[1:])
-    covariance = tuple(
-        tuple(float(value) for value in row[1:]) for row in posterior.covariance[1:]
-    )
+    covariance = tuple(tuple(float(value) for value in row[1:]) for row in posterior.covariance[1:])
     return mean, covariance
 
 
@@ -279,9 +273,4 @@ def isotropic_zero_mean_expected_norm(*, dimension: int, standard_deviation: flo
         raise ValueError("dimension must be positive")
     if standard_deviation < 0.0:
         raise ValueError("standard_deviation must be nonnegative")
-    return (
-        standard_deviation
-        * sqrt(2.0)
-        * gamma(0.5 * (dimension + 1))
-        / gamma(0.5 * dimension)
-    )
+    return standard_deviation * sqrt(2.0) * gamma(0.5 * (dimension + 1)) / gamma(0.5 * dimension)
