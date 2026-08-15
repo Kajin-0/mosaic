@@ -2,11 +2,11 @@
 
 ## Status
 
-Method-development checkpoint after `s1-tangent-stopping-benchmark-v12e`.
+Active method-development line after the v12 Laplace-posterior stopping family was falsified.
 
-v12a–v12e falsified the current Laplace-posterior q95 family as a finite-sample sequential stopping guarantee. The next confidence object should therefore be valid under predictable adaptive query selection and optional stopping by construction, rather than repaired empirically with another posterior correction.
+v13 replaces posterior-percentile calibration with a **prequential likelihood-ratio e-process** whose fixed-parameter optional-stopping validity is established before simulation. The finite-grid program has now progressed through v13f and materially refined the operational confidence object.
 
-This document defines the first v13 candidate: a **prequential likelihood-ratio e-process**.
+Current result boundary: `results/s1-nested-confidence-benchmark-v13f.md`.
 
 ## Observable model
 
@@ -17,19 +17,17 @@ Y_t\in\{0,1\},\qquad
 P_\theta(Y_t=1\mid x_t)=\sigma(\theta^T z_t),
 \]
 
-where `z_t=(1,x_t)` includes the intercept and `x_t` is predictable: it may depend on all prior observations and internal randomized design choices, but not on the current unseen outcome.
+where `z_t=(1,x_t)` includes the intercept and `x_t` is predictable: it may depend on all previous observations and internal randomized design choices, but not on the current unseen outcome.
 
-The model remains the provisional S1 linear-logistic acceptance surface. This method does not validate that model; deliberate misspecification tests remain required later.
+This remains the provisional S1 linear-logistic acceptance model. The e-process does **not** validate that likelihood family. Misspecification remains a separate required research problem.
 
-## Prequential numerator
+## Fixed-parameter prequential e-process
 
 Before observing `Y_t`, choose any normalized predictive distribution
 
 \[
 q_t(y\mid H_{t-1},x_t),\qquad q_t(0)+q_t(1)=1.
 \]
-
-The predictor may use the current Laplace fit, another fitted model, a mixture, or a deliberately simple baseline. **Its calibration is not required for validity.** It is only required to be predictable and normalized before `Y_t` is revealed.
 
 For a fixed candidate parameter `theta`, define
 
@@ -40,262 +38,264 @@ E_t(\theta)
 {p_\theta(Y_s\mid x_s)}.
 \]
 
-Conditional on the past and current predictable design,
+Conditional on the past and the current predictable design,
 
 \[
-\begin{aligned}
 \mathbb E_\theta\left[
 \frac{q_t(Y_t)}{p_\theta(Y_t)}
 \middle|H_{t-1},x_t
 \right]
-&=\sum_{y\in\{0,1\}}
-p_\theta(y)\frac{q_t(y)}{p_\theta(y)}\\
-&=q_t(0)+q_t(1)\\
-&=1.
-\end{aligned}
+=\sum_y p_\theta(y)\frac{q_t(y)}{p_\theta(y)}
+=1.
 \]
 
-Therefore `E_t(theta)` is a nonnegative martingale under `theta`, including when `x_t` is adaptively selected from the past.
+Therefore `E_t(theta)` is a nonnegative martingale under correctly specified fixed `theta`, including predictable adaptive query selection.
 
-By Ville's inequality,
+Ville's inequality gives
 
 \[
-P_\theta\left(\sup_t E_t(\theta)\ge 1/\alpha\right)\le\alpha.
+P_\theta\left(\sup_t E_t(\theta)\ge1/\alpha\right)\le\alpha.
 \]
 
-This gives the anytime-valid confidence sequence
+Writing
 
 \[
-C_t(\alpha)
-=\{\theta:E_t(\theta)<1/\alpha\}.
-\]
-
-Equivalently, writing
-
-\[
-Q_t=\prod_s q_s(Y_s),
-\qquad
+Q_t=\prod_s q_s(Y_s),\qquad
 L_t(\theta)=\prod_s p_\theta(Y_s\mid x_s),
 \]
 
-a parameter remains plausible whenever
+the current-time confidence set is
 
 \[
-\log L_t(\theta)>
-\log Q_t+\log\alpha.
+C_t=\left\{\theta:\log L_t(\theta)>\log Q_t+\log\alpha\right\}.
 \]
 
-The strict/boundary convention has probability-zero relevance in continuous parameter settings but should remain explicit in code.
+The exact strict/boundary convention should remain explicit in code.
 
-## Why this addresses the v12 failure mode
+## Preferred representation: the running intersection
 
-The v12 family asked a local Gaussian posterior approximation to behave like a finite-sample confidence sequence. It did not:
+The sequence of current-time sets is not necessarily nested because an e-process may cross its threshold and later fall below it. A parameter rejected at one time can therefore re-enter a later `C_t`.
 
-- raw q95 undercovered badly for weak signal/high dimension;
-- persistence reduced but did not eliminate false stopping;
-- radial/transverse corrections restored safety by becoming conservative;
-- tangent projection restored utility by becoming anti-conservative.
-
-The e-process changes the logical order. Optional-stopping validity is established **before** simulation. Simulation then measures power, burden, numerical conservatism, and model misspecification rather than discovering after the fact whether a nominal posterior percentile behaves like a confidence bound.
-
-## Fixed composite nulls are valid; data-dependent nulls require care
-
-For a **fixed, prespecified** composite null `H0`, a safe statistic is
+The operational confidence sequence should instead remember all previous valid rejections:
 
 \[
-E_t(H_0)
-=\frac{Q_t}{\sup_{\theta\in H_0}L_t(\theta)}.
+C_t^{\cap}
+=\bigcap_{s\le t}C_s
+=\left\{\theta:\max_{s\le t}E_s(\theta)<1/\alpha\right\}.
 \]
 
-For every true `theta_0 in H0`,
+This does **not** spend additional error probability. Under the true fixed parameter,
 
 \[
-E_t(H_0)
-\le\frac{Q_t}{L_t(\theta_0)}.
+\{\theta_*\in C_t^{\cap}\ \forall t\}
+=\{\sup_t E_t(\theta_*)<1/\alpha\},
 \]
 
-Thus a crossing of `1/alpha` by the composite statistic implies a crossing by the fixed-parameter e-process for the true null parameter, and type-I error is bounded by `alpha` provided the denominator is a **genuine upper bound** on the null likelihood supremum.
+so the same Ville event yields simultaneous coverage at least `1-alpha`.
 
-This point is numerically critical:
+### Geometric consequence
+
+If the same reported center `c_t` is used for current and nested sets, then
+
+\[
+C_t^{\cap}\subseteq C_t
+\]
+
+implies any subset-monotone directional radius obeys
+
+\[
+r(c_t;C_t^{\cap})\le r(c_t;C_t)
+\]
+
+whenever the nested set is nonempty.
+
+v13f enforces this pathwise as a hard implementation assertion and observes no violation.
+
+An **empty nested set is a confidence/model failure state, not a successful certificate**.
+
+## Parameter-specific predictable numerators are valid
+
+A single common numerator is convenient but not required.
+
+For every candidate parameter `theta_j`, one may choose its own normalized predictable distribution
+
+\[
+q_{t,j}(y\mid H_{t-1},x_t),
+\qquad
+\sum_y q_{t,j}(y)=1,
+\]
+
+before observing `Y_t`. Define
+
+\[
+E_{t,j}
+=\prod_{s\le t}
+\frac{q_{s,j}(Y_s)}{p_{\theta_j}(Y_s\mid x_s)}.
+\]
+
+Under the fixed null `theta_j`, exactly the same conditional expectation identity gives
+
+\[
+\mathbb E_{\theta_j}[E_{t,j}\mid H_{t-1}]=E_{t-1,j}.
+\]
+
+Thus each candidate parameter may have a **different challenger/test-specific predictor** without invalidating its own e-process. The resulting nested confidence sequence is
+
+\[
+C_t^{\cap}
+=\left\{\theta_j:\max_{s\le t}E_{s,j}<1/\alpha\right\}.
+\]
+
+This is the next finite-grid efficiency lever. The numerator for candidate `j` may use all historical data and the current predictable query, but it must not use the current unseen response or synthetic truth.
+
+A natural first finite-grid construction is the one-step-lagged maximum-likelihood alternative excluding `theta_j`, averaging exactly tied maximizers before forming the binary predictive distribution.
+
+## Why this route replaced v12
+
+The v12 family asked a local Gaussian/Laplace posterior approximation to behave like a finite-sample confidence sequence. It failed:
+
+- raw angular q95 undercovered;
+- persistence did not repair weak/high-dimensional subgroup failure;
+- radial/transverse debiasing regained safety by becoming too conservative;
+- tangent projection regained utility by becoming anti-conservative.
+
+v13 establishes the error event first. Simulation then measures burden, power, predictor regret, numerical conservatism, and misspecification rather than empirically tuning a nominal confidence percentile.
+
+## Moving composite nulls remain unsafe without a separate theorem
+
+For a fixed prespecified composite null `H0`, a safe statistic is
+
+\[
+E_t(H_0)=\frac{Q_t}{\sup_{\theta\in H_0}L_t(\theta)},
+\]
+
+provided the denominator is a genuine upper bound on the null likelihood supremum.
 
 ```text
-underestimate sup_H0 L  -> invalid, anti-conservative certificate
-upper-bound sup_H0 L    -> valid, possibly conservative certificate
+underestimate sup_H0 L  -> invalid / anti-conservative
+upper-bound sup_H0 L    -> valid / possibly conservative
 ```
 
-However, an angular null centered on a **current fitted direction**,
+But an angular null centered on a current fitted direction is data-dependent and changes over time. Repeatedly selecting a new cone and testing it as though it were fixed is not automatically covered by the fixed-null argument.
 
-\[
-H_{0,t}(\epsilon)
-=\{\theta:\operatorname{angle}(\beta(\theta),u_t)\ge\pi\epsilon\},
-\]
+The safe operational order remains:
 
-is data-dependent and changes with `t`. The fixed-composite-null domination argument does **not** automatically provide an anytime guarantee when the tested null itself is adaptively selected from the same data. Repeatedly selecting a new cone and testing it as if it had been fixed in advance can reintroduce optional-selection error.
+```text
+construct anytime-valid parameter confidence sequence
+        ↓
+choose a reported center
+        ↓
+certify a geometric property of every retained parameter
+        ↓
+stop only if the full retained set satisfies the target
+```
 
-Therefore S1 should not operationalize stopping by repeatedly testing a moving fitted-direction null unless a separate selective/sequential theorem is supplied.
+## Directional certification
 
-## Safe operational route: certify the geometry of the confidence sequence
-
-The cleaner construction is to build the anytime-valid parameter confidence sequence first and then ask whether its entire directional geometry is sufficiently concentrated.
-
-On the event
-
-\[
-\theta_*\in C_t(\alpha)\quad\text{for every }t,
-\]
-
-which has probability at least `1-alpha`, any deterministic geometric statement established about **all** parameters in `C_t` also applies to the truth at every stopping time.
-
-For example, define the slope-direction set
+For a retained slope-direction set
 
 \[
 D_t=\left\{
-\frac{\beta(\theta)}{\|\beta(\theta)\|}:\theta\in C_t(\alpha),\ \|\beta(\theta)\|>0
-\right\}.
+\beta(\theta)/\|\beta(\theta)\|:
+\theta\in C_t^{\cap},\ \|\beta(\theta)\|>0
+\right\},
 \]
 
-Two safe certification targets are:
-
-### Directional diameter
-
-\[
-\operatorname{diam}(D_t)
-=\sup_{u,v\in D_t}\frac{\arccos(u^Tv)}{\pi}.
-\]
-
-Stop only if
-
-\[
-\operatorname{diam}(D_t)\le\epsilon_*.
-\]
-
-This is strongest but can be unnecessarily conservative because it controls the maximum disagreement between any two plausible directions.
-
-### Certified directional radius
-
-Choose a reported center `c_t` after seeing `C_t` and compute
+a reported center `c_t` may be data-dependent because it is chosen after the confidence set has been constructed. The certificate must then control every retained direction:
 
 \[
 r_t(c_t)
-=\sup_{u\in D_t}\frac{\arccos(c_t^Tu)}{\pi}.
+=\sup_{u\in D_t}\frac{\arccos(c_t^Tu)}{\pi}
+\le\epsilon_*.
 \]
 
-Stop only if a certified bound shows
+On the simultaneous coverage event, the true direction is necessarily inside the certified cone at every stopping time.
+
+The finite-grid harness computes this maximum exactly.
+
+## Continuous cone problem
+
+For a fixed center `u` and half-angle `theta_0=pi epsilon`, write
 
 \[
-r_t(c_t)\le\epsilon_*.
+\beta=\beta_\parallel u+\beta_\perp,\qquad u^T\beta_\perp=0.
 \]
 
-The center may be data-dependent because it is merely a summary chosen **after the confidence set is constructed**; validity comes from requiring every parameter in the already-anytime-valid set to lie inside the reported cone.
-
-This distinction is load-bearing:
-
-```text
-unsafe shortcut:
-select moving cone -> test that data-dependent null as though fixed
-
-safe route:
-construct anytime-valid C_t -> certify a geometric property of all theta in C_t
-```
-
-## Geometry of a directional cone
-
-For a fixed candidate center `u` and target half-angle `theta0=pi*epsilon`, decompose a candidate slope
+The target cone is
 
 \[
-\beta=\beta_\parallel u+\beta_\perp,
-\qquad
-u^T\beta_\perp=0.
+\beta_\parallel\ge0,\qquad
+\|\beta_\perp\|\le\tan(\theta_0)\beta_\parallel.
 \]
 
-The cone around `u` is
+To certify the continuous confidence set inside the cone, one must prove that no parameter outside the cone meets the confidence threshold. Equivalently, obtain a conservative upper bound on
 
 \[
-\beta_\parallel\ge0,
-\qquad
-\|\beta_\perp\|\le \tan(\theta_0)\beta_\parallel.
+\sup_{\theta\notin K(u,\epsilon)}\log L_t(\theta)
 \]
 
-For the tested S1 targets `epsilon in {0.15,0.20,0.25}`, `theta0<pi/2`, so the cone is second-order-cone representable.
+and show it lies below the relevant e-process confidence cutoff.
 
-To prove that the confidence set lies inside the cone, it is sufficient to prove that **no parameter outside the cone satisfies the likelihood confidence threshold**. Equivalently, one needs a conservative upper bound on
+A local optimizer that can underestimate this outside-cone supremum is unacceptable: an underestimate can create false confidence. Continuous S1 therefore still requires branch-and-bound, convex relaxation, or another numerically certified upper-bound construction, including nuisance intercept and slope magnitude.
 
-\[
-\sup_{\theta\notin K(u,\epsilon)}\log L_t(\theta).
-\]
+## Finite-grid result chain
 
-If that certified upper bound is below
+- **v13a:** finite fixed-null sanity check; valid construction rejected 0.477% at nominal 5%, while an outcome-leaking numerator rejected 100%.
+- **v13b:** exact finite confidence-set geometry; zero directional false stops while truth remained in the confidence set.
+- **v13c:** grid refinement helped but did not solve strict-target burden.
+- **v13d:** common-path numerator comparison identified a large oracle gap under current-time sets.
+- **v13e:** fresh-seed validation replicated large current-time-set gains for MLE-face and SNML over the all-grid mixture.
+- **v13f:** replacing current-time sets by the running intersection produced the largest finite-grid efficiency gain so far: by 240 observations mixture `7.23% -> 70.25%`, MLE `26.56% -> 53.97%`, SNML `26.17% -> 58.53%`, with zero geometric violations. It also demonstrated that numerator ranking depends strongly on confidence-sequence representation.
 
-\[
-\log Q_t+\log\alpha,
-\]
-
-then every point in `C_t(alpha)` lies inside the cone.
-
-The logistic log likelihood is concave in the full coefficient vector, but maximizing a concave function over the complement of a cone is not directly a convex optimization problem. Any continuous v13 angular certificate must therefore provide a conservative **upper bound** on the best outside-cone likelihood rather than trust a local optimizer whose failure could create false confidence.
-
-## Candidate numerical strategy
-
-Do not launch a large continuous-angular v13 operating benchmark until this step is resolved.
-
-A defensible staged path is:
-
-1. **fixed-parameter e-process kernel** — implemented;
-2. **finite fixed-composite-null sanity problem** — on a deliberately finite prespecified null grid, where the exact maximum likelihood over the grid is computable and sequential validity is straightforward;
-3. **confidence-set geometry harness** — on a finite parameter grid, certify angular diameter/radius directly from the e-process confidence set rather than from a moving null test;
-4. **continuous outside-cone likelihood upper bound** — develop branch-and-bound, a convex relaxation, or another method that provably upper-bounds the likelihood outside a candidate cone;
-5. **fresh-seed correctly specified benchmark** — measure safety, power, and burden only after the numerical certificate itself is conservative;
-6. **misspecification regimes** — pair context, curvature, interactions, multimodality, and generator error must then be tested because e-process validity is conditional on the likelihood family containing the truth.
-
-The finite-grid checkpoints are verification harnesses, not product stopping rules.
-
-## Predictor semantics
-
-The numerator predictor influences power but not fixed-parameter validity, provided it is chosen predictably.
-
-For an initial implementation, one reasonable predictor is a clipped plug-in probability from the previous posterior/MAP fit:
-
-```text
-q_t(1) = clip(sigmoid(alpha_hat_{t-1}^T z_t), epsilon_q, 1-epsilon_q)
-```
-
-with the first observations using a fixed baseline such as 0.5.
-
-Clipping is a numerical/power choice, not a validity repair: after clipping, `(q_t(0),q_t(1))` still forms a normalized predictable distribution.
-
-Future work may compare plug-in, posterior predictive, and mixture predictors on efficiency. The stopping guarantee must not depend on selecting the predictor that looks best on evaluation seeds.
+Future finite-grid benchmarks should use `C_t^cap` by default.
 
 ## Current implementation checkpoint
 
-`services/engine/src/mosaic_engine/science_s1_eprocess.py` implements:
+`services/engine/src/mosaic_engine/science_s1_eprocess.py` implements the stable fixed-parameter e-process primitives.
 
-- numerically stable binary-logistic log probabilities;
-- one-step prequential log e-increments;
-- cumulative fixed-parameter log e-values;
-- the exact two-outcome conditional normalization identity;
-- anytime thresholds;
-- the equivalent likelihood confidence cutoff; and
-- conservative rejection for a **fixed** composite null given an externally supplied upper bound on its log-likelihood supremum.
+Finite-grid benchmark modules v13a–v13f additionally exercise:
 
-The module intentionally does **not** claim that a time-varying data-dependent composite null inherits fixed-null anytime validity, and it does not yet solve continuous confidence-set angular certification.
+- predictable adaptive query selection;
+- exact finite confidence sets;
+- exact finite directional radii;
+- several common predictable numerators;
+- fresh-seed prospective validation; and
+- running-intersection confidence sequences with hard subset/radius invariants.
+
+These are verification harnesses, not a production matchmaking model.
 
 ## Nonclaims
 
-This method does not establish:
+The v13 method does not establish:
 
 - that the linear-logistic S1 likelihood is correct for people;
 - a valid synthetic visual feature basis;
 - transfer from synthetic willingness-to-meet to real-person attraction;
 - compatibility or relationship outcome prediction;
-- that the current numerical optimizer can certify a continuous angular cone;
-- that a moving data-dependent composite-null test is automatically anytime-valid;
+- a certified continuous cone optimizer;
+- validity of a moving data-dependent composite-null test;
 - that 5% is the final product risk tolerance; or
-- that the new method will have acceptable user burden.
-
-It establishes a mathematically different route whose fixed-parameter sequential validity can be audited independently from the failed Laplace-q95 calibration family.
+- acceptable human calibration burden in the real application.
 
 ## Next exact checkpoint
 
-Run the **finite fixed-grid composite-null benchmark** already implemented in `science_s1_benchmark_v13a.py`. It must verify empirically that false rejection of a true grid null remains at or below the nominal level under optional stopping and adaptive predictable design, while a deliberately non-predictable numerator should visibly break the construction.
+Run a fresh-seed finite-grid **theta-specific predictable challenger** benchmark with the acquisition policy frozen.
 
-After that, extend the finite-grid harness to certify the angular diameter/radius of the full e-process confidence set. Only then should continuous outside-cone optimization be attempted.
+Preserve:
+
+- 5-degree grid;
+- `B=0.9`;
+- target `epsilon=0.15`;
+- `alpha=0.05`;
+- candidate bank size 12;
+- the existing current-time all-grid-mixture disagreement controller for query selection, so the observed data path is not changed by the new numerator;
+- running-intersection confidence sequences for certification;
+- the same global finite-grid MLE center for directional reporting.
+
+Baseline: nested all-grid mixture.
+
+Candidate: for each tested `theta_j`, construct a normalized predictable challenger from the one-step-lagged maximum-likelihood alternative set excluding `theta_j`, averaging tied alternatives.
+
+Primary endpoint: paired difference in stop probability by 240 observations. Secondary endpoint: stopping-time burden. Hard safety invariant: zero false directional stops while truth remains in the nested confidence set.
+
+Do not change query policy in this checkpoint. After the challenger-numerator mechanism is understood, continuous certification and deliberate likelihood-misspecification work remain mandatory before S1 can close.
