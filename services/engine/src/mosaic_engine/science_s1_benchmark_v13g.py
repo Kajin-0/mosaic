@@ -61,9 +61,7 @@ def _second_face_excluding_unique_max(
     unique_max_index: int,
 ) -> tuple[int, ...]:
     alternatives = tuple(
-        (index, value)
-        for index, value in enumerate(log_likelihoods)
-        if index != unique_max_index
+        (index, value) for index, value in enumerate(log_likelihoods) if index != unique_max_index
     )
     maximum = max(value for _, value in alternatives)
     return tuple(index for index, value in alternatives if value == maximum)
