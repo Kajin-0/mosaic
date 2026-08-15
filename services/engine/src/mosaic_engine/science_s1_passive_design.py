@@ -14,6 +14,12 @@ from .science_s1_simulation import (
 from .science_s1_v6_simulation import V6SimulationResult
 
 
+def _ordered_pair(first: int, second: int) -> CandidatePair:
+    if first < second:
+        return (first, second)
+    return (second, first)
+
+
 def balanced_round_robin_pair_schedule(
     candidate_count: int,
     *,
@@ -37,9 +43,9 @@ def balanced_round_robin_pair_schedule(
     rounds: list[list[CandidatePair]] = []
 
     for _ in range(candidate_count - 1):
-        round_pairs: list[CandidatePair] = [tuple(sorted((fixed, rotating[-1])))]
+        round_pairs = [_ordered_pair(fixed, rotating[-1])]
         for index in range((candidate_count - 2) // 2):
-            round_pairs.append(tuple(sorted((rotating[index], rotating[-2 - index]))))
+            round_pairs.append(_ordered_pair(rotating[index], rotating[-2 - index]))
         random.shuffle(round_pairs)
         rounds.append(round_pairs)
         rotating = [rotating[-1], *rotating[:-1]]

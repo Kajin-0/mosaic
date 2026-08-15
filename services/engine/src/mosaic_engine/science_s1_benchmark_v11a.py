@@ -5,6 +5,7 @@ from collections.abc import Iterable
 from dataclasses import asdict
 from math import atan, pi, sqrt
 from statistics import mean, pstdev
+from typing import cast
 
 from .science_s1_benchmark_v7a import pair_query_count, realized_kappa
 from .science_s1_benchmark_v8a import (
@@ -297,20 +298,23 @@ def run_benchmark_v11a(
                 and cell["eta_target"] == eta_target
             ]
             observed = [
-                float(cell["gaussian_population_ordering_error"]["mean"]) for cell in matching_cells
+                cast(dict[str, float], cell["gaussian_population_ordering_error"])["mean"]
+                for cell in matching_cells
             ]
-            realized_etas = [float(cell["realized_eta"]) for cell in matching_cells]
+            realized_etas = [cast(float, cell["realized_eta"]) for cell in matching_cells]
             large_residual_means = [
-                float(cell["large_dimension_residual"]["mean"]) for cell in matching_cells
+                cast(dict[str, float], cell["large_dimension_residual"])["mean"]
+                for cell in matching_cells
             ]
             finite_residual_means = [
-                float(cell["finite_dimension_residual"]["mean"]) for cell in matching_cells
+                cast(dict[str, float], cell["finite_dimension_residual"])["mean"]
+                for cell in matching_cells
             ]
             collapse_groups.append(
                 {
                     "feature_dimension": feature_dimension,
                     "eta_target": eta_target,
-                    "slope_norms": [float(cell["slope_norm"]) for cell in matching_cells],
+                    "slope_norms": [cast(float, cell["slope_norm"]) for cell in matching_cells],
                     "realized_eta_min": min(realized_etas),
                     "realized_eta_max": max(realized_etas),
                     "observed_mean_error_min": min(observed),
