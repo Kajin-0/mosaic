@@ -10,24 +10,39 @@ Mosaic is the working codename for a mobile-first, research-driven matchmaking s
 
 The active scientific question is: what is the smallest user-specific preference state that can actually be identified from controlled synthetic-candidate choices strongly enough to support stable out-of-sample candidate ranking?
 
-S1 currently defines the observable target as a user's **willingness-to-meet probability over a versioned synthetic candidate feature space**, not a domain-general latent essence called attraction. The provisional state is an effective linear-logistic acceptance surface. Separate preference magnitude and response-consistency parameters are not treated as identified because ordinary choice likelihoods only reveal their product without an independent scale anchor.
+S1 defines the first observable target as a user's **willingness-to-meet probability over a versioned synthetic candidate feature space**, not a domain-general latent essence called attraction. The provisional state is an effective linear-logistic acceptance surface. Separate preference magnitude and response-consistency parameters are not treated as identified because ordinary choice likelihoods only reveal their product without an independent scale anchor.
 
-The current experimental checkpoint follows `s1-fixed-signal-sample-complexity-benchmark-v10a`. V7a showed that `kappa = 2q/(d+1)` did not collapse ranking performance when a fixed 18-candidate iid-Gaussian bank became increasingly ill-conditioned. V8a replaced that bank with a deterministic centered DCT tight frame and recovered much of the high-dimensional performance. V9a repeated the geometry control with a stochastic Gaussian-derived tight frame: high-dimensional recovery largely replicated, but finite-sample adaptive response paths could still infer the wrong direction despite exact full-bank covariance conditioning. V10a then removed adaptive acquisition and normalized every synthetic truth to the same effective slope norm `B = ||beta|| = 0.9`, using 32 seeds per `(d,kappa)` cell and 640 runs total. For the isotropic Gaussian reference population, wrong-order probability is exactly `acos(cos(beta,m))/pi`. At `d=12`, the prespecified Gaussian-logistic Fisher law predicted mean ordering error across the tested budgets with about `0.006` mean absolute cell error, but finite-dimensional transverse modes and finite query-path geometry remain important. Critically, mean performance is not a stopping guarantee: at `d=12,kappa=12`, mean ordering error is about `0.198` while the 90th percentile is about `0.270`. V10a tested only `B=0.9`, so the proposed signal coordinate `eta_F = B^2 kappa a(B)` has **not** yet been validated across signal levels. The next scientific checkpoint is a prespecified fixed-`B` phase diagram that varies `B` itself under passive controlled geometry before any product stopping rule or new greedy acquisition policy is introduced. See `docs/science/results/s1-fixed-signal-sample-complexity-benchmark-v10a.md`.
+The current experimental checkpoint follows `s1-radial-stopping-benchmark-v12c`.
 
-Do not reinterpret any existing deterministic questionnaire, synthetic PNG, candidate, score, or ranking fixture as a validated matchmaking, psychometric, attraction, compatibility, or relationship-prediction model.
+The controlled S1 program has now established the following synthetic boundary:
+
+- v7a showed that `kappa = 2q/(d+1)` did not collapse ranking performance when a fixed 18-candidate iid-Gaussian bank became increasingly ill-conditioned.
+- v8a replaced that bank with a deterministic centered tight frame and recovered much of the high-dimensional performance.
+- v9a repeated the geometry control with a stochastic Gaussian-derived tight frame; high-dimensional recovery largely replicated, but finite response paths could still infer the wrong direction.
+- v10a removed adaptive acquisition and fixed `B = ||beta|| = 0.9`. At `d=12`, the Gaussian-logistic Fisher law predicted mean population ordering error well, while upper-tail error remained too large for a stopping guarantee.
+- v11a varied `B` and supported the large-dimensional mean information coordinate `eta_F = B^2 kappa a(B)`, where `a(B)=E[sigmoid(BZ)(1-sigmoid(BZ))]`. This remains a mean-risk law, not a stopping rule.
+- v12a tested a posterior-observable Laplace q95 angular stopping statistic. Single crossing was anti-conservative: aggregate false-stop-given-stop was about 7–9%, and fixed-checkpoint coverage was severely subnominal for weak-signal/high-dimensional conditions.
+- v12b prospectively replicated the benefit of requiring two consecutive q95 crossings on fresh seeds, but aggregate pooling hid a serious subgroup defect. At `d=12, B=0.55, target=0.25`, two-consecutive crossing false-stopped on `23/89 = 25.8%` of stops. The core defect was weak-signal radial noise, not optional stopping alone.
+- v12c prospectively tested `B_db^2 = max(||m||^2 - tr(Sigma_beta), 0)` on fresh seeds. The corrected two-consecutive rule passed the aggregate Wilson-95 safety gate and all adequately sampled subgroup safety gates, but failed the prespecified strong-signal utility gate: at `d=12, B=1.5, target=0.15`, only `42/128 = 32.8%` of paths stopped despite a 60% required floor.
+
+The current scientific conclusion is therefore precise: **radial posterior noise is a real cause of false confidence, but subtracting the entire covariance trace overcorrects angular uncertainty.** The next checkpoint is a fresh-seed v12d test of transverse-only covariance debiasing, because pure longitudinal uncertainty changes fitted magnitude but does not rotate the ranking direction to first order.
+
+Do not reinterpret any existing deterministic questionnaire, synthetic PNG, candidate, score, posterior, or ranking fixture as a validated matchmaking, psychometric, attraction, compatibility, or relationship-prediction model.
 
 ## Required reading before substantial work
 
 1. `README.md`
 2. `docs/science/README.md`
 3. `docs/science/s1-identifiable-preference-model.md`
-4. `docs/science/results/s1-fixed-signal-sample-complexity-benchmark-v10a.md` for the current experimental boundary; read v7a–v9a first when reconstructing the geometry/sample-complexity argument.
-5. ADR 0009 for the first scientific-state boundary.
-6. `docs/ROADMAP.md` for completed infrastructure history.
-7. `docs/ARCHITECTURE.md`
-8. ADRs 0004–0008 for raw-evidence/derived-state, synthetic-provenance, operational-recovery, and persisted-ranking boundaries.
-9. `docs/protocols/phase8-internal-alpha.md` for the complete application replay.
-10. `docs/operations/database-recovery.md` before database or migration work that can affect persistent scientific state.
+4. `docs/science/results/s1-radial-stopping-benchmark-v12c.md` for the current boundary.
+5. `docs/science/results/s1-stopping-validation-benchmark-v12b.md` and `docs/science/results/s1-stopping-calibration-benchmark-v12a.md` for the stopping-calibration failure chain.
+6. Read v7a–v11a result documents when reconstructing the geometry/sample-complexity/Fisher-law argument.
+7. ADR 0009 for the first scientific-state boundary.
+8. `docs/ROADMAP.md` for completed infrastructure history.
+9. `docs/ARCHITECTURE.md`
+10. ADRs 0004–0008 for raw-evidence/derived-state, synthetic-provenance, operational-recovery, and persisted-ranking boundaries.
+11. `docs/protocols/phase8-internal-alpha.md` for the complete application replay.
+12. `docs/operations/database-recovery.md` before database or migration work that can affect persistent scientific state.
 
 ## Active S1 scientific invariants
 
@@ -41,8 +56,12 @@ Do not reinterpret any existing deterministic questionnaire, synthetic PNG, cand
 - No universal feature dimension or fixed calibration-question count is established. Query burden is adaptive and uncertainty must remain explicit when a product cap is reached.
 - `kappa = 2q/(d+1)` is not a sufficient finite-dimensional directional sample-complexity coordinate by itself. Query-path information geometry, the `d-1` transverse ranking modes, prior information, and effective slope signal `B = ||beta||` matter.
 - For an isotropic Gaussian reference population and nonzero true/fitted slopes, population ordering error is exactly `acos(cos(beta,m))/pi`.
-- For passive isotropic Gaussian-logistic sampling, `a(B) = E[sigmoid(BZ)(1-sigmoid(BZ))]` is the transverse Fisher weight and `eta_F = B^2 kappa a(B)` is the current large-dimensional theoretical information coordinate. V10a supports its mean-error behavior at `B=0.9,d=12`; scaling across `B` remains unvalidated.
-- The large-dimensional mean-error relation `ordering_error ≈ atan(eta_F^-1/2)/pi` is a synthetic analytical benchmark, not a production stopping rule. Tail/false-stop operating characteristics remain unresolved.
+- For passive isotropic Gaussian-logistic sampling, `a(B) = E[sigmoid(BZ)(1-sigmoid(BZ))]` is the transverse Fisher weight and `eta_F = B^2 kappa a(B)` is the current supported large-dimensional mean-information coordinate across the tested `B` range. It is not a production stopping rule.
+- The large-dimensional mean-error relation `ordering_error ≈ atan(eta_F^-1/2)/pi` is a synthetic analytical benchmark. Mean risk does not control individual/tail risk.
+- A raw Laplace posterior q95 angular statistic is **not** a calibrated 95% frequentist upper bound under the current finite-sample protocol. v12a/v12b demonstrate severe undercoverage in weak-signal/high-dimensional conditions.
+- Two consecutive raw q95 crossings reduce optional-stopping error but do not repair fixed-checkpoint posterior undercoverage.
+- Full-trace radial debiasing `max(||m||^2-tr(Sigma_beta),0)` repairs much of that undercoverage and passes aggregate/subgroup safety gates, but v12c shows it can be materially overconservative for strict high-dimensional strong-signal calibration.
+- The next stopping hypothesis is transverse-only debiasing: with `u=m/||m||`, use `V_perp = tr(Sigma_beta)-u^T Sigma_beta u`, because first-order directional error depends on covariance orthogonal to the fitted direction.
 - Exact identity empirical covariance of the admissible query bank does not imply the finite accumulated query path is isotropic and does not guarantee finite-sample active-policy reliability.
 - Active queries must include model-diagnostic probes; do not optimize information gain forever under an untested likelihood.
 - Synthetic-domain identification does not establish transfer to real profile choices, in-person attraction, relationship formation, or long-term relationship quality.
