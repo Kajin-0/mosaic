@@ -1,0 +1,74 @@
+name: Science S1 Exact Gaussian Ranking Benchmark v6a
+
+on:
+  push:
+    branches:
+      - science/s1-identifiable-preference-model
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout exact science head
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Install pinned uv
+        run: python -m pip install uv==0.12.4
+
+      - name: Install locked Python environment
+        run: uv sync --project services/engine --all-groups --frozen
+
+      - name: Run exploratory S1 v6a benchmark
+        run: |
+          uv run --project services/engine python -m mosaic_engine.science_s1_benchmark_v6a > s1-benchmark-v6a.json
+
+      - name: Print concise benchmark summary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path('s1-benchmark-v6a.json').read_text())
+          print(result['benchmark_version'])
+          print(result['scientific_scope'])
+          print(f"raw_runs={len(result['raw_runs'])}")
+          print('d\tq\tpolicy\tpair_regret\torder_error\ttopk_regret\tprob_mse\texcess_logloss\tconv')
+          for cell in result['cells']:
+              metrics = cell['metrics']
+              ranking = cell['ranking_metrics']
+              print(
+                  f"{cell['feature_dimension']}\t{cell['query_count']}\t{cell['policy']}\t"
+                  f"{ranking['probability_regret']['mean']:.6f}\t"
+                  f"{ranking['ordering_error_rate']['mean']:.6f}\t"
+                  f"{metrics['top_k_regret']['mean']:.6f}\t"
+                  f"{metrics['probability_mse']['mean']:.6f}\t"
+                  f"{metrics['excess_log_loss']['mean']:.6f}\t"
+                  f"{cell['convergence_rate']:.6f}"
+              )
+
+          for policy in ('population_score_regret', 'exact_gaussian_score_regret'):
+              policy_runs = [run for run in result['raw_runs'] if run['policy'] == policy]
+              negative = sum(run['negative_acquisition_score_count'] for run in policy_runs)
+              score_means = [run['acquisition_score_mean'] for run in policy_runs]
+              print(f"{policy}_runs={len(policy_runs)}")
+              print(f"{policy}_selected_negative_scores={negative}")
+              print(f"{policy}_mean_selected_score={sum(score_means) / len(score_means):.8f}")
+          PY
+
+      - name: Upload benchmark JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: s1-exact-gaussian-ranking-benchmark-v6a
+          path: s1-benchmark-v6a.json
+          if-no-files-found: error
+          retention-days: 14
