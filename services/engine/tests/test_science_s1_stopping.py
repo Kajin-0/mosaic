@@ -5,6 +5,8 @@ from mosaic_engine.science_s1_stopping import (
     posterior_directional_risk,
     posterior_radial_debiased_directional_risk,
     posterior_radial_signal,
+    posterior_transverse_debiased_directional_risk,
+    posterior_transverse_signal,
 )
 
 
@@ -81,6 +83,26 @@ def test_radial_signal_subtracts_covariance_trace_from_squared_norm() -> None:
     assert signal.retained_fraction < 1.0
 
 
+def test_transverse_signal_excludes_longitudinal_covariance_energy() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 1.0, 0.0),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.12, 0.0), (0.0, 0.0, 0.18)),
+        precision=((10.0, 0.0, 0.0), (0.0, 8.3333333333, 0.0), (0.0, 0.0, 5.5555555556)),
+        converged=True,
+        iterations=1,
+    )
+
+    radial = posterior_radial_signal(posterior)
+    transverse = posterior_transverse_signal(posterior)
+
+    assert abs(transverse.covariance_trace - 0.30) < 1e-12
+    assert abs(transverse.parallel_variance - 0.12) < 1e-12
+    assert abs(transverse.transverse_variance - 0.18) < 1e-12
+    assert abs(transverse.debiased_norm_sq - 0.82) < 1e-12
+    assert abs(transverse.debiased_norm - sqrt(0.82)) < 1e-12
+    assert radial.debiased_norm < transverse.debiased_norm < transverse.raw_norm
+
+
 def test_radial_debiased_risk_is_more_conservative_when_noise_inflates_norm() -> None:
     posterior = LaplacePosterior(
         mean=(0.0, 1.0, 0.0),
@@ -102,6 +124,32 @@ def test_radial_debiased_risk_is_more_conservative_when_noise_inflates_norm() ->
     assert corrected.upper_error > ordinary.upper_error
 
 
+def test_transverse_risk_lies_between_raw_and_full_trace_corrections() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 1.0, 0.0),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.12, 0.0), (0.0, 0.0, 0.18)),
+        precision=((10.0, 0.0, 0.0), (0.0, 8.3333333333, 0.0), (0.0, 0.0, 5.5555555556)),
+        converged=True,
+        iterations=1,
+    )
+
+    raw = posterior_directional_risk(posterior, sample_count=4096, seed=23)
+    transverse = posterior_transverse_debiased_directional_risk(
+        posterior,
+        sample_count=4096,
+        seed=23,
+    )
+    full = posterior_radial_debiased_directional_risk(
+        posterior,
+        sample_count=4096,
+        seed=23,
+    )
+
+    assert full.slope_norm < transverse.slope_norm < raw.slope_norm
+    assert raw.mean_error < transverse.mean_error < full.mean_error
+    assert raw.upper_error < transverse.upper_error < full.upper_error
+
+
 def test_noise_dominated_radial_signal_refuses_confident_direction() -> None:
     posterior = LaplacePosterior(
         mean=(0.0, 0.2, 0.0),
@@ -116,5 +164,27 @@ def test_noise_dominated_radial_signal_refuses_confident_direction() -> None:
 
     assert signal.debiased_norm == 0.0
     assert signal.retained_fraction == 0.0
+    assert risk.mean_error == 0.5
+    assert risk.upper_error == 0.5
+
+
+def test_noise_dominated_transverse_signal_refuses_confident_direction() -> None:
+    posterior = LaplacePosterior(
+        mean=(0.0, 0.2, 0.0),
+        covariance=((0.1, 0.0, 0.0), (0.0, 0.1, 0.0), (0.0, 0.0, 0.1)),
+        precision=((10.0, 0.0, 0.0), (0.0, 10.0, 0.0), (0.0, 0.0, 10.0)),
+        converged=True,
+        iterations=1,
+    )
+
+    signal = posterior_transverse_signal(posterior)
+    risk = posterior_transverse_debiased_directional_risk(
+        posterior,
+        sample_count=64,
+        seed=2,
+    )
+
+    assert signal.transverse_variance == 0.1
+    assert signal.debiased_norm == 0.0
     assert risk.mean_error == 0.5
     assert risk.upper_error == 0.5
