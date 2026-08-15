@@ -264,12 +264,14 @@ def _paired_at_horizon(
         stops = cast(dict[str, object], path["first_stop"])
         local_stop = stops[LOCAL_NEIGHBOR]
         baseline_stop = stops[BASELINE]
-        local = local_stop is not None and cast(
-            int, cast(dict[str, object], local_stop)["observation_count"]
-        ) <= horizon
-        baseline = baseline_stop is not None and cast(
-            int, cast(dict[str, object], baseline_stop)["observation_count"]
-        ) <= horizon
+        local = (
+            local_stop is not None
+            and cast(int, cast(dict[str, object], local_stop)["observation_count"]) <= horizon
+        )
+        baseline = (
+            baseline_stop is not None
+            and cast(int, cast(dict[str, object], baseline_stop)["observation_count"]) <= horizon
+        )
         if local and baseline:
             both += 1
         elif local:
