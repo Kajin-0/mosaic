@@ -38,8 +38,7 @@ def centered_dct_candidate_bank(
     scale = sqrt(2.0)
     return tuple(
         tuple(
-            scale
-            * cos(pi * (row_index + 0.5) * (feature_index + 1) / candidate_count)
+            scale * cos(pi * (row_index + 0.5) * (feature_index + 1) / candidate_count)
             for feature_index in range(feature_dimension)
         )
         for row_index in range(candidate_count)
