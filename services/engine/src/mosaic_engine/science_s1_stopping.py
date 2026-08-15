@@ -66,10 +66,7 @@ def _quadratic_form(vector: Sequence[float], matrix: Sequence[Sequence[float]]) 
         raise ValueError("matrix and vector dimensions must agree")
     return sum(
         float(vector[row])
-        * sum(
-            float(matrix[row][column]) * float(vector[column])
-            for column in range(len(vector))
-        )
+        * sum(float(matrix[row][column]) * float(vector[column]) for column in range(len(vector)))
         for row in range(len(vector))
     )
 
