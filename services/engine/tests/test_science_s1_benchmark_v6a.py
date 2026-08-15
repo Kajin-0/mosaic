@@ -22,10 +22,15 @@ def test_v6a_tiny_benchmark_is_reproducible_and_marks_exact_reference() -> None:
     assert first["benchmark_version"] == "s1-exact-gaussian-ranking-benchmark-v6a"
     assert first["config"]["reference_difference_distribution"] == "Normal(0, 2 I)"
     assert first["config"]["exact_policy_uses_reference_samples"] is False
+    assert first["config"]["raw_runs_retain_selected_pairs"] is True
     assert len(first["cells"]) == 2
     assert len(first["raw_runs"]) == 2
 
     runs_by_policy = {run["policy"]: run for run in first["raw_runs"]}
-    assert runs_by_policy["population_score_regret"]["acquisition_score_mean"] is not None
-    assert runs_by_policy["exact_gaussian_score_regret"]["acquisition_score_mean"] is not None
-    assert runs_by_policy["exact_gaussian_score_regret"]["ranking_metrics"]["pair_count"] == 28
+    sampled_run = runs_by_policy["population_score_regret"]
+    exact_run = runs_by_policy["exact_gaussian_score_regret"]
+    assert sampled_run["acquisition_score_mean"] is not None
+    assert exact_run["acquisition_score_mean"] is not None
+    assert len(sampled_run["selected_pairs"]) == 1
+    assert len(exact_run["selected_pairs"]) == 1
+    assert exact_run["ranking_metrics"]["pair_count"] == 28
