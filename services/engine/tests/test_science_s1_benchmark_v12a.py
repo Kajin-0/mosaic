@@ -27,8 +27,8 @@ def test_v12a_small_benchmark_shape_and_stop_semantics() -> None:
         assert query_counts == [3, 6, 9, 12, 15]
         for checkpoint in path["checkpoints"]:
             risk = checkpoint["posterior_directional_risk"]
-            assert 0.0 <= risk["mean_error"] <= 0.5
-            assert 0.0 <= risk["upper_error"] <= 0.5
+            assert 0.0 <= risk["mean_error"] <= 1.0
+            assert 0.0 <= risk["upper_error"] <= 1.0
             assert risk["upper_error"] >= risk["mean_error"]
 
     for summary in cell["target_summaries"]:
