@@ -31,9 +31,7 @@ def test_centered_isotropic_expected_norm_matches_chi_closed_form(dimension: int
     standard_deviation = 1.7
     mean = (0.0,) * dimension
     covariance = tuple(
-        tuple(
-            standard_deviation**2 if row == column else 0.0 for column in range(dimension)
-        )
+        tuple(standard_deviation**2 if row == column else 0.0 for column in range(dimension))
         for row in range(dimension)
     )
 
