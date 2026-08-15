@@ -256,7 +256,10 @@ def _summarize_predictor(
         )
 
     stopping_observations = [cast(int, stop["observation_count"]) for stop in stopped]
-    regrets = [oracle - predictor for oracle, predictor in zip(oracle_log_q, predictor_log_q, strict=True)]
+    regrets = [
+        oracle - predictor
+        for oracle, predictor in zip(oracle_log_q, predictor_log_q, strict=True)
+    ]
     return {
         "predictor": predictor_name,
         "horizon": horizon,
