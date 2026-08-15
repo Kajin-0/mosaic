@@ -12,7 +12,7 @@ The active scientific question is: what is the smallest user-specific preference
 
 S1 defines the first observable target as a user's **willingness-to-meet probability over a versioned synthetic candidate feature space**, not a domain-general latent essence called attraction. The provisional state is an effective linear-logistic acceptance surface. Separate preference magnitude and response-consistency parameters are not treated as identified because ordinary choice likelihoods only reveal their product without an independent scale anchor.
 
-The current experimental checkpoint follows `s1-radial-stopping-benchmark-v12c`.
+The current experimental checkpoint follows `s1-transverse-stopping-benchmark-v12d`.
 
 The controlled S1 program has now established the following synthetic boundary:
 
@@ -24,8 +24,11 @@ The controlled S1 program has now established the following synthetic boundary:
 - v12a tested a posterior-observable Laplace q95 angular stopping statistic. Single crossing was anti-conservative: aggregate false-stop-given-stop was about 7–9%, and fixed-checkpoint coverage was severely subnominal for weak-signal/high-dimensional conditions.
 - v12b prospectively replicated the benefit of requiring two consecutive q95 crossings on fresh seeds, but aggregate pooling hid a serious subgroup defect. At `d=12, B=0.55, target=0.25`, two-consecutive crossing false-stopped on `23/89 = 25.8%` of stops. The core defect was weak-signal radial noise, not optional stopping alone.
 - v12c prospectively tested `B_db^2 = max(||m||^2 - tr(Sigma_beta), 0)` on fresh seeds. The corrected two-consecutive rule passed the aggregate Wilson-95 safety gate and all adequately sampled subgroup safety gates, but failed the prespecified strong-signal utility gate: at `d=12, B=1.5, target=0.15`, only `42/128 = 32.8%` of paths stopped despite a 60% required floor.
+- v12d replaced full-trace subtraction with transverse-only debiasing, `B_perp,db^2 = max(||m||^2 - [tr(Sigma_beta)-u^T Sigma_beta u], 0)`. It preserved aggregate/subgroup safety and improved the failed strict strong-signal stop rate to `56/128 = 43.8%`, but still missed the unchanged 60% utility gate. A transverse single-crossing comparator reached 60.9% in that cell but failed aggregate confidence-bound safety at target 0.15.
 
-The current scientific conclusion is therefore precise: **radial posterior noise is a real cause of false confidence, but subtracting the entire covariance trace overcorrects angular uncertainty.** The next checkpoint is a fresh-seed v12d test of transverse-only covariance debiasing, because pure longitudinal uncertainty changes fitted magnitude but does not rotate the ranking direction to first order.
+The current scientific conclusion is therefore precise: **scalar signal-norm correction is no longer the main unresolved defect.** Full-trace and transverse-only corrections both repair weak-signal false confidence, and transverse-only correction improves burden, but the current angular posterior simulation remains too conservative because it perturbs the reference direction with full covariance, including longitudinal noise that does not rotate rankings to first order.
+
+The next checkpoint is a fresh-seed v12e **tangent-space angular confidence** test. Posterior perturbations should be projected with `P_perp = I - uu^T` before angular error is computed, while retaining the transverse-debiased signal norm as the reference scale. The v12c/v12d safety, subgroup, and strong-signal utility gates must remain unchanged.
 
 Do not reinterpret any existing deterministic questionnaire, synthetic PNG, candidate, score, posterior, or ranking fixture as a validated matchmaking, psychometric, attraction, compatibility, or relationship-prediction model.
 
@@ -34,8 +37,8 @@ Do not reinterpret any existing deterministic questionnaire, synthetic PNG, cand
 1. `README.md`
 2. `docs/science/README.md`
 3. `docs/science/s1-identifiable-preference-model.md`
-4. `docs/science/results/s1-radial-stopping-benchmark-v12c.md` for the current boundary.
-5. `docs/science/results/s1-stopping-validation-benchmark-v12b.md` and `docs/science/results/s1-stopping-calibration-benchmark-v12a.md` for the stopping-calibration failure chain.
+4. `docs/science/results/s1-transverse-stopping-benchmark-v12d.md` for the current stopping boundary.
+5. `docs/science/results/s1-radial-stopping-benchmark-v12c.md`, `docs/science/results/s1-stopping-validation-benchmark-v12b.md`, and `docs/science/results/s1-stopping-calibration-benchmark-v12a.md` for the stopping-calibration failure chain.
 6. Read v7a–v11a result documents when reconstructing the geometry/sample-complexity/Fisher-law argument.
 7. ADR 0009 for the first scientific-state boundary.
 8. `docs/ROADMAP.md` for completed infrastructure history.
@@ -61,7 +64,8 @@ Do not reinterpret any existing deterministic questionnaire, synthetic PNG, cand
 - A raw Laplace posterior q95 angular statistic is **not** a calibrated 95% frequentist upper bound under the current finite-sample protocol. v12a/v12b demonstrate severe undercoverage in weak-signal/high-dimensional conditions.
 - Two consecutive raw q95 crossings reduce optional-stopping error but do not repair fixed-checkpoint posterior undercoverage.
 - Full-trace radial debiasing `max(||m||^2-tr(Sigma_beta),0)` repairs much of that undercoverage and passes aggregate/subgroup safety gates, but v12c shows it can be materially overconservative for strict high-dimensional strong-signal calibration.
-- The next stopping hypothesis is transverse-only debiasing: with `u=m/||m||`, use `V_perp = tr(Sigma_beta)-u^T Sigma_beta u`, because first-order directional error depends on covariance orthogonal to the fitted direction.
+- Transverse-only debiasing with `V_perp = tr(Sigma_beta)-u^T Sigma_beta u` improves the safety–utility tradeoff and preserves safety, but v12d shows scalar norm correction alone cannot meet the strict strong-signal utility gate under two-round persistence.
+- The next stopping hypothesis must modify the angular uncertainty construction itself: posterior perturbations should be projected into the tangent space orthogonal to `u=m/||m||` before converting them to angular/ranking error. Do not introduce another arbitrary scalar multiplier, burn-in, or threshold tuned on v12a–v12d artifacts.
 - Exact identity empirical covariance of the admissible query bank does not imply the finite accumulated query path is isotropic and does not guarantee finite-sample active-policy reliability.
 - Active queries must include model-diagnostic probes; do not optimize information gain forever under an untested likelihood.
 - Synthetic-domain identification does not establish transfer to real profile choices, in-person attraction, relationship formation, or long-term relationship quality.
