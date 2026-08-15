@@ -43,12 +43,8 @@ def _slope_marginal(
     if len(posterior.mean) < 2:
         raise ValueError("posterior must contain an intercept and at least one slope")
     slope_mean = tuple(float(value) for value in posterior.mean[1:])
-    covariance = tuple(
-        tuple(float(value) for value in row[1:]) for row in posterior.covariance[1:]
-    )
-    if len(covariance) != len(slope_mean) or any(
-        len(row) != len(slope_mean) for row in covariance
-    ):
+    covariance = tuple(tuple(float(value) for value in row[1:]) for row in posterior.covariance[1:])
+    if len(covariance) != len(slope_mean) or any(len(row) != len(slope_mean) for row in covariance):
         raise ValueError("posterior slope covariance dimensions must agree")
     return slope_mean, covariance
 
@@ -152,8 +148,7 @@ def _posterior_directional_risk_with_reference_norm(
     for _ in range(sample_count):
         standard = [random.gauss(0.0, 1.0) for _ in reference]
         draw = tuple(
-            reference[row]
-            + sum(lower[row][column] * standard[column] for column in range(row + 1))
+            reference[row] + sum(lower[row][column] * standard[column] for column in range(row + 1))
             for row in range(len(reference))
         )
         errors.append(_angle_error(reference, draw))
