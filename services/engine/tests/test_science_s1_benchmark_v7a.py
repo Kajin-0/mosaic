@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from math import pi
+
 import pytest
 
 from mosaic_engine.science_s1_benchmark_v7a import (
@@ -67,7 +69,7 @@ def test_tiny_benchmark_records_dimension_normalization_and_direction_metrics() 
             "slope_signal_to_uncertainty",
         }
         assert -1.0 <= direction["slope_cosine"]["mean"] <= 1.0
-        assert 0.0 <= direction["slope_angle_radians"]["mean"] <= pytest.approx(3.141592653589793)
+        assert 0.0 <= direction["slope_angle_radians"]["mean"] <= pi
 
     for raw in result["raw_runs"]:
         assert raw["binary_observation_count"] == 2 * raw["query_count"]
