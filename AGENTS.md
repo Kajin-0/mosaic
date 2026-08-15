@@ -12,7 +12,7 @@ The active scientific question is: what is the smallest user-specific preference
 
 S1 currently defines the observable target as a user's **willingness-to-meet probability over a versioned synthetic candidate feature space**, not a domain-general latent essence called attraction. The provisional state is an effective linear-logistic acceptance surface. Separate preference magnitude and response-consistency parameters are not treated as identified because ordinary choice likelihoods only reveal their product without an independent scale anchor.
 
-The current experimental checkpoint follows `s1-sample-complexity-benchmark-v7a`. V7a rejected the simple hypothesis that ranking performance is determined only by binary observations per fitted coefficient, `kappa = 2q/(d+1)`, under the tested design. However, the fixed 18-candidate iid-Gaussian query bank became sharply more ill-conditioned as dimension increased, so intrinsic dimension effects are confounded with stimulus-design geometry. **The next experiment must control query-bank geometry across dimensions before testing sparse/low-rank preference structure or inventing another acquisition objective.** See `docs/science/results/s1-sample-complexity-benchmark-v7a.md`.
+The current experimental checkpoint follows `s1-gaussian-controlled-geometry-benchmark-v9a`. V7a showed that `kappa = 2q/(d+1)` did not collapse ranking performance when a fixed 18-candidate iid-Gaussian bank became increasingly ill-conditioned. V8a replaced that bank with a deterministic centered DCT tight frame and recovered much of the high-dimensional performance. V9a repeated the geometry control with a stochastic Gaussian-derived tight frame. The high-dimensional/high-budget recovery largely replicated, so well-conditioned query geometry is a real mechanism rather than a DCT-specific artifact. However, v9a also produced severe finite-sample adaptive path failures at `d=4` despite exact full-bank covariance conditioning, proving that static geometry is not sufficient. Four seeds also left large dimension-to-dimension variation in realized effective slope norm `B = ||beta||`. The strongest next test is therefore **not another acquisition heuristic**: normalize every synthetic truth to a fixed slope norm, expand the seed count, and test the theoretically motivated signal-normalized coordinate `eta = B^2 kappa / 4`, including lower-tail/false-direction behavior. See `docs/science/results/s1-gaussian-controlled-geometry-benchmark-v9a.md`.
 
 Do not reinterpret any existing deterministic questionnaire, synthetic PNG, candidate, score, or ranking fixture as a validated matchmaking, psychometric, attraction, compatibility, or relationship-prediction model.
 
@@ -21,7 +21,7 @@ Do not reinterpret any existing deterministic questionnaire, synthetic PNG, cand
 1. `README.md`
 2. `docs/science/README.md`
 3. `docs/science/s1-identifiable-preference-model.md`
-4. `docs/science/results/s1-sample-complexity-benchmark-v7a.md` for the current experimental boundary.
+4. `docs/science/results/s1-gaussian-controlled-geometry-benchmark-v9a.md` for the current experimental boundary; read v7a/v8a first when reconstructing the geometry argument.
 5. ADR 0009 for the first scientific-state boundary.
 6. `docs/ROADMAP.md` for completed infrastructure history.
 7. `docs/ARCHITECTURE.md`
@@ -39,7 +39,9 @@ Do not reinterpret any existing deterministic questionnaire, synthetic PNG, cand
 - Operational selectivity is initially a derived posterior-predictive acceptance rate over a versioned reference candidate distribution, not an unqualified intrinsic threshold scalar.
 - Population information enters only through explicit versioned priors learned from suitable evidence; direct individual evidence determines the operative posterior.
 - No universal feature dimension or fixed calibration-question count is established. Query burden is adaptive and uncertainty must remain explicit when a product cap is reached.
-- `kappa = 2q/(d+1)` is not established as a sufficient sample-complexity coordinate. Query-bank information geometry must also be measured or controlled.
+- `kappa = 2q/(d+1)` is not established as a sufficient sample-complexity coordinate. Query-bank information geometry and effective slope signal `B = ||beta||` must also be controlled or measured in a fixed standardized basis.
+- Under the ideal isotropic Gaussian-reference limit, `eta = B^2 kappa / 4` is a theoretical directional-information coordinate and `ordering_error ≈ atan(eta^-1/2)/pi`; this remains a hypothesis to validate, not a production stopping rule.
+- Exact identity empirical covariance of the admissible query bank does not guarantee finite-sample active-policy reliability; adaptive response-path failures must be measured as distributions/tails, not hidden by cell means.
 - Active queries must include model-diagnostic probes; do not optimize information gain forever under an untested likelihood.
 - Synthetic-domain identification does not establish transfer to real profile choices, in-person attraction, relationship formation, or long-term relationship quality.
 
