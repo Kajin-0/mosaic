@@ -27,6 +27,18 @@ class PosteriorRadialSignal:
     retained_fraction: float
 
 
+@dataclass(frozen=True)
+class PosteriorTransverseSignal:
+    raw_norm: float
+    raw_norm_sq: float
+    covariance_trace: float
+    parallel_variance: float
+    transverse_variance: float
+    debiased_norm: float
+    debiased_norm_sq: float
+    retained_fraction: float
+
+
 def _dot(left: Sequence[float], right: Sequence[float]) -> float:
     if len(left) != len(right):
         raise ValueError("vector dimensions must agree")
@@ -47,6 +59,19 @@ def _slope_marginal(
     if len(covariance) != len(slope_mean) or any(len(row) != len(slope_mean) for row in covariance):
         raise ValueError("posterior slope covariance dimensions must agree")
     return slope_mean, covariance
+
+
+def _quadratic_form(vector: Sequence[float], matrix: Sequence[Sequence[float]]) -> float:
+    if len(matrix) != len(vector) or any(len(row) != len(vector) for row in matrix):
+        raise ValueError("matrix and vector dimensions must agree")
+    return sum(
+        float(vector[row])
+        * sum(
+            float(matrix[row][column]) * float(vector[column])
+            for column in range(len(vector))
+        )
+        for row in range(len(vector))
+    )
 
 
 def _cholesky(matrix: Sequence[Sequence[float]]) -> tuple[tuple[float, ...], ...]:
@@ -89,7 +114,7 @@ def _angle_error(reference: Sequence[float], candidate: Sequence[float]) -> floa
 
 
 def posterior_radial_signal(posterior: LaplacePosterior) -> PosteriorRadialSignal:
-    """Estimate how much fitted slope norm remains after first-order noise debiasing.
+    """Estimate how much fitted slope norm remains after full covariance debiasing.
 
     If an approximately Gaussian estimator has mean ``beta`` and covariance ``V``, then
     ``E[||m||^2] = ||beta||^2 + tr(V)``. The Laplace slope covariance is used here as a
@@ -107,6 +132,44 @@ def posterior_radial_signal(posterior: LaplacePosterior) -> PosteriorRadialSigna
         raw_norm=raw_norm,
         raw_norm_sq=raw_norm_sq,
         covariance_trace=covariance_trace,
+        debiased_norm=debiased_norm,
+        debiased_norm_sq=debiased_norm_sq,
+        retained_fraction=retained_fraction,
+    )
+
+
+def posterior_transverse_signal(posterior: LaplacePosterior) -> PosteriorTransverseSignal:
+    """Debias fitted slope norm using only covariance that can rotate its direction.
+
+    Let ``u = m / ||m||``. The covariance component ``u.T Sigma u`` is longitudinal:
+    to first order it changes slope magnitude without changing ranking direction. The
+    transverse covariance energy is therefore ``tr(Sigma) - u.T Sigma u``. Subtracting
+    only that component from ``||m||^2`` is less conservative than full-trace radial
+    debiasing while remaining tied to the geometry of angular ranking error.
+
+    This is a synthetic diagnostic approximation, not a confidence guarantee.
+    """
+    slope_mean, covariance = _slope_marginal(posterior)
+    raw_norm_sq = sum(value * value for value in slope_mean)
+    raw_norm = sqrt(raw_norm_sq)
+    covariance_trace = sum(covariance[index][index] for index in range(len(covariance)))
+
+    if raw_norm > 1e-15:
+        direction = tuple(value / raw_norm for value in slope_mean)
+        parallel_variance = _quadratic_form(direction, covariance)
+    else:
+        parallel_variance = 0.0
+
+    transverse_variance = max(covariance_trace - parallel_variance, 0.0)
+    debiased_norm_sq = max(raw_norm_sq - transverse_variance, 0.0)
+    debiased_norm = sqrt(debiased_norm_sq)
+    retained_fraction = debiased_norm / raw_norm if raw_norm > 1e-15 else 0.0
+    return PosteriorTransverseSignal(
+        raw_norm=raw_norm,
+        raw_norm_sq=raw_norm_sq,
+        covariance_trace=covariance_trace,
+        parallel_variance=parallel_variance,
+        transverse_variance=transverse_variance,
         debiased_norm=debiased_norm,
         debiased_norm_sq=debiased_norm_sq,
         retained_fraction=retained_fraction,
@@ -169,17 +232,7 @@ def posterior_directional_risk(
     sample_count: int = 512,
     seed: int = 0,
 ) -> PosteriorDirectionalRisk:
-    """Estimate posterior uncertainty in Gaussian-population ranking direction.
-
-    The fitted slope mean is the operational ranking direction. Draws are taken
-    from the Laplace slope marginal and converted to angular wrong-order error
-    relative to that fitted direction. The result uses posterior quantities only;
-    it never accesses a synthetic ground-truth coefficient vector.
-
-    ``upper_error`` is a nearest-rank posterior quantile. It is a candidate
-    stopping statistic whose frequentist false-stop behavior must be measured by
-    synthetic benchmarks before any product use.
-    """
+    """Estimate posterior uncertainty in Gaussian-population ranking direction."""
     slope_mean, _ = _slope_marginal(posterior)
     return _posterior_directional_risk_with_reference_norm(
         posterior,
@@ -197,20 +250,36 @@ def posterior_radial_debiased_directional_risk(
     sample_count: int = 512,
     seed: int = 0,
 ) -> PosteriorDirectionalRisk:
-    """Inflate directional uncertainty by removing first-order radial noise energy.
-
-    The fitted slope direction is retained, but its reference norm is replaced by
-    ``sqrt(max(||m||^2 - tr(Sigma_beta), 0))`` before angular posterior-noise draws
-    are evaluated. A zero debiased norm returns random-ordering uncertainty (0.5),
-    preventing a noise-dominated fitted vector from satisfying ordinary S1 targets.
-
-    This is a theory-motivated synthetic diagnostic. Its operating characteristics
-    must be validated prospectively before any use as a calibration stopping rule.
-    """
+    """Evaluate angular uncertainty after subtracting full slope-covariance energy."""
     radial = posterior_radial_signal(posterior)
     return _posterior_directional_risk_with_reference_norm(
         posterior,
         reference_norm=radial.debiased_norm,
+        quantile=quantile,
+        sample_count=sample_count,
+        seed=seed,
+    )
+
+
+def posterior_transverse_debiased_directional_risk(
+    posterior: LaplacePosterior,
+    *,
+    quantile: float = 0.95,
+    sample_count: int = 512,
+    seed: int = 0,
+) -> PosteriorDirectionalRisk:
+    """Evaluate angular uncertainty after subtracting transverse covariance energy.
+
+    The fitted direction is retained, but its reference norm is replaced by
+    ``sqrt(max(||m||^2 - V_perp, 0))`` with
+    ``V_perp = tr(Sigma_beta) - u.T Sigma_beta u``. The construction is intended to
+    retain the v12c weak-signal safety mechanism without penalizing longitudinal
+    uncertainty that does not rotate rankings to first order.
+    """
+    transverse = posterior_transverse_signal(posterior)
+    return _posterior_directional_risk_with_reference_norm(
+        posterior,
+        reference_norm=transverse.debiased_norm,
         quantile=quantile,
         sample_count=sample_count,
         seed=seed,
