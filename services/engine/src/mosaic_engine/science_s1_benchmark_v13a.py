@@ -5,6 +5,7 @@ from collections.abc import Iterable, Sequence
 from math import cos, log, pi, sin
 from random import Random
 from statistics import mean, median
+from typing import cast
 
 from .science_s1 import acceptance_probability
 from .science_s1_eprocess import anytime_log_threshold, binary_log_probability
@@ -128,7 +129,7 @@ def _run_path(
 
 def _summarize(paths: Sequence[dict[str, object]]) -> dict[str, object]:
     rejected = [path for path in paths if bool(path["rejected"])]
-    stopping = [int(path["stopping_observation"]) for path in rejected]
+    stopping = [cast(int, path["stopping_observation"]) for path in rejected]
     return {
         "runs": len(paths),
         "rejections": len(rejected),
