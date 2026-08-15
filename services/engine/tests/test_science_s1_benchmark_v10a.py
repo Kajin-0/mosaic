@@ -35,9 +35,10 @@ def test_v10a_fixed_signal_passive_benchmark_records_theory_and_geometry() -> No
     for run in result["raw_runs"]:
         assert run["policy"] == "random"
         assert run["true_slope_norm"] == pytest.approx(FIXED_SLOPE_NORM)
-        assert run["gaussian_logistic_directional_information_coordinate"] < run[
-            "boundary_directional_information_coordinate"
-        ]
+        assert (
+            run["gaussian_logistic_directional_information_coordinate"]
+            < run["boundary_directional_information_coordinate"]
+        )
         assert 0.0 <= run["gaussian_population_ordering_error"] <= 1.0
         assert isinstance(run["false_direction"], bool)
 

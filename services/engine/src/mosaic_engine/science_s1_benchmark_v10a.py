@@ -242,8 +242,7 @@ def run_benchmark_v10a(
                         1.0 if result.posterior.converged else 0.0 for result in results
                     ),
                     "false_direction_rate": mean(
-                        1.0 if metric["slope_cosine"] < 0.0 else 0.0
-                        for metric in direction_metrics
+                        1.0 if metric["slope_cosine"] < 0.0 else 0.0 for metric in direction_metrics
                     ),
                     "mean_absolute_boundary_law_residual": mean(
                         abs(value) for value in boundary_law_residuals
@@ -298,8 +297,7 @@ def run_benchmark_v10a(
             "kappa_definition": "2 * pair_query_count / (feature_dimension + 1)",
             "boundary_eta_definition": "fixed_slope_norm^2 * realized_kappa / 4",
             "gaussian_logistic_eta_definition": (
-                "fixed_slope_norm^2 * realized_kappa * "
-                "E[sigmoid(BZ)*(1-sigmoid(BZ))], Z~N(0,1)"
+                "fixed_slope_norm^2 * realized_kappa * E[sigmoid(BZ)*(1-sigmoid(BZ))], Z~N(0,1)"
             ),
             "paired_binary_observations_per_pair": 2,
             "scenario_seed_rule": "1_500_000 + feature_dimension * 10_000 + seed",
