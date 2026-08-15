@@ -236,9 +236,7 @@ def _summarize_rule(
                 "missed_stop_at_cap": False,
                 "query_count": int(cast(int, stop["query_count"])),
                 "true_error_at_decision": true_error,
-                "transverse_retained_fraction": float(
-                    cast(float, signal["retained_fraction"])
-                ),
+                "transverse_retained_fraction": float(cast(float, signal["retained_fraction"])),
             }
         )
 
@@ -354,8 +352,7 @@ def _evaluate_primary_gate(
             if stops >= SUBGROUP_MIN_STOPS:
                 sampled_subgroups += 1
                 subgroup_safe = subgroup_safe and (
-                    float(cast(float, summary["false_stop_given_stop"]))
-                    <= SUBGROUP_FALSE_STOP_GATE
+                    float(cast(float, summary["false_stop_given_stop"])) <= SUBGROUP_FALSE_STOP_GATE
                 )
             if signal == 1.5:
                 strong_signal_safe = strong_signal_safe and (
@@ -492,9 +489,7 @@ def run_benchmark_v12d(
             "primary_rule": PRIMARY_RULE,
             "fresh_seed_requirement": "all seeds >=320; v12a-v12c used 0-319",
             "common_random_numbers_across_signal_levels": True,
-            "transverse_debiasing": (
-                "max(||m||^2 - (tr(Sigma_beta)-u.T Sigma_beta u), 0)"
-            ),
+            "transverse_debiasing": ("max(||m||^2 - (tr(Sigma_beta)-u.T Sigma_beta u), 0)"),
         },
         "primary_gate": primary_gate,
         "aggregate_rule_summaries": aggregate,
