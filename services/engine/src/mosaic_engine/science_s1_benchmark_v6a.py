@@ -190,10 +190,13 @@ def run_benchmark_v6a(
                             "seed": seed,
                             "converged": result.posterior.converged,
                             "iterations": result.posterior.iterations,
+                            "selected_pairs": result.selected_pairs,
                             "acquisition_score_mean": mean(scores) if scores else None,
                             "acquisition_score_min": min(scores) if scores else None,
                             "acquisition_score_max": max(scores) if scores else None,
-                            "negative_acquisition_score_count": sum(score < -1e-12 for score in scores),
+                            "negative_acquisition_score_count": sum(
+                                score < -1e-12 for score in scores
+                            ),
                             "metrics": asdict(result.metrics),
                             "ranking_metrics": asdict(result.ranking_metrics),
                         }
@@ -237,6 +240,7 @@ def run_benchmark_v6a(
             "intercept": intercept,
             "reference_difference_distribution": "Normal(0, 2 I)",
             "exact_policy_uses_reference_samples": False,
+            "raw_runs_retain_selected_pairs": True,
         },
         "cells": cells,
         "raw_runs": raw_runs,
