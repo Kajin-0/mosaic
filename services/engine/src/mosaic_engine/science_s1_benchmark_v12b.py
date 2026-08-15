@@ -53,9 +53,11 @@ def _wilson_interval(
     z2 = z * z
     denominator = 1.0 + z2 / trials
     center = (proportion + z2 / (2.0 * trials)) / denominator
-    half_width = z * sqrt(
-        proportion * (1.0 - proportion) / trials + z2 / (4.0 * trials * trials)
-    ) / denominator
+    half_width = (
+        z
+        * sqrt(proportion * (1.0 - proportion) / trials + z2 / (4.0 * trials * trials))
+        / denominator
+    )
     return (max(0.0, center - half_width), min(1.0, center + half_width))
 
 
