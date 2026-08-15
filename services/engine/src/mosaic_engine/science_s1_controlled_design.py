@@ -16,7 +16,11 @@ class ControlledDesignDiagnostics:
     maximum_row_norm: float
 
 
-def centered_dct_candidate_bank(*, candidate_count: int, feature_dimension: int) -> tuple[Vector, ...]:
+def centered_dct_candidate_bank(
+    *,
+    candidate_count: int,
+    feature_dimension: int,
+) -> tuple[Vector, ...]:
     """Construct a deterministic centered orthogonal synthetic query bank.
 
     Columns are the first ``feature_dimension`` nonconstant DCT-II basis vectors,
@@ -60,11 +64,7 @@ def controlled_design_diagnostics(
     for row_index in range(feature_dimension):
         for column_index in range(feature_dimension):
             empirical = (
-                sum(
-                    row[row_index] * row[column_index]
-                    for row in candidates
-                )
-                / candidate_count
+                sum(row[row_index] * row[column_index] for row in candidates) / candidate_count
             )
             target = 1.0 if row_index == column_index else 0.0
             maximum_absolute_gram_error = max(
