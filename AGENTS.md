@@ -12,6 +12,8 @@ The active scientific question is: what is the smallest user-specific preference
 
 S1 currently defines the observable target as a user's **willingness-to-meet probability over a versioned synthetic candidate feature space**, not a domain-general latent essence called attraction. The provisional state is an effective linear-logistic acceptance surface. Separate preference magnitude and response-consistency parameters are not treated as identified because ordinary choice likelihoods only reveal their product without an independent scale anchor.
 
+The current experimental checkpoint follows `s1-sample-complexity-benchmark-v7a`. V7a rejected the simple hypothesis that ranking performance is determined only by binary observations per fitted coefficient, `kappa = 2q/(d+1)`, under the tested design. However, the fixed 18-candidate iid-Gaussian query bank became sharply more ill-conditioned as dimension increased, so intrinsic dimension effects are confounded with stimulus-design geometry. **The next experiment must control query-bank geometry across dimensions before testing sparse/low-rank preference structure or inventing another acquisition objective.** See `docs/science/results/s1-sample-complexity-benchmark-v7a.md`.
+
 Do not reinterpret any existing deterministic questionnaire, synthetic PNG, candidate, score, or ranking fixture as a validated matchmaking, psychometric, attraction, compatibility, or relationship-prediction model.
 
 ## Required reading before substantial work
@@ -19,12 +21,13 @@ Do not reinterpret any existing deterministic questionnaire, synthetic PNG, cand
 1. `README.md`
 2. `docs/science/README.md`
 3. `docs/science/s1-identifiable-preference-model.md`
-4. ADR 0009 for the first scientific-state boundary.
-5. `docs/ROADMAP.md` for completed infrastructure history.
-6. `docs/ARCHITECTURE.md`
-7. ADRs 0004–0008 for raw-evidence/derived-state, synthetic-provenance, operational-recovery, and persisted-ranking boundaries.
-8. `docs/protocols/phase8-internal-alpha.md` for the complete application replay.
-9. `docs/operations/database-recovery.md` before database or migration work that can affect persistent scientific state.
+4. `docs/science/results/s1-sample-complexity-benchmark-v7a.md` for the current experimental boundary.
+5. ADR 0009 for the first scientific-state boundary.
+6. `docs/ROADMAP.md` for completed infrastructure history.
+7. `docs/ARCHITECTURE.md`
+8. ADRs 0004–0008 for raw-evidence/derived-state, synthetic-provenance, operational-recovery, and persisted-ranking boundaries.
+9. `docs/protocols/phase8-internal-alpha.md` for the complete application replay.
+10. `docs/operations/database-recovery.md` before database or migration work that can affect persistent scientific state.
 
 ## Active S1 scientific invariants
 
@@ -36,6 +39,7 @@ Do not reinterpret any existing deterministic questionnaire, synthetic PNG, cand
 - Operational selectivity is initially a derived posterior-predictive acceptance rate over a versioned reference candidate distribution, not an unqualified intrinsic threshold scalar.
 - Population information enters only through explicit versioned priors learned from suitable evidence; direct individual evidence determines the operative posterior.
 - No universal feature dimension or fixed calibration-question count is established. Query burden is adaptive and uncertainty must remain explicit when a product cap is reached.
+- `kappa = 2q/(d+1)` is not established as a sufficient sample-complexity coordinate. Query-bank information geometry must also be measured or controlled.
 - Active queries must include model-diagnostic probes; do not optimize information gain forever under an untested likelihood.
 - Synthetic-domain identification does not establish transfer to real profile choices, in-person attraction, relationship formation, or long-term relationship quality.
 
