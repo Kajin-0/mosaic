@@ -124,9 +124,7 @@ def _run_path(
     checkpoints: list[dict[str, object]] = []
 
     for round_index in range(candidate_count - 1):
-        round_pairs = schedule[
-            round_index * pairs_per_round : (round_index + 1) * pairs_per_round
-        ]
+        round_pairs = schedule[round_index * pairs_per_round : (round_index + 1) * pairs_per_round]
         for first, second in round_pairs:
             for candidate_index in (first, second):
                 features = tuple(float(value) for value in candidates[candidate_index])
@@ -334,9 +332,7 @@ def _evaluate_primary_gate(
     cells: Sequence[dict[str, object]],
     aggregate: Sequence[dict[str, object]],
 ) -> dict[str, object]:
-    primary_aggregate = [
-        summary for summary in aggregate if summary["rule"] == PRIMARY_RULE
-    ]
+    primary_aggregate = [summary for summary in aggregate if summary["rule"] == PRIMARY_RULE]
     aggregate_safe = all(
         float(
             cast(
@@ -362,13 +358,11 @@ def _evaluate_primary_gate(
             if stops >= SUBGROUP_MIN_STOPS:
                 sampled_cells.append(summary)
                 subgroup_safe = subgroup_safe and (
-                    float(cast(float, summary["false_stop_given_stop"]))
-                    <= SUBGROUP_FALSE_STOP_GATE
+                    float(cast(float, summary["false_stop_given_stop"])) <= SUBGROUP_FALSE_STOP_GATE
                 )
             if signal == 1.5:
                 strong_signal_safe = strong_signal_safe and (
-                    float(cast(float, summary["stop_rate"]))
-                    >= STRONG_SIGNAL_STOP_GATES[target]
+                    float(cast(float, summary["stop_rate"])) >= STRONG_SIGNAL_STOP_GATES[target]
                 )
 
     return {
@@ -460,9 +454,7 @@ def run_benchmark_v12c(
                     "slope_norm": slope_norm,
                     "runs": len(condition_paths),
                     "rule_summaries": rule_summaries,
-                    "fixed_checkpoint_diagnostics": _fixed_checkpoint_diagnostics(
-                        condition_paths
-                    ),
+                    "fixed_checkpoint_diagnostics": _fixed_checkpoint_diagnostics(condition_paths),
                 }
             )
 
