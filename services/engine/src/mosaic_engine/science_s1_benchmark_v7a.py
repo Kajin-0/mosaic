@@ -125,8 +125,7 @@ def _slope_direction_metrics(
         cosine = min(max(cosine, -1.0), 1.0)
 
     slope_variance_trace = sum(
-        float(posterior_covariance[index + 1][index + 1])
-        for index in range(len(true_slope))
+        float(posterior_covariance[index + 1][index + 1]) for index in range(len(true_slope))
     )
     uncertainty_scale = sqrt(max(slope_variance_trace, 0.0))
     if uncertainty_scale > 0.0:
