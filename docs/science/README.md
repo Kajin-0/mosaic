@@ -8,7 +8,7 @@ Active. Preliminary infrastructure Phases 0–8 are complete; scientific model w
 
 Mosaic ultimately aims to improve the probability and expected quality of mutually satisfying long-term relationships. No single upstream model should be confused with that terminal objective.
 
-The scientific program therefore separates at least four levels:
+The scientific program separates:
 
 ```text
 controlled observation
@@ -30,9 +30,9 @@ Question: what is the smallest user-specific preference state that can actually 
 
 Primary document: `s1-identifiable-preference-model.md`.
 
-Current experimental boundary: `results/s1-tangent-stopping-benchmark-v12e.md`.
+Current experimental boundary: `results/s1-finite-confidence-geometry-benchmark-v13b.md`.
 
-The controlled program now has two distinct results that must not be conflated:
+The controlled program now has three distinct results that must not be conflated:
 
 1. **mean directional sample complexity:** v11a supports the large-dimensional synthetic coordinate
 
@@ -41,19 +41,41 @@ The controlled program now has two distinct results that must not be conflated:
    \]
 
    for mean ranking error under the correctly specified passive controlled-geometry model;
-2. **individual sequential stopping:** v12a–v12e show that converting a Gaussian/Laplace posterior into an angular q95 statistic does not produce a trustworthy finite-sample sequential confidence guarantee.
+2. **rejected posterior stopping family:** v12a–v12e show that converting a Gaussian/Laplace posterior into an angular q95 statistic does not produce a trustworthy finite-sample sequential confidence guarantee;
+3. **anytime-valid confidence route:** v13a verifies the prequential e-process on an exact finite composite null, and v13b verifies the intended operational sequence `confidence set -> exact finite directional geometry -> stop`.
 
-The stopping failure chain is now mechanistically resolved far enough to leave that family:
+The v12 failure chain is closed:
 
 - v12a found severe raw-q95 undercoverage;
-- v12b showed that two-round persistence reduces aggregate false stopping but does not repair weak-signal/high-dimensional subgroup failure;
-- v12c full-trace radial debiasing restored safety but became too conservative;
-- v12d transverse-only norm debiasing improved utility while still failing the strict strong-signal burden gate;
-- v12e projected posterior perturbations into tangent space and recovered utility, but false-stop-given-stop rose to roughly 10–12% under the primary rule, failing both aggregate and subgroup safety.
+- v12b showed persistence does not repair weak-signal/high-dimensional subgroup failure;
+- v12c/v12d restored safety only by becoming too conservative;
+- v12e tangent projection restored utility but became strongly anti-conservative.
 
-Therefore the active next checkpoint is **not another Laplace-q95 correction**. The next methodological branch should construct an anytime-valid finite-sample confidence object for logistic preference direction under predictable/adaptive queries. The leading candidate is a prequential likelihood-ratio / e-process confidence sequence, followed by a conservative angular certification problem over the resulting confidence set.
+Do not resume that Laplace-q95 tuning family without a new theorem-level justification.
 
-Synthetic truth may be used to score a stopping rule only after each simulated decision. It must never enter the operational stop statistic.
+The v13 route changes the logic. For a normalized numerator chosen predictably before the current outcome,
+
+\[
+E_t(\theta)=\prod_{s\le t}\frac{q_s(Y_s)}{p_\theta(Y_s\mid x_s)}
+\]
+
+is a nonnegative martingale under fixed correctly specified `theta`, including predictable adaptive query selection. Ville's inequality supplies an anytime-valid parameter confidence sequence.
+
+v13a's finite-null harness rejected only `22/4608 = 0.477%` true-null paths at nominal alpha 5%, while a deliberately outcome-leaking numerator rejected `4608/4608 = 100%`.
+
+v13b then maintained an exact finite confidence set over 24 directions and stopped only when every retained direction lay within the requested angular radius of the retained maximum-likelihood direction. Across 6,144 paths:
+
+- target 0.25: 65.9% stopped by 120 observations; false-stop rate 0.130%;
+- target 0.20: 25.6% stopped; false-stop rate 0.081%;
+- target 0.15: no paths stopped;
+- truth was excluded from the anytime confidence sequence on 2.865% of paths;
+- **zero false stops occurred while truth remained in the confidence set.**
+
+Thus the finite-grid safety mechanism is working, but the current construction is conservative. The active next checkpoint is v13c: decompose the strict-target efficiency/resolution bottleneck while preserving the confidence-sequence invariant. Start with grid spacing × observation horizon while freezing the numerator and query policy. Do not loosen the safety threshold after seeing v13b.
+
+A continuous S1 stopping rule still requires a conservative continuous confidence-set geometry certificate, including nuisance parameters. A local optimizer that can underestimate the best outside-cone likelihood is not acceptable because such an error would be anti-conservative.
+
+Synthetic truth may be used to score a stopping rule only after each simulated decision. It must never enter the operational confidence statistic.
 
 ### Later workstreams
 
