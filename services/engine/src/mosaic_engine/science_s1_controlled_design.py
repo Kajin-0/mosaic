@@ -81,8 +81,7 @@ def centered_orthogonalized_candidate_bank(
         for _ in range(2):
             for basis in orthonormal_columns:
                 projection = sum(
-                    value * basis_value
-                    for value, basis_value in zip(vector, basis, strict=True)
+                    value * basis_value for value, basis_value in zip(vector, basis, strict=True)
                 )
                 vector = [
                     value - projection * basis_value
@@ -118,10 +117,7 @@ def controlled_design_diagnostics(
     for row_index in range(feature_dimension):
         for column_index in range(feature_dimension):
             empirical = (
-                sum(
-                    float(row[row_index]) * float(row[column_index])
-                    for row in candidates
-                )
+                sum(float(row[row_index]) * float(row[column_index]) for row in candidates)
                 / candidate_count
             )
             target = 1.0 if row_index == column_index else 0.0
@@ -130,9 +126,7 @@ def controlled_design_diagnostics(
                 abs(empirical - target),
             )
 
-    row_norms = tuple(
-        sqrt(sum(float(value) * float(value) for value in row)) for row in candidates
-    )
+    row_norms = tuple(sqrt(sum(float(value) * float(value) for value in row)) for row in candidates)
     return ControlledDesignDiagnostics(
         candidate_count=candidate_count,
         feature_dimension=feature_dimension,
