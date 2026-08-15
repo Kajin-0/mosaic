@@ -129,7 +129,10 @@ def _slope_direction_metrics(
         for index in range(len(true_slope))
     )
     uncertainty_scale = sqrt(max(slope_variance_trace, 0.0))
-    signal_to_uncertainty = estimated_norm / uncertainty_scale if uncertainty_scale > 0.0 else float("inf")
+    if uncertainty_scale > 0.0:
+        signal_to_uncertainty = estimated_norm / uncertainty_scale
+    else:
+        signal_to_uncertainty = float("inf")
     return {
         "slope_cosine": cosine,
         "slope_angle_radians": acos(cosine),
