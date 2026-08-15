@@ -297,8 +297,7 @@ def run_benchmark_v11a(
                 and cell["eta_target"] == eta_target
             ]
             observed = [
-                float(cell["gaussian_population_ordering_error"]["mean"])
-                for cell in matching_cells
+                float(cell["gaussian_population_ordering_error"]["mean"]) for cell in matching_cells
             ]
             realized_etas = [float(cell["realized_eta"]) for cell in matching_cells]
             large_residual_means = [
