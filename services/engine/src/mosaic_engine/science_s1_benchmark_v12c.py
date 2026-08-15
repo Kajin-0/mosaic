@@ -336,9 +336,12 @@ def _evaluate_primary_gate(
     aggregate_safe = all(
         float(
             cast(
-                dict[str, object],
-                summary["false_stop_given_stop_wilson95"],
-            )["upper"]
+                float,
+                cast(
+                    dict[str, object],
+                    summary["false_stop_given_stop_wilson95"],
+                )["upper"],
+            )
         )
         <= PRIMARY_AGGREGATE_WILSON_UPPER_GATE
         for summary in primary_aggregate
