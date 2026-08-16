@@ -19,7 +19,14 @@ def test_v13k_small_run_compares_only_acquisition_policy() -> None:
     assert result["config"]["candidate_acquisition"] == NESTED_COVER
     assert result["config"]["numerator"] == "v13j 11-point outside-cone mixture"
     assert len(result["paths"]) == 8
-    assert result["paired_comparisons"][0]["both"] + result["paired_comparisons"][0]["left_only"] + result["paired_comparisons"][0]["right_only"] + result["paired_comparisons"][0]["neither"] == 4
+    comparison = result["paired_comparisons"][0]
+    total = (
+        comparison["both"]
+        + comparison["left_only"]
+        + comparison["right_only"]
+        + comparison["neither"]
+    )
+    assert total == 4
     for summary in result["summaries"]:
         assert summary["geometry_violations"] == 0
         assert 0.0 <= summary["stop_rate"] <= 1.0
