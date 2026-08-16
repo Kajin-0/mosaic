@@ -237,9 +237,7 @@ def _paired_at_horizon(
         "paired_exact_p_value": _paired_exact_p_value(candidate_only, historical_only),
         "among_both_candidate_earlier": len(earlier_candidate),
         "among_both_historical_earlier": len(earlier_historical),
-        "candidate_earlier_median_gain": (
-            median(earlier_candidate) if earlier_candidate else None
-        ),
+        "candidate_earlier_median_gain": (median(earlier_candidate) if earlier_candidate else None),
         "historical_earlier_median_gain": (
             median(earlier_historical) if earlier_historical else None
         ),
