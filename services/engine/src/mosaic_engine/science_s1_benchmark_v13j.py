@@ -204,9 +204,7 @@ def _summarize(
     }
 
 
-def _paired_at_horizon(
-    paths: Sequence[dict[str, object]], *, horizon: int
-) -> dict[str, object]:
+def _paired_at_horizon(paths: Sequence[dict[str, object]], *, horizon: int) -> dict[str, object]:
     cover_only = 0
     baseline_only = 0
     both = 0
@@ -215,12 +213,14 @@ def _paired_at_horizon(
         stops = cast(dict[str, object], path["first_stop"])
         cover_stop = stops[CONE_COVER]
         baseline_stop = stops[BASELINE]
-        cover = cover_stop is not None and cast(
-            int, cast(dict[str, object], cover_stop)["observation_count"]
-        ) <= horizon
-        baseline = baseline_stop is not None and cast(
-            int, cast(dict[str, object], baseline_stop)["observation_count"]
-        ) <= horizon
+        cover = (
+            cover_stop is not None
+            and cast(int, cast(dict[str, object], cover_stop)["observation_count"]) <= horizon
+        )
+        baseline = (
+            baseline_stop is not None
+            and cast(int, cast(dict[str, object], baseline_stop)["observation_count"]) <= horizon
+        )
         if cover and baseline:
             both += 1
         elif cover:
