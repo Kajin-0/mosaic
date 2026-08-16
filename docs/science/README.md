@@ -30,21 +30,16 @@ Question: what is the smallest user-specific preference state that can actually 
 
 Primary document: `s1-identifiable-preference-model.md`.
 
-Current experimental boundary: `results/s1-nested-confidence-benchmark-v13f.md`.
+Current experimental boundary: `results/s1-cone-cover-benchmark-v13j.md`.
 
-The controlled program now has five distinct results that must not be conflated:
+The controlled S1 program has six distinct conclusions that must not be conflated:
 
-1. **mean directional sample complexity:** v11a supports the large-dimensional synthetic coordinate
-
-   \[
-   \eta_F=B^2\kappa E[\sigma(BZ)(1-\sigma(BZ))]
-   \]
-
-   for mean ranking error under the correctly specified passive controlled-geometry model;
-2. **rejected posterior stopping family:** v12a–v12e show that Gaussian/Laplace angular-q95 statistics do not provide trustworthy finite-sample sequential confidence under the tested S1 protocol;
-3. **anytime-valid confidence route:** v13a–v13b establish the finite-grid prequential e-process route `predictable numerator -> confidence sequence -> exact confidence-set geometry -> stop`;
-4. **efficiency mechanism:** v13c–v13e show that grid resolution is secondary and that prequential numerator choice materially changes strict-target burden under the current-time-set representation;
-5. **correct confidence-sequence representation:** v13f shows that the running intersection `C_t^cap=intersection_{s<=t} C_s` retains past valid rejections, has the same simultaneous truth-coverage event, and produces a very large burden reduction without changing alpha, the likelihood, query policy, responses, or geometric target.
+1. **mean directional sample complexity:** v11a supports the large-dimensional synthetic coordinate `eta_F=B^2 kappa E[sigma(BZ)(1-sigma(BZ))]` for mean ranking error under the correctly specified passive controlled-geometry model;
+2. **rejected posterior stopping family:** v12a–v12e show that Gaussian/Laplace angular-q95 statistics do not provide trustworthy finite-sample sequential confidence under the tested protocol;
+3. **anytime-valid confidence route:** v13a–v13b establish `predictable normalized numerator -> e-process confidence sequence -> exact confidence-set geometry -> stop` on a finite grid;
+4. **nested representation:** v13f establishes the running intersection `C_t^cap=intersection_{s<=t} C_s` as the preferred finite-grid confidence representation because valid past rejections must not be allowed to re-enter;
+5. **numerator-design boundary:** v13g–v13i show that neither leave-null-out MLE, near-equivalent leave-one-out all-alternative mixtures, nor extremely local ±5-degree alternatives solve efficiency. Prior dilution and null/alternative separation must be considered jointly;
+6. **current leading finite-grid numerator:** v13j's geometrically prespecified 11-point outside-cone mixture reaches **88.48%** strict-target stopping by 240 observations versus **71.29%** for the nested all-grid mixture on 1,536 fresh paths, with 264 cone-cover-only stops, zero mixture-only stops, and zero geometry violations.
 
 The v12 family is closed. Do not resume Laplace-q95 tuning without a new theorem-level justification.
 
@@ -56,39 +51,51 @@ E_t(\theta)=\prod_{s\le t}\frac{q_s(Y_s)}{p_\theta(Y_s\mid x_s)}
 
 is a nonnegative martingale under fixed correctly specified `theta`, including predictable adaptive query selection. Ville's inequality supplies an anytime-valid parameter confidence sequence.
 
-The preferred finite-grid representation is now the nested running intersection
+The preferred finite-grid representation is
 
 \[
 C_t^{\cap}=\bigcap_{s\le t}\{\theta:E_s(\theta)<1/\alpha\}
 =\{\theta:\max_{s\le t}E_s(\theta)<1/\alpha\}.
 \]
 
-This uses the same `1-alpha` simultaneous coverage event as the sequence of current-time sets. Rejected parameters do not re-enter later.
+Rejected parameters do not re-enter later. An empty nested set is a confidence/model failure state, not a successful certificate.
 
-### v13 finite-confidence results
+### v13 finite-confidence progression
 
 - **v13a:** valid true-null rejection `22/4608=0.477%` at nominal alpha 5%; an intentionally outcome-leaking numerator rejected 100%, demonstrating the predictability requirement.
-- **v13b:** exact finite confidence-set geometry produced zero false directional stops while truth remained in the confidence set. The strict target 0.15 did not stop by 120 observations under the original 15-degree grid.
-- **v13c:** refining the grid from 15° to 5° increased strict-target stopping at 240 observations from 2.73% to 7.55%, but all grids remained at zero through 180 and the finest-grid median stop was 237. Resolution is a secondary burden.
-- **v13d:** on common 5-degree-grid query/response paths using current-time sets, the all-grid mixture stopped on 7.81% by 240, MLE-face on 26.30%, SNML on 25.85%, while a synthetic-truth oracle stopped on 96.55% on exactly the same observations. This localized a major efficiency penalty to the prequential numerator rather than the query sequence.
-- **v13e:** fresh seeds `192..319` prospectively replicated that current-time-set result. Mixture stopped 7.16%; MLE-face 26.89% (+19.73 pp, paired `p≈7.9e-76`); SNML 25.72% (+18.55 pp, `p≈2.5e-72`); zero geometry violations. MLE beat SNML by only ~1.17 pp (`p=0.0414`), so the practical gap was small.
-- **v13f:** fresh seeds `320..447` corrected the confidence representation. With the same global finite-grid MLE center for both representations, nesting changed stop rates from `7.23% -> 70.25%` for mixture, `26.56% -> 53.97%` for MLE-face, and `26.17% -> 58.53%` for SNML. No current-time stop was lost; no geometric violation occurred. Among MLE paths where both representations stopped and nesting was earlier, the median gain was 33 observations.
+- **v13b:** exact finite confidence-set geometry produced zero false directional stops while truth remained in the confidence set.
+- **v13c:** grid refinement helps strict-target efficiency but does not explain the dominant horizon burden.
+- **v13d/v13e:** numerator choice materially changes efficiency under current-time sets, but that ranking was representation-dependent.
+- **v13f:** nesting increased all-grid-mixture strict-target stopping from about 7% to about 70% by 240 observations and became the required finite-grid representation.
+- **v13g:** theta-specific leave-null-out MLE collapsed onto ordinary MLE-face and underperformed nested all-grid mixture.
+- **v13h:** leave-one-out all-alternative mixture is analytically only a near-threshold-equivalent affine transform of all-grid mixture.
+- **v13i:** immediate ±5-degree alternatives produced zero certificates by 240; sparse support without meaningful separation is ineffective.
+- **v13j:** fixed support at offsets `{±30,±60,±90,±120,±150,180}` degrees covers the entire region outside the 27-degree target cone at 30-degree spacing. On fresh seeds `704..831`, stop rate was 88.48% by 240 versus 71.29% for all-grid mixture; median stop improved 216 -> 210; geometry violations remained zero. Cone-cover is the current leading finite-grid numerator.
 
 ### Current finite-grid conclusion
 
-Future finite-grid v13 work should use **nested confidence sequences by default**. Current-time-only sets are historical comparators.
+The current route is:
 
-v13f also changes the interpretation of numerator experiments. Under the nested representation the observed ordering is:
+```text
+candidate-specific cone-cover e-process
+        ↓
+nested confidence sequence
+        ↓
+global finite-grid MLE reporting direction
+        ↓
+exact radius over every retained direction
+        ↓
+strict directional certificate
+```
 
-1. all-grid mixture: 70.25%;
-2. SNML: 58.53%;
-3. MLE-face: 53.97%.
+Do not hand-tune further numerator supports on the v13j result. The next isolated efficiency lever is **acquisition policy** while keeping the cone-cover numerator fixed.
 
-This does not establish a formally prespecified nested-numerator ranking, but it shows that v13e's MLE preference was specific to the inferior current-time-set representation. Do not carry that ranking forward unqualified.
+Compare prospectively:
 
-The next isolated checkpoint is a **theta-specific predictable challenger numerator** with the query policy frozen. A common numerator is not required for fixed-parameter e-process validity: each candidate null `theta_j` may have its own normalized predictable `q_{t,j}`. The natural finite-grid first test uses the one-step-lagged maximum-likelihood alternative excluding `theta_j`, with ties averaged before the current response is observed. The resulting per-null e-processes are then accumulated into nested confidence sets.
+- historical current-time all-grid-mixture disagreement acquisition + cone-cover certification;
+- disagreement acquisition over the surviving nested cone-cover confidence set + the identical cone-cover certification.
 
-Use nested `mixture_all` as the baseline control. Do not change the acquisition policy in the same checkpoint.
+Keep the grid, likelihood, slope norm, target, alpha, candidate bank, numerator, nested representation, and reporting center fixed. Zero geometry violations remains a hard invariant.
 
 A continuous S1 stopping rule still requires a conservative continuous confidence-set geometry certificate, including nuisance parameters. A local optimizer that can underestimate the best outside-cone likelihood is unacceptable because that error is anti-conservative.
 
