@@ -213,10 +213,12 @@ def _paired_at_horizon(
         historical = historical_observation is not None and historical_observation <= horizon
         if candidate and historical:
             both += 1
-            if cast(int, candidate_observation) < cast(int, historical_observation):
-                earlier_candidate.append(cast(int, historical_observation) - cast(int, candidate_observation))
-            elif cast(int, historical_observation) < cast(int, candidate_observation):
-                earlier_historical.append(cast(int, candidate_observation) - cast(int, historical_observation))
+            candidate_count = cast(int, candidate_observation)
+            historical_count = cast(int, historical_observation)
+            if candidate_count < historical_count:
+                earlier_candidate.append(historical_count - candidate_count)
+            elif historical_count < candidate_count:
+                earlier_historical.append(candidate_count - historical_count)
         elif candidate:
             candidate_only += 1
         elif historical:
@@ -235,8 +237,12 @@ def _paired_at_horizon(
         "paired_exact_p_value": _paired_exact_p_value(candidate_only, historical_only),
         "among_both_candidate_earlier": len(earlier_candidate),
         "among_both_historical_earlier": len(earlier_historical),
-        "candidate_earlier_median_gain": median(earlier_candidate) if earlier_candidate else None,
-        "historical_earlier_median_gain": median(earlier_historical) if earlier_historical else None,
+        "candidate_earlier_median_gain": (
+            median(earlier_candidate) if earlier_candidate else None
+        ),
+        "historical_earlier_median_gain": (
+            median(earlier_historical) if earlier_historical else None
+        ),
     }
 
 
@@ -286,10 +292,10 @@ def run_benchmark_v13k(
         "benchmark_version": BENCHMARK_VERSION,
         "method_version": METHOD_VERSION,
         "scientific_scope": (
-            "Fresh-seed isolation of acquisition policy with the v13j cone-cover numerator, nested "
-            "confidence representation, target, grid, likelihood, candidate bank, and reporting "
-            "center fixed. Historical acquisition uses the current-time all-grid-mixture confidence "
-            "set; the candidate uses the surviving nested cone-cover set."
+            "Fresh-seed isolation of acquisition policy with the v13j cone-cover numerator, "
+            "nested confidence representation, target, grid, likelihood, candidate bank, and "
+            "reporting center fixed. Historical acquisition uses the current-time all-grid-mixture "
+            "confidence set; the candidate uses the surviving nested cone-cover set."
         ),
         "config": {
             "grid_spacing_degrees": GRID_SPACING_DEGREES,
