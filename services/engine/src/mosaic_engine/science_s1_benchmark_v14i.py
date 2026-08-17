@@ -345,11 +345,12 @@ def run_benchmark_v14i() -> dict[str, object]:
         "benchmark_version": BENCHMARK_VERSION,
         "method_version": METHOD_VERSION,
         "scientific_scope": (
-            "Common-region representation change only. The original coarse nuisance box is retained, "
-            "but every exact necessary score halfspace from v14h remains active as a certified "
-            "disjointness prune at every charged box evaluation. The common e-process, alpha split, "
-            "directional e-process, rational cone, coupled bound, sensitivity split, fair best-first "
-            "order, precision, and 250-evaluation budget are unchanged."
+            "Common-region representation change only. The original coarse nuisance "
+            "box is retained, but every exact necessary score halfspace from v14h "
+            "remains active as a certified disjointness prune at every charged box "
+            "evaluation. The common e-process, alpha split, directional e-process, "
+            "rational cone, coupled bound, sensitivity split, fair best-first order, "
+            "precision, and 250-evaluation budget are unchanged."
         ),
         "config": {
             "evaluation_budget": EVALUATION_BUDGET,
