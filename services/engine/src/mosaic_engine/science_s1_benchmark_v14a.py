@@ -108,7 +108,7 @@ def _reference_cone_log_e(
     maximum = max(alternatives)
     with localcontext() as context:
         context.prec = REFERENCE_PRECISION
-        total = sum((value - maximum).exp() for value in alternatives)
+        total = sum(((value - maximum).exp() for value in alternatives), Decimal(0))
         log_mixture = maximum + total.ln() - Decimal(len(alternatives)).ln()
         return log_mixture - null_log_likelihood
 
