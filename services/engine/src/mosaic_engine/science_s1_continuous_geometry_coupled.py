@@ -61,14 +61,10 @@ def _interval_multiply(
     right: tuple[Decimal, Decimal],
 ) -> tuple[Decimal, Decimal]:
     floor_products = tuple(
-        _directed_multiply(a, b, rounding=ROUND_FLOOR)
-        for a in left
-        for b in right
+        _directed_multiply(a, b, rounding=ROUND_FLOOR) for a in left for b in right
     )
     ceiling_products = tuple(
-        _directed_multiply(a, b, rounding=ROUND_CEILING)
-        for a in left
-        for b in right
+        _directed_multiply(a, b, rounding=ROUND_CEILING) for a in left for b in right
     )
     return min(floor_products), max(ceiling_products)
 
@@ -384,9 +380,5 @@ def certify_continuous_cone_current_coupled(
         side_certificates=side_certificates,
         common_cutoff_lower=common_cutoff_lower,
         cone_log_threshold_upper=cone_log_threshold_upper,
-        reason=(
-            "both_cone_sides_certified"
-            if certified
-            else "at_least_one_cone_side_unresolved"
-        ),
+        reason=("both_cone_sides_certified" if certified else "at_least_one_cone_side_unresolved"),
     )
