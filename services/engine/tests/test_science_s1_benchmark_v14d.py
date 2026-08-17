@@ -32,7 +32,7 @@ def test_halfspace_probe_uses_box_corner_that_minimizes_violation_halfspace() ->
 def test_trace_side_reports_attribution_without_changing_small_search_budget() -> None:
     observations = _synthetic_observations(
         alpha=(0.15, 1.2, 0.0),
-        repeats=1,
+        repeats=20,
         seed=14_601,
     )
     cutoff = common_log_likelihood_cutoff_lower(observations)
