@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, Decimal, localcontext
 from fractions import Fraction
 from itertools import combinations
-from math import cos, hypot, log, pi, sin
+from math import cos, log, pi, sin
 
 from .science_s1_eprocess import PrequentialBinaryObservation
 
@@ -15,6 +15,10 @@ COMMON_ALPHA = Fraction(1, 200)
 CONE_ALPHA = Fraction(9, 200)
 TOTAL_ALPHA = Fraction(1, 20)
 CONE_OFFSETS_DEGREES = (-150, -120, -90, -60, -30, 30, 60, 90, 120, 150, 180)
+CERTIFIED_TARGET_ERROR = 0.15
+# tan(27 degrees) > 1/2. Using exactly 1/2 therefore narrows the operational
+# certificate to arctan(1/2) ~= 26.565 degrees and can only reduce stopping power.
+CERTIFIED_CONE_TAN = Fraction(1, 2)
 
 
 @dataclass(frozen=True)
@@ -85,18 +89,42 @@ def _log_fraction_upper(value: Fraction) -> Decimal:
         return context.next_plus(result)
 
 
-def _log_sigmoid_decimal(score: Decimal) -> Decimal:
-    one = Decimal(1)
-    if score >= 0:
-        return -(one + (-score).exp()).ln()
-    return score - (one + score.exp()).ln()
+def _exp_bounds(value: Decimal) -> tuple[Decimal, Decimal]:
+    with localcontext() as context:
+        context.prec = DECIMAL_PRECISION
+        context.rounding = ROUND_HALF_EVEN
+        midpoint = value.exp()
+        lower = context.next_minus(midpoint)
+        upper = context.next_plus(midpoint)
+    if lower <= 0:
+        lower = Decimal(0)
+    return lower, upper
 
 
-def _log_one_minus_sigmoid_decimal(score: Decimal) -> Decimal:
-    one = Decimal(1)
-    if score >= 0:
-        return -score - (one + (-score).exp()).ln()
-    return -(one + score.exp()).ln()
+def _ln_bounds(value: Decimal) -> tuple[Decimal, Decimal]:
+    if value <= 0:
+        raise ValueError("logarithm argument must be positive")
+    with localcontext() as context:
+        context.prec = DECIMAL_PRECISION
+        context.rounding = ROUND_HALF_EVEN
+        midpoint = value.ln()
+        return context.next_minus(midpoint), context.next_plus(midpoint)
+
+
+def _directed_add(left: Decimal, right: Decimal, *, rounding: str) -> Decimal:
+    with localcontext() as context:
+        context.prec = DECIMAL_PRECISION
+        context.rounding = rounding
+        return left + right
+
+
+def _negative_softplus_bounds(argument: Decimal) -> LikelihoodBounds:
+    exp_lower, exp_upper = _exp_bounds(argument)
+    sum_lower = _directed_add(Decimal(1), exp_lower, rounding=ROUND_FLOOR)
+    sum_upper = _directed_add(Decimal(1), exp_upper, rounding=ROUND_CEILING)
+    ln_lower = _ln_bounds(sum_lower)[0]
+    ln_upper = _ln_bounds(sum_upper)[1]
+    return LikelihoodBounds(lower=-ln_upper, upper=-ln_lower)
 
 
 def _log_probability_bounds(
@@ -108,15 +136,12 @@ def _log_probability_bounds(
     lower_decimal = _decimal_from_fraction(lower_score, rounding=ROUND_FLOOR)
     upper_decimal = _decimal_from_fraction(upper_score, rounding=ROUND_CEILING)
 
-    with localcontext() as context:
-        context.prec = DECIMAL_PRECISION
-        context.rounding = ROUND_HALF_EVEN
-        if accepted:
-            lower_value = context.next_minus(_log_sigmoid_decimal(lower_decimal))
-            upper_value = context.next_plus(_log_sigmoid_decimal(upper_decimal))
-        else:
-            lower_value = context.next_minus(_log_one_minus_sigmoid_decimal(upper_decimal))
-            upper_value = context.next_plus(_log_one_minus_sigmoid_decimal(lower_decimal))
+    if accepted:
+        lower_value = _negative_softplus_bounds(-lower_decimal).lower
+        upper_value = _negative_softplus_bounds(-upper_decimal).upper
+    else:
+        lower_value = _negative_softplus_bounds(upper_decimal).lower
+        upper_value = _negative_softplus_bounds(lower_decimal).upper
     return LikelihoodBounds(lower=lower_value, upper=upper_value)
 
 
@@ -340,29 +365,25 @@ def _cone_halfspaces(
 ) -> tuple[tuple[Fraction, Fraction], tuple[Fraction, Fraction]]:
     if len(center_slope) != 2:
         raise ValueError("center_slope must have two coordinates")
-    center_x = float(center_slope[0])
-    center_y = float(center_slope[1])
-    norm = hypot(center_x, center_y)
-    if norm <= 1e-15:
-        raise ValueError("center_slope must be nonzero")
-    if not 0.0 < target_error < 0.5:
-        raise ValueError("target_error must lie strictly between zero and one half")
+    if target_error != CERTIFIED_TARGET_ERROR:
+        raise ValueError("v14 certified cone currently supports target_error=0.15 only")
 
-    unit_x = center_x / norm
-    unit_y = center_y / norm
-    perpendicular_x = -unit_y
-    perpendicular_y = unit_x
-    delta = target_error * pi
-    sine = sin(delta)
-    cosine = cos(delta)
+    center_x = _fraction(float(center_slope[0]))
+    center_y = _fraction(float(center_slope[1]))
+    if center_x == 0 and center_y == 0:
+        raise ValueError("center_slope must be nonzero")
+
+    tangent = CERTIFIED_CONE_TAN
+    # If p=(-cy,cx), the two inequalities are t(c.beta)+/-p.beta >= 0.
+    # Scaling c is irrelevant, so normalization and trigonometric evaluation are avoided.
     return (
         (
-            _fraction(sine * unit_x + cosine * perpendicular_x),
-            _fraction(sine * unit_y + cosine * perpendicular_y),
+            tangent * center_x - center_y,
+            tangent * center_y + center_x,
         ),
         (
-            _fraction(sine * unit_x - cosine * perpendicular_x),
-            _fraction(sine * unit_y - cosine * perpendicular_y),
+            tangent * center_x + center_y,
+            tangent * center_y - center_x,
         ),
     )
 
@@ -478,7 +499,7 @@ def certify_continuous_cone_current(
     observations: Sequence[PrequentialBinaryObservation],
     center_slope: Sequence[float],
     *,
-    target_error: float = 0.15,
+    target_error: float = CERTIFIED_TARGET_ERROR,
     common_alpha: Fraction = COMMON_ALPHA,
     cone_alpha: Fraction = CONE_ALPHA,
     max_nodes: int = 20_000,
