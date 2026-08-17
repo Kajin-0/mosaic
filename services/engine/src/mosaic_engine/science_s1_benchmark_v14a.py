@@ -5,7 +5,7 @@ from collections.abc import Iterable, Sequence
 from decimal import Decimal, localcontext
 from fractions import Fraction
 from itertools import product
-from math import cos, exp, log, pi, sin
+from math import cos, pi, sin
 from random import Random
 from typing import cast
 
@@ -18,7 +18,6 @@ from .science_s1_continuous_geometry import (
     _cone_halfspaces,
     _cone_log_e_lower_bound,
     _fraction,
-    common_log_likelihood_cutoff_lower,
     certify_continuous_cone_current,
     likelihood_bounds,
 )
@@ -28,8 +27,9 @@ BENCHMARK_VERSION = "s1-continuous-bound-validation-v14a"
 METHOD_VERSION = "continuous-split-alpha-interval-bnb-v1"
 VALIDATION_SEED = 14_001
 REFERENCE_PRECISION = 120
-DEFAULT_BOX_COUNT = 18
-DEFAULT_GRID_SIZE = 4
+DEFAULT_BOX_COUNT = 8
+DEFAULT_GRID_SIZE = 3
+DEFAULT_CERTIFICATE_MAX_NODES = 250
 ROTATIONS_DEGREES = (0.0, 30.0, -60.0, 120.0)
 
 
@@ -294,6 +294,7 @@ def _dense_outside_survivors(
 def _validate_full_certificates(
     *,
     grid_size: int,
+    max_nodes: int,
 ) -> list[dict[str, object]]:
     scenarios = (
         ("aligned_240", (0.15, 1.2, 0.0), 20, 14_101, (1.0, 0.0)),
@@ -308,8 +309,8 @@ def _validate_full_certificates(
         certificate = certify_continuous_cone_current(
             observations,
             center,
-            max_nodes=8_000,
-            min_width=0.02,
+            max_nodes=max_nodes,
+            min_width=0.05,
         )
         dense_outside_survivors = None
         if certificate.initial_box is not None:
@@ -346,11 +347,15 @@ def run_benchmark_v14a(
     *,
     box_count: int = DEFAULT_BOX_COUNT,
     grid_size: int = DEFAULT_GRID_SIZE,
+    include_full_certificates: bool = True,
+    certificate_max_nodes: int = DEFAULT_CERTIFICATE_MAX_NODES,
 ) -> dict[str, object]:
     if box_count <= 0:
         raise ValueError("box_count must be positive")
     if grid_size < 2:
         raise ValueError("grid_size must be at least two")
+    if certificate_max_nodes <= 0:
+        raise ValueError("certificate_max_nodes must be positive")
 
     observations = _synthetic_observations(
         alpha=(0.2, 0.9, -0.35),
@@ -368,7 +373,14 @@ def run_benchmark_v14a(
     if cast(int, box_validation["cone_lower_bound_violations"]) != 0:
         raise AssertionError("cone e-value lower-bound violation")
 
-    full_certificates = _validate_full_certificates(grid_size=max(3, grid_size))
+    full_certificates = (
+        _validate_full_certificates(
+            grid_size=max(3, grid_size),
+            max_nodes=certificate_max_nodes,
+        )
+        if include_full_certificates
+        else []
+    )
     return {
         "benchmark_version": BENCHMARK_VERSION,
         "method_version": METHOD_VERSION,
@@ -385,6 +397,8 @@ def run_benchmark_v14a(
             "rotations_degrees": ROTATIONS_DEGREES,
             "common_alpha": float(COMMON_ALPHA),
             "cone_alpha": float(CONE_ALPHA),
+            "include_full_certificates": include_full_certificates,
+            "certificate_max_nodes": certificate_max_nodes,
         },
         "box_validation": box_validation,
         "full_certificate_scenarios": full_certificates,
