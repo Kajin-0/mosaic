@@ -12,7 +12,7 @@ The active S1 question is: what is the smallest user-specific preference state t
 
 The first observable is a user's **willingness-to-meet probability over a versioned synthetic candidate feature space**, not a domain-general latent essence called attraction. The provisional identifiable state is a linear-logistic acceptance surface `alpha=[b,beta]`. Separate preference magnitude and response consistency are not treated as identified without an independent scale anchor.
 
-Current experimental boundary: `docs/science/results/s1-cone-cover-benchmark-v13j.md`.
+Current experimental boundary: `docs/science/results/s1-acquisition-benchmark-v13k.md`.
 
 ## S1 scientific history and current boundary
 
@@ -29,12 +29,15 @@ Current experimental boundary: `docs/science/results/s1-cone-cover-benchmark-v13
 - v13h proved analytically that a leave-one-out all-alternative mixture is only the affine transform `E_j^(-j)=(N E_j^all-1)/(N-1)`. At `N=72`, alpha 0.05, it merely changes the equivalent all-grid threshold from 20 to 19.736 and therefore is not a substantive new mechanism.
 - v13i tested an immediate-neighbor mixture at ±5 degrees on fresh seeds `576..703`. It produced **0/1536 certificates by 240 observations**, while the frozen nested all-grid control stopped on 71.74%. The method was safe but essentially powerless because neighboring alternatives were too close to each candidate null. This establishes that prior dilution and null/alternative separation must be optimized jointly.
 - v13j used the certification geometry itself to construct an 11-point outside-cone support at offsets `{±30,±60,±90,±120,±150,180}` degrees. On fresh seeds `704..831`, with acquisition still frozen to the historical all-grid controller, cone-cover stopped on **88.48%** by 240 versus **71.29%** for nested all-grid mixture. At 240, 1,095 paths stopped under both, **264 stopped only under cone-cover, and zero stopped only under mixture** (`p≈6.75e-80`). Median stop improved 216 -> 210. Geometry violations were zero. Cone-cover is therefore the leading finite-grid numerator under the current 2-D strict-target protocol.
+- v13k changed only acquisition while freezing the v13j cone-cover certificate. On fresh seeds `832..959`, disagreement over nested cone-cover survivors accelerated 180-observation stopping from **5.47% to 10.29%** (`142` candidate-only vs `68` historical-only, paired `p≈3.61e-7`), but by 240 the stop rates were statistically indistinguishable: **87.96% candidate vs 88.67% historical** (`126` vs `137` exclusive stops, `p=0.538`). The candidate also raised truth exclusion from 3.26% to 3.78% and false-stop rate from 0.46% to 1.30%, while geometry violations remained zero. The survivor-focused controller is therefore not promoted; retain the historical all-grid current disagreement controller as the finite-grid default.
 
 ### Current conclusion
 
 The strongest finite-grid S1 confidence route is now:
 
 ```text
+historical all-grid current disagreement acquisition
+        ↓
 predictable normalized candidate-specific cone-cover numerator
         ↓
 current-time e-process sets
@@ -52,33 +55,33 @@ Do not repeatedly test a moving data-dependent angular null as though fixed. Con
 
 **Future finite-grid work should use nested confidence sequences by default.** Current-time-only sets remain historical comparators.
 
-**Do not continue hand-tuning numerator supports on v13j data.** v13j's 11-point support is geometrically motivated and prospectively validated. The next checkpoint changes acquisition only while freezing this numerator.
+**Do not continue hand-tuning numerator supports or acquisition mixtures on v13j/v13k outcomes.** v13j's support is geometrically motivated and prospectively validated; v13k shows that survivor-focused acquisition changes stopping-time distribution but does not improve 240-observation completion and worsens observed truth-exclusion/false-stop rates.
 
-The next exact checkpoint is an acquisition-efficiency comparison:
+The next exact checkpoint is **continuous confidence geometry with nuisance parameters**, not another finite-grid efficiency tweak.
 
-1. control: historical current-time all-grid-mixture disagreement acquisition + nested cone-cover certification;
-2. candidate: disagreement acquisition over the **surviving nested cone-cover set** + the same nested cone-cover certification.
+For the current 2-D slope case, an angular target cone with half-angle below 90 degrees can be written as the intersection of two linear halfspaces in slope space. Its complement is the union of the two violating halfspaces. Because each cumulative logistic log-likelihood superlevel set is convex, the nested continuous confidence set is an intersection of convex sets. This allows each outside-cone side to be posed as a convex feasibility/optimization problem even when intercept and slope magnitude are free nuisance parameters.
 
-Keep the 5-degree grid, `B=0.9`, target 0.15, alpha 0.05, candidate bank, cone-cover numerator, nested representation, and global finite-grid MLE reporting center unchanged. Use a fresh disjoint seed block. Primary endpoints are paired stop probability at 180 and 240 and stopping-time distribution; zero geometry violations is a hard invariant.
+The numerical requirement is non-negotiable: a stopping certificate needs a **genuine upper bound** on the best confidence margin/likelihood attainable outside the cone. A local optimizer, approximate angular grid, or any method that can underestimate the outside-cone supremum is anti-conservative and invalid. Develop a certified bound (for example a dual bound or rigorously controlled branch-and-bound/interval bound) before using continuous optimization to stop.
 
-The continuous problem remains unresolved: certify conservatively that the entire continuous confidence set lies inside a candidate directional cone, including nuisance intercept and slope magnitude. Any numerical method must provide a genuine upper bound on the best outside-cone likelihood; underestimating that supremum is anti-conservative and invalid.
+After the continuous certificate is validated under correct specification, S1 still requires deliberate misspecification regimes: nonlinear curvature, multimodality, pair-context dependence, feature/generator error, and truth outside the assumed likelihood family. Do not merge PR #12 on finite-grid operating characteristics alone.
 
 ## Required reading before substantial work
 
 1. `README.md`
 2. `docs/science/README.md`
 3. `docs/science/s1-identifiable-preference-model.md`
-4. `docs/science/results/s1-cone-cover-benchmark-v13j.md`
-5. `docs/science/results/s1-cone-cover-mixture-design-v13j.md`
-6. `docs/science/results/s1-local-neighbor-benchmark-v13i.md`
-7. `docs/science/results/s1-leaveout-mixture-equivalence-v13h.md`
-8. `docs/science/results/s1-theta-challenger-benchmark-v13g.md`
-9. `docs/science/results/s1-nested-confidence-benchmark-v13f.md`
-10. v13a–v13e result documents and `docs/science/s1-anytime-likelihood-confidence.md` for the confidence-sequence development chain.
-11. v12a–v12e result documents for the rejected posterior-q95 family.
-12. v7a–v11a result documents for the geometry/sample-complexity/Fisher-law argument.
-13. ADR 0009 for the first scientific-state boundary.
-14. `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, ADRs 0004–0008, `docs/protocols/phase8-internal-alpha.md`, and `docs/operations/database-recovery.md` when relevant to persistence/operations.
+4. `docs/science/results/s1-acquisition-benchmark-v13k.md`
+5. `docs/science/results/s1-cone-cover-benchmark-v13j.md`
+6. `docs/science/results/s1-cone-cover-mixture-design-v13j.md`
+7. `docs/science/results/s1-local-neighbor-benchmark-v13i.md`
+8. `docs/science/results/s1-leaveout-mixture-equivalence-v13h.md`
+9. `docs/science/results/s1-theta-challenger-benchmark-v13g.md`
+10. `docs/science/results/s1-nested-confidence-benchmark-v13f.md`
+11. v13a–v13e result documents and `docs/science/s1-anytime-likelihood-confidence.md` for the confidence-sequence development chain.
+12. v12a–v12e result documents for the rejected posterior-q95 family.
+13. v7a–v11a result documents for the geometry/sample-complexity/Fisher-law argument.
+14. ADR 0009 for the first scientific-state boundary.
+15. `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, ADRs 0004–0008, `docs/protocols/phase8-internal-alpha.md`, and `docs/operations/database-recovery.md` when relevant to persistence/operations.
 
 ## Active S1 scientific invariants
 
@@ -98,9 +101,10 @@ The continuous problem remains unresolved: certify conservatively that the entir
 - Prefer `construct confidence sequence -> certify all retained parameters -> stop` over moving data-dependent null tests.
 - The preferred finite-grid confidence object is the nested running intersection `C_t^cap`; rejected hypotheses must not be allowed to re-enter.
 - An empty nested set is a confidence/model failure state, not a successful certificate.
-- Finite-grid false directional stopping is structurally impossible while the true grid parameter remains in the certified set. v13b–v13j have maintained zero geometry violations under the reported finite-grid certificates.
+- Finite-grid false directional stopping is structurally impossible while the true grid parameter remains in the certified set. v13b–v13k maintained zero geometry violations under the reported finite-grid certificates.
 - Numerator mean log loss or support size alone is not an adequate efficiency criterion. v13i shows that a tiny support can be powerless when alternatives have poor KL/separation from the candidate null.
 - v13j's supported finite-grid design principle is to balance predictive/prior dilution with geometric coverage and null/alternative separation.
+- v13k shows that early stopping-rate gains from a more aggressive acquisition controller are insufficient for promotion if terminal completion does not improve or observed exclusion/false-stop behavior worsens.
 - `oracle_true` is a synthetic diagnostic ceiling only and must never be used operationally.
 - v13e's MLE-over-SNML result is scoped to current-time sets; do not carry it into the nested regime.
 - Do not trade away confidence-sequence validity merely to reduce query burden.
