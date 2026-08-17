@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, localcontext
+from decimal import ROUND_CEILING, ROUND_FLOOR, ROUND_HALF_EVEN, Decimal, localcontext
 from fractions import Fraction
 from itertools import combinations
-from math import cos, hypot, pi, sin
+from math import cos, hypot, log, pi, sin
 
 from .science_s1_eprocess import PrequentialBinaryObservation
 
@@ -46,7 +46,7 @@ class ConeSideCertificate:
 class ContinuousConeCertificate:
     certified: bool
     initial_box: ParameterBox | None
-    side_certificates: tuple[ConeSideCertificate, ConeSideCertificate] | tuple[()]
+    side_certificates: tuple[ConeSideCertificate, ...]
     common_cutoff_lower: Decimal | None
     cone_log_threshold_upper: Decimal
     reason: str
@@ -219,7 +219,9 @@ def common_log_likelihood_cutoff_lower(
         )
         probability_fraction = _fraction(probability)
         if probability_fraction <= 0 or probability_fraction >= 1:
-            raise ValueError("predictive outcome probability must lie strictly between zero and one")
+            raise ValueError(
+                "predictive outcome probability must lie strictly between zero and one"
+            )
         terms.append(_log_fraction_lower(probability_fraction))
     log_joint_lower = _directed_sum(terms, rounding=ROUND_FLOOR)
     log_alpha_lower = _log_fraction_lower(alpha_level)
@@ -324,7 +326,7 @@ def initial_nuisance_box(
         if any(width <= 0.0 for width in widths):
             continue
         # Product comparison without constructing enormous exact rational products.
-        log_volume = sum(__import__("math").log(width) for width in widths)
+        log_volume = sum(log(width) for width in widths)
         if best_log_volume is None or log_volume < best_log_volume:
             best_log_volume = log_volume
             best_box = box
