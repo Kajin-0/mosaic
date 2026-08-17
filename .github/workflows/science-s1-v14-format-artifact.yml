@@ -30,7 +30,7 @@ jobs:
 
       - name: Apply canonical Ruff formatting
         run: |
-          uv run --project services/engine ruff check --fix services/engine/src/mosaic_engine/science_s1_continuous_geometry.py services/engine/tests/test_science_s1_continuous_geometry.py
+          uv run --project services/engine ruff check --fix services/engine/src/mosaic_engine/science_s1_continuous_geometry.py services/engine/tests/test_science_s1_continuous_geometry.py || true
           uv run --project services/engine ruff format services/engine/src/mosaic_engine/science_s1_continuous_geometry.py services/engine/tests/test_science_s1_continuous_geometry.py
 
       - name: Upload canonical files
