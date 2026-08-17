@@ -272,9 +272,7 @@ def _run_fair_best_first_side(
         "resolution_frozen_boxes": len(frozen_resolution),
         "terminal_reason": terminal_reason,
         "counts": dict(counts),
-        "selected_dimensions": {
-            str(index): selected_dimensions[index] for index in range(3)
-        },
+        "selected_dimensions": {str(index): selected_dimensions[index] for index in range(3)},
         "elapsed_seconds": perf_counter() - start,
     }
 
