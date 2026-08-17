@@ -65,8 +65,7 @@ KNOWN_240_SURVIVOR = (
 
 def _inside_box(box: ParameterBox, theta: Sequence[Fraction]) -> bool:
     return all(
-        lower <= value <= upper
-        for value, (lower, upper) in zip(theta, box.intervals, strict=True)
+        lower <= value <= upper for value, (lower, upper) in zip(theta, box.intervals, strict=True)
     )
 
 
@@ -224,9 +223,7 @@ def run_benchmark_v14h() -> dict[str, object]:
             outer.tightened_box,
             halfspace=halfspace,
         )
-        if case_name == "aligned_240_side0_negative_control" and bool(
-            candidate["certified"]
-        ):
+        if case_name == "aligned_240_side0_negative_control" and bool(candidate["certified"]):
             raise AssertionError(
                 "v14h common-box tightening certified the known retained "
                 "outside-cone negative control"
