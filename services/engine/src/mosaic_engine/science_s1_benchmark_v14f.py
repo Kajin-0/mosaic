@@ -32,8 +32,6 @@ from .science_s1_continuous_geometry_coupled import (
     _interval_scale_nonnegative_integer,
     _point_box,
     _residual_bounds,
-    grouped_coupled_cone_log_e_lower_bound,
-    grouped_log_likelihood_ratio_lower_bound,
 )
 from .science_s1_continuous_geometry_grouped import (
     PreparedGroupedLikelihood,
