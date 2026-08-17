@@ -323,7 +323,8 @@ def _run_case(
     )
     if name == "aligned_240_side0_negative_control" and candidate["certified"]:
         raise AssertionError(
-            "v14i active common polytope certified the known retained outside-cone negative control"
+            "v14i active common polytope certified the known retained "
+            "outside-cone negative control"
         )
 
     return {
