@@ -228,7 +228,8 @@ def run_benchmark_v14h() -> dict[str, object]:
             candidate["certified"]
         ):
             raise AssertionError(
-                "v14h common-box tightening certified the known retained outside-cone negative control"
+                "v14h common-box tightening certified the known retained "
+                "outside-cone negative control"
             )
         directional_results.append(
             {
