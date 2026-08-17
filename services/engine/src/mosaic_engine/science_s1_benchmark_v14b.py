@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from decimal import Decimal
 from fractions import Fraction
 from time import perf_counter
+from typing import cast
 
 from .science_s1_benchmark_v14a import (
     _box_grid,
@@ -158,8 +159,8 @@ def _run_runtime_scenario(
             cone_log_threshold_upper=cone_threshold,
             grouped=True,
         )
-        raw_total += float(raw["elapsed_seconds"])
-        grouped_total += float(grouped["elapsed_seconds"])
+        raw_total += cast(float, raw["elapsed_seconds"])
+        grouped_total += cast(float, grouped["elapsed_seconds"])
         sides.append({"side": side_index, "raw": raw, "grouped": grouped})
 
     return {
@@ -194,8 +195,14 @@ def run_benchmark_v14b(*, include_runtime: bool = True) -> dict[str, object]:
         if include_runtime
         else []
     )
-    raw_total = sum(float(item["raw_elapsed_seconds"]) for item in runtime_scenarios)
-    grouped_total = sum(float(item["grouped_elapsed_seconds"]) for item in runtime_scenarios)
+    raw_total = sum(
+        (cast(float, item["raw_elapsed_seconds"]) for item in runtime_scenarios),
+        0.0,
+    )
+    grouped_total = sum(
+        (cast(float, item["grouped_elapsed_seconds"]) for item in runtime_scenarios),
+        0.0,
+    )
 
     return {
         "benchmark_version": BENCHMARK_VERSION,
