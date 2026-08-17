@@ -220,11 +220,7 @@ def _sensitivity_split_dimension(
     box: ParameterBox,
     diagnostic: ConePenaltyDiagnostic,
 ) -> int:
-    legal = [
-        index
-        for index, (lower, upper) in enumerate(box.intervals)
-        if lower != upper
-    ]
+    legal = [index for index, (lower, upper) in enumerate(box.intervals) if lower != upper]
     if not legal:
         raise ValueError("box has no splittable dimension")
     return max(
@@ -319,9 +315,7 @@ def _run_sensitivity_dfs_side(
         "unresolved_boxes": 0,
         "terminal_reason": "all_violating_boxes_pruned",
         "counts": dict(counts),
-        "selected_dimensions": {
-            str(index): selected_dimensions[index] for index in range(3)
-        },
+        "selected_dimensions": {str(index): selected_dimensions[index] for index in range(3)},
         "best_rotation_counts": {
             str(key): value for key, value in sorted(chosen_rotations.items())
         },
