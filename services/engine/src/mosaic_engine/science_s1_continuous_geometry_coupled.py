@@ -13,7 +13,6 @@ from .science_s1_continuous_geometry import (
     TOTAL_ALPHA,
     ConeSideCertificate,
     ContinuousConeCertificate,
-    LikelihoodBounds,
     ParameterBox,
     _cone_halfspaces,
     _decimal_from_fraction,
