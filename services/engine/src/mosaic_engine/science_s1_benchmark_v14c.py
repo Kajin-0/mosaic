@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from decimal import Decimal
+from fractions import Fraction
 from statistics import median
 from time import perf_counter
 from typing import cast
@@ -92,7 +93,7 @@ def _time_side(
     observations: Sequence[PrequentialBinaryObservation],
     *,
     box: ParameterBox,
-    halfspace: Sequence,
+    halfspace: Sequence[Fraction],
     common_cutoff: Decimal,
     cone_threshold: Decimal,
     coupled: bool,
@@ -127,6 +128,10 @@ def _time_side(
         "unresolved_boxes": result.unresolved_boxes,
         "reason": result.reason,
     }
+
+
+def _nested(side: dict[str, object], name: str) -> dict[str, object]:
+    return cast(dict[str, object], side[name])
 
 
 def _run_scenario(
@@ -170,19 +175,23 @@ def _run_scenario(
     return {
         "scenario": name,
         "observation_count": len(observations),
-        "grouped_certified": all(cast(bool, side["grouped"]["certified"]) for side in sides),
-        "coupled_certified": all(cast(bool, side["coupled"]["certified"]) for side in sides),
+        "grouped_certified": all(
+            cast(bool, _nested(side, "grouped")["certified"]) for side in sides
+        ),
+        "coupled_certified": all(
+            cast(bool, _nested(side, "coupled")["certified"]) for side in sides
+        ),
         "grouped_nodes_total": sum(
-            cast(int, side["grouped"]["nodes_visited"]) for side in sides
+            cast(int, _nested(side, "grouped")["nodes_visited"]) for side in sides
         ),
         "coupled_nodes_total": sum(
-            cast(int, side["coupled"]["nodes_visited"]) for side in sides
+            cast(int, _nested(side, "coupled")["nodes_visited"]) for side in sides
         ),
         "grouped_seconds_total": sum(
-            cast(float, side["grouped"]["elapsed_seconds"]) for side in sides
+            cast(float, _nested(side, "grouped")["elapsed_seconds"]) for side in sides
         ),
         "coupled_seconds_total": sum(
-            cast(float, side["coupled"]["elapsed_seconds"]) for side in sides
+            cast(float, _nested(side, "coupled")["elapsed_seconds"]) for side in sides
         ),
         "sides": sides,
     }
