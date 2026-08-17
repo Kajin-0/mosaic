@@ -123,14 +123,10 @@ def _evaluate_box(
 ) -> EvaluatedPolytopeBox:
     maximum_width = max(_box_widths(box))
     if _minimum_halfspace_value(box, directional_halfspace) >= 0:
-        return EvaluatedPolytopeBox(
-            box, "geometry_prune", None, None, None, maximum_width
-        )
+        return EvaluatedPolytopeBox(box, "geometry_prune", None, None, None, maximum_width)
 
     if box_disjoint_from_halfspace_polytope(box, halfspaces):
-        return EvaluatedPolytopeBox(
-            box, "polytope_prune", None, None, None, maximum_width
-        )
+        return EvaluatedPolytopeBox(box, "polytope_prune", None, None, None, maximum_width)
 
     common_margin = grouped_likelihood_bounds(box, prepared).upper - common_cutoff_lower
     if common_margin <= 0:
