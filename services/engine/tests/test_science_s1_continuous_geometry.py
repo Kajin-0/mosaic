@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from fractions import Fraction
 
 import pytest
@@ -17,7 +17,7 @@ from mosaic_engine.science_s1_continuous_geometry import (
     initial_nuisance_box,
     likelihood_bounds,
 )
-from mosaic_engine.science_s1_eprocess import PrequentialBinaryObservation, binary_log_probability
+from mosaic_engine.science_s1_eprocess import PrequentialBinaryObservation
 
 
 def _balanced_observations() -> tuple[PrequentialBinaryObservation, ...]:
@@ -41,7 +41,25 @@ def _balanced_observations() -> tuple[PrequentialBinaryObservation, ...]:
     return tuple(observations)
 
 
-def test_likelihood_interval_bounds_contain_direct_point_value() -> None:
+def _high_precision_log_likelihood(
+    alpha: tuple[float, float, float],
+    observations: tuple[PrequentialBinaryObservation, ...],
+) -> Decimal:
+    with localcontext() as context:
+        context.prec = 120
+        total = Decimal(0)
+        for observation in observations:
+            score = Decimal.from_float(alpha[0])
+            for coefficient, feature in zip(alpha[1:], observation.features, strict=True):
+                score += Decimal.from_float(coefficient) * Decimal.from_float(float(feature))
+            if observation.accepted:
+                total -= (Decimal(1) + (-score).exp()).ln()
+            else:
+                total -= (Decimal(1) + score.exp()).ln()
+        return total
+
+
+def test_likelihood_interval_bounds_contain_high_precision_point_value() -> None:
     observations = (
         PrequentialBinaryObservation((0.6, -0.8), True, 0.55),
         PrequentialBinaryObservation((-0.2, 0.9), False, 0.45),
@@ -50,13 +68,36 @@ def test_likelihood_interval_bounds_contain_direct_point_value() -> None:
     point_box = ParameterBox(tuple((Fraction.from_float(value),) * 2 for value in alpha))
 
     bounds = likelihood_bounds(point_box, observations)
-    direct = sum(
-        binary_log_probability(alpha, observation.features, observation.accepted)
-        for observation in observations
-    )
-    direct_decimal = Decimal.from_float(direct)
+    direct = _high_precision_log_likelihood(alpha, observations)
 
-    assert bounds.lower <= direct_decimal <= bounds.upper
+    assert bounds.lower <= direct <= bounds.upper
+
+
+@pytest.mark.parametrize(
+    "alpha",
+    [
+        (-3.0, 1.2, -0.4),
+        (-0.2, -1.7, 0.8),
+        (0.0, 0.0, 0.0),
+        (0.5, 2.4, -1.1),
+        (4.0, -0.3, 0.7),
+    ],
+)
+def test_point_likelihood_enclosures_hold_across_logit_regimes(
+    alpha: tuple[float, float, float],
+) -> None:
+    observations = (
+        PrequentialBinaryObservation((1.0, 0.0), True, 0.4),
+        PrequentialBinaryObservation((0.0, 1.0), False, 0.6),
+        PrequentialBinaryObservation((-0.8, 0.6), True, 0.5),
+        PrequentialBinaryObservation((0.3, -0.9), False, 0.5),
+    )
+    point_box = ParameterBox(tuple((Fraction.from_float(value),) * 2 for value in alpha))
+
+    bounds = likelihood_bounds(point_box, observations)
+    direct = _high_precision_log_likelihood(alpha, observations)
+
+    assert bounds.lower <= direct <= bounds.upper
 
 
 def test_common_confidence_cutoff_builds_finite_box_containing_zero_parameter() -> None:
@@ -77,6 +118,13 @@ def test_nuisance_box_refuses_unmixed_outcomes() -> None:
     cutoff = common_log_likelihood_cutoff_lower(observations)
 
     assert initial_nuisance_box(observations, common_cutoff_lower=cutoff) is None
+
+
+def test_certified_cone_uses_exact_narrower_rational_wedge() -> None:
+    first, second = _cone_halfspaces((1.0, 0.0), target_error=0.15)
+
+    assert first == (Fraction(1, 2), Fraction(1))
+    assert second == (Fraction(1, 2), Fraction(-1))
 
 
 def test_known_outside_survivor_cannot_be_turned_into_certificate() -> None:
