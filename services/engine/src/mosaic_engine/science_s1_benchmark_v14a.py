@@ -178,10 +178,7 @@ def _grid_values(
     if count < 2:
         raise ValueError("grid count must be at least two")
     lower, upper = interval
-    return tuple(
-        lower + (upper - lower) * Fraction(index, count - 1)
-        for index in range(count)
-    )
+    return tuple(lower + (upper - lower) * Fraction(index, count - 1) for index in range(count))
 
 
 def _box_grid(box: ParameterBox, *, grid_size: int) -> Iterable[tuple[Fraction, ...]]:
