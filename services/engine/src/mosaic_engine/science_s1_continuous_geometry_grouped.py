@@ -17,7 +17,6 @@ from .science_s1_continuous_geometry import (
     ContinuousConeCertificate,
     LikelihoodBounds,
     ParameterBox,
-    _certify_cone_side,
     _cone_halfspaces,
     _design_vector,
     _directed_sum,
