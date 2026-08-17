@@ -124,7 +124,10 @@ def _negative_softplus_bounds(argument: Decimal) -> LikelihoodBounds:
     sum_upper = _directed_add(Decimal(1), exp_upper, rounding=ROUND_CEILING)
     ln_lower = _ln_bounds(sum_lower)[0]
     ln_upper = _ln_bounds(sum_upper)[1]
-    return LikelihoodBounds(lower=-ln_upper, upper=-ln_lower)
+    return LikelihoodBounds(
+        lower=ln_upper.copy_negate(),
+        upper=ln_lower.copy_negate(),
+    )
 
 
 def _log_probability_bounds(
@@ -137,8 +140,8 @@ def _log_probability_bounds(
     upper_decimal = _decimal_from_fraction(upper_score, rounding=ROUND_CEILING)
 
     if accepted:
-        lower_value = _negative_softplus_bounds(-lower_decimal).lower
-        upper_value = _negative_softplus_bounds(-upper_decimal).upper
+        lower_value = _negative_softplus_bounds(lower_decimal.copy_negate()).lower
+        upper_value = _negative_softplus_bounds(upper_decimal.copy_negate()).upper
     else:
         lower_value = _negative_softplus_bounds(upper_decimal).lower
         upper_value = _negative_softplus_bounds(lower_decimal).upper
