@@ -115,6 +115,49 @@ def common_score_halfspaces(
     return tuple(halfspaces)
 
 
+def minimum_linear_form_over_box(
+    box: ParameterBox,
+    coefficients: Sequence[Fraction],
+) -> Fraction:
+    """Return the exact minimum of a linear form over an axis-aligned box."""
+
+    if len(coefficients) != 3:
+        raise ValueError("common polytope linear form requires dimension three")
+    total = Fraction(0)
+    for coefficient, (lower, upper) in zip(coefficients, box.intervals, strict=True):
+        total += coefficient * (lower if coefficient >= 0 else upper)
+    return total
+
+
+def box_disjoint_from_halfspace_polytope(
+    box: ParameterBox,
+    halfspaces: Sequence[LinearUpperHalfspace],
+) -> bool:
+    """Certify box/polytope disjointness when one exact halfspace excludes the box.
+
+    This is intentionally a sufficient disjointness test, not a full linear
+    feasibility solver. If every point in ``box`` violates any necessary common
+    halfspace, the box cannot contain a common-confidence parameter.
+    """
+
+    return any(
+        minimum_linear_form_over_box(box, halfspace.coefficients) > halfspace.upper_bound
+        for halfspace in halfspaces
+    )
+
+
+def point_satisfies_halfspace_polytope(
+    theta: Sequence[Fraction],
+    halfspaces: Sequence[LinearUpperHalfspace],
+) -> bool:
+    if len(theta) != 3:
+        raise ValueError("common polytope point requires dimension three")
+    return all(
+        _dot(halfspace.coefficients, theta) <= halfspace.upper_bound
+        for halfspace in halfspaces
+    )
+
+
 def _feasible_vertex(
     selected: Sequence[LinearUpperHalfspace],
     all_halfspaces: Sequence[LinearUpperHalfspace],
