@@ -166,9 +166,7 @@ def _dimension_score(
 ) -> tuple[float, float, float, int]:
     pruned_count = sum(int(evaluation.pruned) for _, evaluation in preview)
     unresolved_distances = [
-        evaluation.prune_distance
-        for _, evaluation in preview
-        if not evaluation.pruned
+        evaluation.prune_distance for _, evaluation in preview if not evaluation.pruned
     ]
     worst_distance = max(unresolved_distances, default=0.0)
     total_distance = sum(unresolved_distances)
@@ -249,9 +247,7 @@ def _run_preview_best_first_side(
             }
 
         legal_dimensions = [
-            index
-            for index, (lower, upper) in enumerate(box.intervals)
-            if lower != upper
+            index for index, (lower, upper) in enumerate(box.intervals) if lower != upper
         ]
         if not legal_dimensions:
             return {
@@ -308,9 +304,7 @@ def _run_preview_best_first_side(
         "unresolved_boxes": 0,
         "terminal_reason": "all_violating_boxes_pruned",
         "counts": dict(counts),
-        "selected_dimensions": {
-            str(index): selected_dimensions[index] for index in range(3)
-        },
+        "selected_dimensions": {str(index): selected_dimensions[index] for index in range(3)},
         "elapsed_seconds": perf_counter() - start,
     }
 
