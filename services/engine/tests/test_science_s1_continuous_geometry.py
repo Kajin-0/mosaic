@@ -12,8 +12,8 @@ from mosaic_engine.science_s1_continuous_geometry import (
     _cone_halfspaces,
     _fraction,
     _log_fraction_upper,
-    common_log_likelihood_cutoff_lower,
     certify_continuous_cone_current,
+    common_log_likelihood_cutoff_lower,
     initial_nuisance_box,
     likelihood_bounds,
 )
@@ -90,9 +90,7 @@ def test_known_outside_survivor_cannot_be_turned_into_certificate() -> None:
     violated = next(
         halfspace
         for halfspace in halfspaces
-        if halfspace[0] * point_box.intervals[1][0]
-        + halfspace[1] * point_box.intervals[2][0]
-        < 0
+        if halfspace[0] * point_box.intervals[1][0] + halfspace[1] * point_box.intervals[2][0] < 0
     )
 
     result = _certify_cone_side(
