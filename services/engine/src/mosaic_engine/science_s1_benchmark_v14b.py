@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
+from decimal import Decimal
 from fractions import Fraction
 from time import perf_counter
 
@@ -58,9 +59,7 @@ def _validate_grouped_bounds(
             point_count += 1
             direct_likelihood = _reference_log_likelihood(theta, observations)
             direct_cone = _reference_cone_log_e(theta, observations)
-            likelihood_violations += int(
-                not bounds.lower <= direct_likelihood <= bounds.upper
-            )
+            likelihood_violations += int(not bounds.lower <= direct_likelihood <= bounds.upper)
             cone_lower_violations += int(cone_lower > direct_cone)
 
     return {
@@ -79,8 +78,8 @@ def _time_certificate_side(
     *,
     initial_box: ParameterBox,
     halfspace: Sequence[Fraction],
-    common_cutoff_lower: object,
-    cone_log_threshold_upper: object,
+    common_cutoff_lower: Decimal,
+    cone_log_threshold_upper: Decimal,
     grouped: bool,
 ) -> dict[str, object]:
     if grouped:
